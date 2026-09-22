@@ -1,0 +1,117 @@
+/* Shared by the HTML startup screen and React: visible before the app bundle loads. */
+.sica-loading-screen,
+.sica-loading-panel {
+  --loader-purple: #8e6bff;
+  --loader-cyan: #1bd8ff;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #553e82 0%, #865f96 52%, #c5899c 100%);
+}
+
+.sica-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms ease, visibility 240ms ease;
+}
+
+.sica-loading-screen.is-leaving {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sica-loading-panel {
+  display: grid;
+  place-items: center;
+  margin: 8px 24px 24px;
+  padding: 18px;
+  min-height: 250px;
+  border-radius: 16px;
+}
+
+.sica-loading-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 480px);
+  padding: 34px 26px;
+  border: 1px solid rgb(255 255 255 / .12);
+  border-radius: 18px;
+  background: #080c18;
+  color: #eef5ff;
+  box-shadow: 0 20px 46px rgb(8 12 24 / .25);
+  text-align: center;
+}
+
+.sica-loading-screen .sica-loading-card { min-height: 340px; }
+.sica-loading-panel .sica-loading-card { padding: 26px 20px; }
+.sica-loading-brand { margin-bottom: 28px; color: #eef5ff; font: 600 21px/1 'Bahnschrift', 'Trebuchet MS', sans-serif; letter-spacing: .06em; }
+.sica-loading-label { margin: 26px 0 0; color: #eef5ff; font-size: 17px; font-weight: 600; line-height: 1.5; letter-spacing: 0; }
+.sica-loading-detail { max-width: 34ch; margin: 8px 0 0; color: #b8c6dc; font-size: 14px; line-height: 1.6; }
+.sica-loading-card noscript p { color: #eef5ff; font-size: 14px; line-height: 1.5; }
+
+.sica-loader {
+  --loader-size: 96px;
+  position: relative;
+  display: inline-block;
+  width: var(--loader-size);
+  height: var(--loader-size);
+  flex: 0 0 var(--loader-size);
+  vertical-align: middle;
+}
+
+.sica-loader--screen { --loader-size: 120px; }
+.sica-loader-rotor { position: absolute; inset: 0; animation: sica-loader-spin 2.2s linear infinite; }
+.sica-loader-segment {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12%;
+  height: 29%;
+  border-radius: 999px;
+  transform: translate(-50%, -50%) rotate(calc(var(--segment) * 30deg)) translateY(calc(var(--loader-size) * -.34));
+  opacity: .55;
+  background: linear-gradient(180deg, var(--loader-purple, #8e6bff), var(--loader-cyan, #1bd8ff));
+  box-shadow: 0 0 8px rgb(142 107 255 / .45), 0 0 16px rgb(27 216 255 / .25);
+  animation: sica-loader-pulse 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--segment) * -.15s);
+}
+
+.sica-loader-mark { position: absolute; inset: 0; display: grid; place-items: center; color: #d7e2f5; }
+.sica-loader--button { --loader-size: 20px; }
+.sica-loader--button .sica-loader-segment { background: currentColor; box-shadow: none; }
+.button[aria-busy='true'] > svg { display: none; }
+.scan-result .sica-loading-panel { margin: 0; padding: 12px; }
+.scan-result .sica-loading-card { padding-inline: 14px; }
+
+@keyframes sica-loader-spin { to { transform: rotate(360deg); } }
+@keyframes sica-loader-pulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+
+@media (max-width: 700px) {
+  .sica-loading-panel { margin: 8px 18px 18px; padding: 12px; }
+  .sica-loading-card { padding: 30px 20px; }
+  .sica-loading-screen .sica-loading-card { min-height: 310px; }
+  .sica-loading-label { font-size: 16px; }
+}
+
+@media (max-height: 480px) {
+  .sica-loading-screen .sica-loading-card { min-height: 0; padding-block: 20px; }
+  .sica-loading-screen .sica-loader { --loader-size: 80px; }
+  .sica-loading-brand { margin-bottom: 18px; }
+  .sica-loading-screen .sica-loading-label { margin-top: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sica-loader-rotor, .sica-loader-segment { animation: none !important; }
+  .sica-loader-segment { opacity: calc(.3 + var(--segment) * .06); }
+  .sica-loading-screen { transition: none !important; }
+}
