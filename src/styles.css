@@ -131,7 +131,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .app-main main { max-width: 1440px; margin: 0 auto; padding: 36px clamp(24px, 3vw, 48px) 24px; }
 .app-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 24px; margin-top: 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .app-footer > span:last-child { display: flex; align-items: center; gap: 7px; }
-.menu-button, .mobile-close, .mobile-nav { display: none; }
+.menu-button, .mobile-close { display: none; }
 .skip-link { position: fixed; top: -100px; left: 16px; z-index: 100; background: #fff; padding: 16px; border: 2px solid var(--brand); border-radius: 8px; }
 .skip-link:focus { top: 12px; }
 
@@ -371,10 +371,7 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .app-main { margin-left: 0; }
   .topbar { gap: 12px; min-height: 78px; }
   .property-select { margin-right: auto; }
-  .app-main main { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
-  .mobile-nav { position: fixed; inset: auto 0 0; z-index: 30; display: flex; justify-content: space-around; gap: 4px; padding: 8px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); border-top: 1px solid var(--line); background: #fff; }
-  .mobile-nav button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-width: 0; min-height: 56px; padding: 6px 3px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 12px; }
-  .mobile-nav button.active { color: var(--brand); background: var(--soft); font-weight: 650; }
+  .app-main main { padding-bottom: calc(156px + env(safe-area-inset-bottom)); }
   .stat-card .stat-icon { display: grid; }
   .login-story { padding-inline: 28px; }
   .login-form-side { padding-inline: 28px; }
@@ -386,7 +383,7 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .property-select { flex: 1; gap: 5px; }
   .property-select > div { flex: 1; }
   .property-select select { max-width: 100%; font-size: 16px; width: 100%; }
-  .app-main main { padding: 26px 18px calc(100px + env(safe-area-inset-bottom)); }
+  .app-main main { padding: 26px 18px calc(156px + env(safe-area-inset-bottom)); }
   .page-heading { align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
   .page-heading p { font-size: 14px; }
   .page-heading > .button { width: 100%; }
@@ -479,7 +476,6 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .welcome-banner .community-art { margin-top: 8px; }
   .login-layout { padding: 12px; }
   .login-form-side { padding: 24px 18px; }
-  .mobile-nav button { font-size: 11px; }
   .review-card dl > div, .details > div { flex-direction: column; gap: 4px; }
   .review-card dd, .details dd { text-align: left; max-width: 100%; }
 }
