@@ -1,13 +1,14 @@
 /* Shared by the HTML startup screen and React: visible before the app bundle loads. */
 .sica-loading-screen,
 .sica-loading-panel {
-  --loader-purple: #8e6bff;
-  --loader-cyan: #1bd8ff;
+  --loader-start: var(--brand, #123c4a);
+  --loader-end: #477385;
   font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  background: linear-gradient(135deg, #553e82 0%, #865f96 52%, #c5899c 100%);
+  background: var(--soft, #e9f1f4);
 }
 
 .sica-loading-screen {
+  background: #f2f6f8;
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -44,20 +45,20 @@
   justify-content: center;
   width: min(100%, 480px);
   padding: 34px 26px;
-  border: 1px solid rgb(255 255 255 / .12);
+  border: 1px solid var(--line, #dce5e9);
   border-radius: 18px;
-  background: #080c18;
-  color: #eef5ff;
-  box-shadow: 0 20px 46px rgb(8 12 24 / .25);
+  background: var(--surface, #fff);
+  color: var(--ink, #182f39);
+  box-shadow: 0 16px 40px rgb(18 60 74 / .08);
   text-align: center;
 }
 
 .sica-loading-screen .sica-loading-card { min-height: 340px; }
 .sica-loading-panel .sica-loading-card { padding: 26px 20px; }
-.sica-loading-brand { margin-bottom: 28px; color: #eef5ff; font: 600 21px/1 'Bahnschrift', 'Trebuchet MS', sans-serif; letter-spacing: .06em; }
-.sica-loading-label { margin: 26px 0 0; color: #eef5ff; font-size: 17px; font-weight: 600; line-height: 1.5; letter-spacing: 0; }
-.sica-loading-detail { max-width: 34ch; margin: 8px 0 0; color: #b8c6dc; font-size: 14px; line-height: 1.6; }
-.sica-loading-card noscript p { color: #eef5ff; font-size: 14px; line-height: 1.5; }
+.sica-loading-brand { margin-bottom: 28px; color: var(--brand, #123c4a); font: 600 21px/1 'Bahnschrift', 'Trebuchet MS', sans-serif; letter-spacing: .06em; }
+.sica-loading-label { margin: 26px 0 0; color: var(--ink, #182f39); font-size: 17px; font-weight: 600; line-height: 1.5; letter-spacing: 0; }
+.sica-loading-detail { max-width: 34ch; margin: 8px 0 0; color: var(--muted, #536873); font-size: 14px; line-height: 1.6; }
+.sica-loading-card noscript p { color: var(--ink, #182f39); font-size: 14px; line-height: 1.5; }
 
 .sica-loader {
   --loader-size: 96px;
@@ -80,13 +81,13 @@
   border-radius: 999px;
   transform: translate(-50%, -50%) rotate(calc(var(--segment) * 30deg)) translateY(calc(var(--loader-size) * -.34));
   opacity: .55;
-  background: linear-gradient(180deg, var(--loader-purple, #8e6bff), var(--loader-cyan, #1bd8ff));
-  box-shadow: 0 0 8px rgb(142 107 255 / .45), 0 0 16px rgb(27 216 255 / .25);
+  background: linear-gradient(180deg, var(--loader-start, #123c4a), var(--loader-end, #477385));
+  box-shadow: 0 0 8px rgb(18 60 74 / .12), 0 0 14px rgb(71 115 133 / .08);
   animation: sica-loader-pulse 1.8s ease-in-out infinite;
   animation-delay: calc(var(--segment) * -.15s);
 }
 
-.sica-loader-mark { position: absolute; inset: 0; display: grid; place-items: center; color: #d7e2f5; }
+.sica-loader-mark { position: absolute; inset: 0; display: grid; place-items: center; color: var(--brand, #123c4a); }
 .sica-loader--button { --loader-size: 20px; }
 .sica-loader--button .sica-loader-segment { background: currentColor; box-shadow: none; }
 .button[aria-busy='true'] > svg { display: none; }
