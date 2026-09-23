@@ -58,6 +58,9 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .brand.light .brand-mark { background: #e3edf0; color: var(--brand); }
 .brand.light .brand-dot { color: var(--sun); }
 .eyebrow, .section-caption { display: block; margin-bottom: 12px; color: var(--muted); font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.loading { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 150px; padding: 24px; color: var(--muted); }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .error-box, .info-box, .success-inline { display: flex; align-items: flex-start; gap: 10px; padding: 15px 16px; margin: 16px 0; font-size: 14px; line-height: 1.6; border-radius: 10px; overflow-wrap: anywhere; }
 .error-box { background: #fff1f1; color: #902c35; border: 1px solid #efc9cd; }
 .error-box > span { flex: 1; min-width: 0; }
