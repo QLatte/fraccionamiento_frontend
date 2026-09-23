@@ -1,0 +1,4 @@
+.animated-home-icon { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-home-icon .home-roof,
+.animated-home-icon .home-house { transform-box: fill-box; transform-origin: center; }
+.animated-home-icon .home-door { transform-box: fill-box; transform-origin: center bottom; }
