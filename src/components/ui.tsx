@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertCircle, ArrowRight, Check, LoaderCircle, QrCode, X } from 'lucide-react';
 import type { Status } from '../types';
 import { statusLabel } from '../hooks';
@@ -18,7 +19,13 @@ export function Modal({ title, children, onClose }: { title: string; children: R
     try { el.showModal(); } catch (error) { unlock(); throw error; }
     return () => { el.close(); unlock(); };
   }, []);
-  return <dialog ref={ref} className="modal" aria-label={title} onCancel={e => { e.preventDefault(); onClose(); }}><div className="modal-top"><h2>{title}</h2><button className="icon-button" onClick={onClose} aria-label="Cerrar"><X size={20}/></button></div>{children}</dialog>;
+  return createPortal(
+    <dialog ref={ref} className="modal" aria-label={title} onCancel={e => { e.preventDefault(); onClose(); }}>
+      <div className="modal-top"><h2>{title}</h2><button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar"><X size={20}/></button></div>
+      <div className="modal-content">{children}</div>
+    </dialog>,
+    document.body,
+  );
 }
 export function PageHeader({ eyebrow, title, text, action }: { eyebrow?: string; title: string; text: string; action?: ReactNode }) { return <div className="page-heading"><div>{eyebrow && <div className="eyebrow">{eyebrow}</div>}<h1>{title}</h1><p>{text}</p></div>{action}</div>; }
 export function Info({ children }: { children: ReactNode }) { return <div className="info-box">{children}</div>; }

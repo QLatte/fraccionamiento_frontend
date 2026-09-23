@@ -140,10 +140,6 @@
   .home-overview .stat-grid .stat-card { padding: 18px 13px; gap: 8px; grid-template-columns: 30px minmax(0, 1fr); }
   .home-overview .stat-card .stat-icon { width: 30px; height: 30px; }
 }
-@keyframes home-panel-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
 @media (prefers-reduced-motion: reduce) {
   .home-overview .welcome-banner, .home-overview .stat-card { animation: none; }
   .home-overview .welcome-banner .button, .home-overview .stat-card, .home-overview .pass-row { transition: none; }
