@@ -6,6 +6,7 @@ export interface TrashIconProps extends AnimatedIconProps {
   shakeOnClick?: boolean;
   dangerHover?: boolean;
   keepOpenOnDelete?: boolean;
+  controlled?: boolean;
 }
 
 const TrashIcon = forwardRef<AnimatedIconHandle, TrashIconProps>(
@@ -14,6 +15,7 @@ const TrashIcon = forwardRef<AnimatedIconHandle, TrashIconProps>(
       shakeOnClick = false,
       dangerHover = false,
       keepOpenOnDelete = false,
+      controlled = false,
       size = 24,
       color = "currentColor",
       strokeWidth = 2,
@@ -102,17 +104,17 @@ const TrashIcon = forwardRef<AnimatedIconHandle, TrashIconProps>(
     }, [shakeOnClick, keepOpenOnDelete, animate, openLid, reducedMotion]);
 
     useImperativeHandle(ref, () => ({
-      startAnimation: openLid,
-      stopAnimation: closeLid,
-    }));
+      startAnimation: hoverAnimation,
+      stopAnimation: hoverEndAnimation,
+    }), [hoverAnimation, hoverEndAnimation]);
 
     return (
       <motion.svg
         ref={scope}
         className={`${className} trash-icon`}
-        onHoverStart={hoverAnimation}
-        onHoverEnd={hoverEndAnimation}
-        onTap={clickAnimation}
+        onHoverStart={controlled ? undefined : hoverAnimation}
+        onHoverEnd={controlled ? undefined : hoverEndAnimation}
+        onTap={controlled ? undefined : clickAnimation}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
