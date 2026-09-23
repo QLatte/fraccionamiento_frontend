@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
-import { Home, Menu, QrCode, ScanLine, Smartphone } from 'lucide-react';
+import { Home, Menu, ScanLine, Smartphone } from 'lucide-react';
+import AnimatedQr from './icons/AnimatedQr';
 import './BottomNav.css';
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
   const items = [
     { path: '/', label: 'Inicio', Icon: Home },
-    { path: '/pases', label: 'Mis pases', Icon: QrCode },
+    { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },
     role === 'HOUSEHOLD_USER'
       ? { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone }
       : { path: '/caseta', label: 'Caseta', Icon: ScanLine },

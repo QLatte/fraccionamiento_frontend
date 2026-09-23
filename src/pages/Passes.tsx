@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, Clock3, Plus, QrCode, Search, ShieldCheck, Ticket, UserRound, Car, RotateCw, XCircle, ChevronRight } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, Clock3, Plus, Search, ShieldCheck, Ticket, UserRound, Car, RotateCw, XCircle, ChevronRight } from 'lucide-react';
 import { useAuth } from '../auth';
 import { api, errorText } from '../api';
 import { dateText, localInput, statusLabel, typeLabel, useMutation, useQuery } from '../hooks';
@@ -8,6 +8,7 @@ import { Badge, Button, Empty, ErrorBox, Info, Loading, Modal, PageHeader, TextL
 import { SharePass } from '../components/SharePass';
 import { CommunityArt } from '../components/CommunityArt';
 import TrashIcon from '../components/icons/AnimatedTrash';
+import AnimatedQr from '../components/icons/AnimatedQr';
 import './HomeOverview.css';
 export function CreatePass({ onClose, onCreated }: { onClose: () => void; onCreated: (pass: CreatedPass, name: string) => void }) {
   const { property } = useAuth(); const mutation = useMutation(); const [step, setStep] = useState(1);
@@ -52,5 +53,5 @@ export function Passes({ home, navigate }: { home: boolean; navigate: (path: str
 }
 function PassDetails({ pass, onClose, onRevoke, share }: { pass: Pass; onClose: () => void; onRevoke: () => void; share?: () => void }) {
   const status = useQuery<{ status: Status; syncPending: boolean }>(`/passes/${pass.id}/status?propertyId=${pass.propertyId}`, 10000);
-  return <Modal title="Detalle del pase" onClose={onClose}><div className="detail-heading"><span className="detail-icon"><UserRound size={28}/></span><h3>{pass.guestName}</h3><Badge status={status.data?.status ?? pass.status}/></div><dl className="details"><div><dt>Tipo</dt><dd>{typeLabel[pass.passType]}</dd></div><div><dt>Vehículo</dt><dd>{pass.guestVehicle || 'Sin vehículo'}</dd></div><div><dt>Válido desde</dt><dd>{dateText(pass.validFrom)}</dd></div><div><dt>Válido hasta</dt><dd>{dateText(pass.validUntil)}</dd></div><div><dt>Zona horaria</dt><dd>{pass.timezone}</dd></div>{pass.passType === 'RECURRING' && <><div><dt>Regla de repetición</dt><dd>{pass.recurrenceRule}</dd></div><div><dt>Ventana de acceso</dt><dd>{pass.windowSeconds / 60} minutos</dd></div></>}</dl><ErrorBox message={status.error} retry={status.refresh}/>{status.data?.syncPending && <Info>El cambio está guardado. Se está sincronizando con la caseta.</Info>}{!share && <Info>El enlace se entrega al crear el pase. Si lo perdiste, cancela este pase y crea uno nuevo.</Info>}<div className="modal-actions">{(status.data?.status ?? pass.status) === 'ACTIVE' && <Button className="danger-outline" onClick={onRevoke}><TrashIcon size={17}/> Cancelar pase</Button>}{share && (status.data?.status ?? pass.status) === 'ACTIVE' && <Button onClick={share}><QrCode size={18}/> Ver QR</Button>}</div></Modal>;
+  return <Modal title="Detalle del pase" onClose={onClose}><div className="detail-heading"><span className="detail-icon"><UserRound size={28}/></span><h3>{pass.guestName}</h3><Badge status={status.data?.status ?? pass.status}/></div><dl className="details"><div><dt>Tipo</dt><dd>{typeLabel[pass.passType]}</dd></div><div><dt>Vehículo</dt><dd>{pass.guestVehicle || 'Sin vehículo'}</dd></div><div><dt>Válido desde</dt><dd>{dateText(pass.validFrom)}</dd></div><div><dt>Válido hasta</dt><dd>{dateText(pass.validUntil)}</dd></div><div><dt>Zona horaria</dt><dd>{pass.timezone}</dd></div>{pass.passType === 'RECURRING' && <><div><dt>Regla de repetición</dt><dd>{pass.recurrenceRule}</dd></div><div><dt>Ventana de acceso</dt><dd>{pass.windowSeconds / 60} minutos</dd></div></>}</dl><ErrorBox message={status.error} retry={status.refresh}/>{status.data?.syncPending && <Info>El cambio está guardado. Se está sincronizando con la caseta.</Info>}{!share && <Info>El enlace se entrega al crear el pase. Si lo perdiste, cancela este pase y crea uno nuevo.</Info>}<div className="modal-actions">{(status.data?.status ?? pass.status) === 'ACTIVE' && <Button className="danger-outline" onClick={onRevoke}><TrashIcon size={17}/> Cancelar pase</Button>}{share && (status.data?.status ?? pass.status) === 'ACTIVE' && <Button onClick={share}><AnimatedQr size={18}/> Ver QR</Button>}</div></Modal>;
 }

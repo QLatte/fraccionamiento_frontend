@@ -1,15 +1,16 @@
 import { useLayoutEffect, useRef, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, ArrowRight, Check, LoaderCircle, QrCode, X } from 'lucide-react';
+import { AlertCircle, ArrowRight, Check, LoaderCircle, X } from 'lucide-react';
 import type { Status } from '../types';
 import { statusLabel } from '../hooks';
 import { lockPageScroll } from './lockPageScroll';
-export function Brand({ light = false, onHome }: { light?: boolean; onHome?: () => void }) { return <a className={`brand ${light ? 'light' : ''}`} href="/" onClick={onHome ? e => { e.preventDefault(); onHome(); } : undefined}><span className="brand-mark"><QrCode size={25}/></span><span>Zentry<span className="brand-dot">.</span></span></a>; }
+import AnimatedQr from './icons/AnimatedQr';
+export function Brand({ light = false, onHome }: { light?: boolean; onHome?: () => void }) { return <a className={`brand ${light ? 'light' : ''}`} href="/" onClick={onHome ? e => { e.preventDefault(); onHome(); } : undefined}><span className="brand-mark"><AnimatedQr size={25}/></span><span>Zentry<span className="brand-dot">.</span></span></a>; }
 export function Button({ children, className = '', busy, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { busy?: boolean }) { return <button type="button" {...props} aria-busy={busy || undefined} disabled={props.disabled || busy} className={`button ${className}`}>{busy && <LoaderCircle className="spin" size={17}/>} {children}</button>; }
 export function ErrorBox({ message, retry }: { message?: string; retry?: () => void }) { if (!message) return null; return <div className="error-box" role="alert"><AlertCircle size={18}/><span>{message}</span>{retry && <button type="button" onClick={retry}>Reintentar</button>}</div>; }
 export function Badge({ status }: { status: Status }) { return <span className={`badge ${status.toLowerCase()}`}><span/>{statusLabel[status]}</span>; }
 export function Loading() { return <div className="loading" role="status"><LoaderCircle className="spin" size={23}/><span>Cargando información…</span></div>; }
-export function Empty({ icon, title, text, action }: { icon?: ReactNode; title: string; text: string; action?: ReactNode }) { return <div className="empty"><div className="empty-icon">{icon ?? <QrCode/>}</div><h3>{title}</h3><p>{text}</p>{action}</div>; }
+export function Empty({ icon, title, text, action }: { icon?: ReactNode; title: string; text: string; action?: ReactNode }) { return <div className="empty"><div className="empty-icon">{icon ?? <AnimatedQr/>}</div><h3>{title}</h3><p>{text}</p>{action}</div>; }
 export function Modal({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   useLayoutEffect(() => {
