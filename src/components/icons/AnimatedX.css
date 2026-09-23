@@ -1,18 +1,47 @@
 .animated-x-button svg { display: block; flex: none; pointer-events: none; overflow: visible; }
 .animated-x-button .x-line-1,
-.animated-x-button .x-line-2 { transform-box: view-box; transform-origin: center; transition: transform .2s ease-in-out; }
-
-@media (hover: hover) {
-  .animated-x-button:hover .x-line-1 { transform: rotate(15deg) scale(1.1); }
-  .animated-x-button:hover .x-line-2 { transform: rotate(-15deg) scale(1.1); }
+.animated-x-button .x-line-2 {
+  transform-box: view-box;
+  transform-origin: center;
+  stroke-dasharray: 18;
+  stroke-dashoffset: 0;
 }
 
-.animated-x-button:focus-visible .x-line-1,
-.animated-x-button[data-pressed='true'] .x-line-1 { transform: rotate(15deg) scale(1.1); }
-.animated-x-button:focus-visible .x-line-2,
-.animated-x-button[data-pressed='true'] .x-line-2 { transform: rotate(-15deg) scale(1.1); }
+@media (hover: hover) {
+  .animated-x-button:hover:not([data-closing='true']) .x-line-1 { animation: x-hover-first .48s ease-out both; }
+  .animated-x-button:hover:not([data-closing='true']) .x-line-2 { animation: x-hover-second .48s ease-out both; }
+}
+
+.animated-x-button:focus-visible:not([data-closing='true']) .x-line-1,
+.animated-x-button[data-pressed='true']:not([data-closing='true']) .x-line-1 { animation: x-hover-first .48s ease-out both; }
+.animated-x-button:focus-visible:not([data-closing='true']) .x-line-2,
+.animated-x-button[data-pressed='true']:not([data-closing='true']) .x-line-2 { animation: x-hover-second .48s ease-out both; }
+
+.animated-x-button[data-closing='true'] .x-line-1 { animation: x-close-first .42s ease-in-out both; }
+.animated-x-button[data-closing='true'] .x-line-2 { animation: x-close-second .42s ease-in-out both; }
+
+@keyframes x-hover-first {
+  0% { transform: rotate(0) scale(1); stroke-dashoffset: 0; }
+  40% { transform: translate(-2px, -2px) rotate(35deg) scale(1.18); stroke-dashoffset: 5; }
+  100% { transform: rotate(15deg) scale(1.1); stroke-dashoffset: 0; }
+}
+@keyframes x-hover-second {
+  0% { transform: rotate(0) scale(1); stroke-dashoffset: 0; }
+  40% { transform: translate(2px, -2px) rotate(-35deg) scale(1.18); stroke-dashoffset: 5; }
+  100% { transform: rotate(-15deg) scale(1.1); stroke-dashoffset: 0; }
+}
+@keyframes x-close-first {
+  0% { transform: rotate(15deg) scale(1.1); stroke-dashoffset: 0; }
+  45% { transform: translate(-2px, -2px) rotate(55deg) scale(.8); stroke-dashoffset: 12; }
+  100% { transform: rotate(180deg) scale(1); stroke-dashoffset: 0; }
+}
+@keyframes x-close-second {
+  0% { transform: rotate(-15deg) scale(1.1); stroke-dashoffset: 0; }
+  45% { transform: translate(2px, 2px) rotate(-55deg) scale(.8); stroke-dashoffset: 12; }
+  100% { transform: rotate(-180deg) scale(1); stroke-dashoffset: 0; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animated-x-button .x-line-1,
-  .animated-x-button .x-line-2 { transition: none !important; transform: none !important; }
+  .animated-x-button .x-line-2 { animation: none !important; transform: none !important; stroke-dashoffset: 0 !important; }
 }

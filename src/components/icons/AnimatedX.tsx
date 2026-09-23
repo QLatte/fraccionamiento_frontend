@@ -12,20 +12,24 @@ type Props = {
 export default function AnimatedX({ onClose, label = 'Cerrar', className = '', size = 24 }: Props) {
   const button = useRef<HTMLButtonElement>(null);
   const timeout = useRef<number | undefined>(undefined);
-  const pointerType = useRef<string | undefined>(undefined);
   const closing = useRef(false);
 
   useEffect(() => () => window.clearTimeout(timeout.current), []);
 
   const close = () => {
     if (closing.current) return;
-    closing.current = true;
-    if (pointerType.current === 'touch' || pointerType.current === 'pen') {
-      button.current?.setAttribute('data-pressed', 'true');
-      timeout.current = window.setTimeout(onClose, 210);
-    } else {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       onClose();
+      return;
     }
+    closing.current = true;
+    button.current?.setAttribute('data-closing', 'true');
+    timeout.current = window.setTimeout(() => {
+      closing.current = false;
+      button.current?.removeAttribute('data-closing');
+      button.current?.removeAttribute('data-pressed');
+      onClose();
+    }, 430);
   };
 
   return <button
@@ -33,9 +37,9 @@ export default function AnimatedX({ onClose, label = 'Cerrar', className = '', s
     type="button"
     className={`icon-button animated-x-button ${className}`}
     aria-label={label}
-    onPointerDown={event => { pointerType.current = event.pointerType; event.currentTarget.dataset.pressed = 'true'; }}
+    onPointerDown={event => { event.currentTarget.dataset.pressed = 'true'; }}
     onPointerUp={event => { if (event.pointerType === 'mouse') delete event.currentTarget.dataset.pressed; }}
-    onPointerCancel={event => { pointerType.current = undefined; delete event.currentTarget.dataset.pressed; }}
+    onPointerCancel={event => { delete event.currentTarget.dataset.pressed; }}
     onClick={close}
   >
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
