@@ -1,6 +1,32 @@
 {
-  "name": "sica-qr-pwa", "private": true, "version": "1.0.0", "type": "module",
-  "scripts": { "dev": "vite --host 127.0.0.1", "build": "tsc --noEmit && vite build && node scripts/build-sw.mjs", "preview": "vite preview --host 127.0.0.1", "typecheck": "tsc --noEmit", "test:e2e": "playwright test" },
-  "dependencies": { "react": "^19.1.0", "react-dom": "^19.1.0", "@simplewebauthn/browser": "^13.1.0", "lucide-react": "^0.468.0", "qrcode": "^1.5.4", "jsqr": "^1.4.0" },
-  "devDependencies": { "typescript": "^5.8.3", "@types/react": "^19.1.0", "@types/react-dom": "^19.1.0", "@types/qrcode": "^1.5.5", "@types/node": "^22.15.3", "vite": "^7.1.0", "@vitejs/plugin-react": "^5.0.0", "@playwright/test": "^1.55.0" }
+  "name": "sica-qr-pwa",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build && node scripts/build-sw.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@simplewebauthn/browser": "^13.1.0",
+    "jsqr": "^1.4.0",
+    "lucide-react": "^0.468.0",
+    "motion": "^12.43.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.15.3",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.0"
+  }
 }
