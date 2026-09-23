@@ -1,10 +1,11 @@
 import { useLayoutEffect, useRef, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, ArrowRight, Check, LoaderCircle, X } from 'lucide-react';
+import { AlertCircle, ArrowRight, Check, LoaderCircle } from 'lucide-react';
 import type { Status } from '../types';
 import { statusLabel } from '../hooks';
 import { lockPageScroll } from './lockPageScroll';
 import AnimatedQr from './icons/AnimatedQr';
+import AnimatedX from './icons/AnimatedX';
 export function Brand({ light = false, onHome }: { light?: boolean; onHome?: () => void }) { return <a className={`brand ${light ? 'light' : ''}`} href="/" onClick={onHome ? e => { e.preventDefault(); onHome(); } : undefined}><span className="brand-mark"><AnimatedQr size={25}/></span><span>Zentry<span className="brand-dot">.</span></span></a>; }
 export function Button({ children, className = '', busy, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { busy?: boolean }) { return <button type="button" {...props} aria-busy={busy || undefined} disabled={props.disabled || busy} className={`button ${className}`}>{busy && <LoaderCircle className="spin" size={17}/>} {children}</button>; }
 export function ErrorBox({ message, retry }: { message?: string; retry?: () => void }) { if (!message) return null; return <div className="error-box" role="alert"><AlertCircle size={18}/><span>{message}</span>{retry && <button type="button" onClick={retry}>Reintentar</button>}</div>; }
@@ -22,7 +23,7 @@ export function Modal({ title, children, onClose }: { title: string; children: R
   }, []);
   return createPortal(
     <dialog ref={ref} className="modal" aria-label={title} onCancel={e => { e.preventDefault(); onClose(); }}>
-      <div className="modal-top"><h2>{title}</h2><button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar"><X size={20}/></button></div>
+      <div className="modal-top"><h2>{title}</h2><AnimatedX size={20} onClose={onClose}/></div>
       <div className="modal-content">{children}</div>
     </dialog>,
     document.body,
