@@ -44,5 +44,5 @@ export function extractToken(value: string) {
   const raw = value.trim();
   if (/^[A-Za-z0-9_-]{43}$/.test(raw)) return raw;
   try { const url = new URL(raw); const token = url.pathname.match(/^\/p\/([A-Za-z0-9_-]{43})\/?$/)?.[1]; if (['https:', 'http:'].includes(url.protocol) && token) return token; } catch { /* raw token checked above */ }
-  throw new Error('Este QR no contiene un pase SICA válido.');
+  throw new Error('Este QR no contiene un pase Zentry válido.');
 }

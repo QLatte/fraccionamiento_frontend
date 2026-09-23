@@ -192,8 +192,8 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .help-shortcut strong { display: block; margin-top: 6px; color: var(--brand); }
 
 /* Forms and QR */
-.modal { position: fixed; width: min(660px, calc(100% - 40px)); max-height: calc(100dvh - 48px); margin: auto; padding: 28px; border: 1px solid var(--line); border-radius: 22px; background: #fff; color: var(--ink); overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 24px 80px #123c4a30; }
-.modal::backdrop { background: #18333e8a; backdrop-filter: blur(4px); }
+.modal { position: fixed; inset: 0; width: min(660px, calc(100% - 40px)); max-height: calc(100dvh - 48px); margin: auto; padding: 28px; border: 1px solid var(--line); border-radius: 22px; background: #fff; color: var(--ink); overflow-x: hidden; overflow-y: auto; overscroll-behavior: none; touch-action: pan-y pinch-zoom; box-shadow: 0 24px 80px #123c4a30; }
+.modal::backdrop { background: #18333e8a; backdrop-filter: blur(4px); touch-action: none; }
 .modal-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .modal-top h2 { margin: 0; font-size: 26px; }
 .modal-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }

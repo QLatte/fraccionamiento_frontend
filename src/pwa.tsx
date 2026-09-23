@@ -6,8 +6,8 @@ window.addEventListener('beforeinstallprompt', event => { event.preventDefault()
 export function InstallButton() {
   const [prompt, setPrompt] = useState(availablePrompt); const [installed, setInstalled] = useState(window.matchMedia('(display-mode: standalone)').matches);
   useEffect(() => { const update = () => setPrompt(availablePrompt); const finish = () => { setInstalled(true); availablePrompt = null; setPrompt(null); }; window.addEventListener('sica:install', update); window.addEventListener('appinstalled', finish); return () => { window.removeEventListener('sica:install', update); window.removeEventListener('appinstalled', finish); }; }, []);
-  if (installed) return <span className="installed-label">SICA está instalada</span>;
-  return prompt ? <button className="install-button" onClick={async () => { await prompt.prompt(); await prompt.userChoice; setPrompt(null); availablePrompt = null; }}><Download size={17}/> Instalar SICA</button> : <p className="small muted">Para instalar, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a inicio”. En iPhone, usa Compartir en Safari.</p>;
+  if (installed) return <span className="installed-label">Zentry está instalada</span>;
+  return prompt ? <button className="install-button" onClick={async () => { await prompt.prompt(); await prompt.userChoice; setPrompt(null); availablePrompt = null; }}><Download size={17}/> Instalar Zentry</button> : <p className="small muted">Para instalar, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a inicio”. En iPhone, usa Compartir en Safari.</p>;
 }
 export function UpdateNotice() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
@@ -18,5 +18,5 @@ export function UpdateNotice() {
     return () => { canceled = true; };
   }, []);
   if (!waiting) return null;
-  return <div className="update-notice"><RefreshCw size={17}/><span>Hay una nueva versión de SICA.</span><button onClick={() => { if (window.confirm('La actualización cerrará tu sesión y los formularios abiertos. ¿Actualizar ahora?')) { navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true }); waiting.postMessage({ type: 'ACTIVATE' }); } }}>Actualizar</button></div>;
+  return <div className="update-notice"><RefreshCw size={17}/><span>Hay una nueva versión de Zentry.</span><button onClick={() => { if (window.confirm('La actualización cerrará tu sesión y los formularios abiertos. ¿Actualizar ahora?')) { navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true }); waiting.postMessage({ type: 'ACTIVATE' }); } }}>Actualizar</button></div>;
 }
