@@ -208,6 +208,9 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .modal-content > form { min-width: 0; margin: 0; }
 .modal .field-grid { align-items: end; }
 .modal .field-grid > label { min-width: 0; }
+.modal .date-field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 18px; }
+.modal .date-field-grid > label { display: flex; flex-direction: column; gap: 8px; min-width: 0; margin-bottom: 20px; }
+.modal .date-field-grid input[type='datetime-local'] { display: block; flex: 0 0 auto; width: 100%; min-width: 0; max-width: 100%; height: 52px; margin-top: auto; }
 .modal::backdrop { background: #18333e8a; backdrop-filter: blur(4px); touch-action: none; }
 .modal-top { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 16px; margin: 0; padding: 18px var(--modal-padding); border-bottom: 1px solid var(--line); }
 .modal-top h2 { min-width: 0; margin: 0; font-size: 26px; text-align: left; }
@@ -453,6 +456,9 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .modal-actions .button { width: 100%; min-width: 0; padding-inline: 10px; }
   .modal-actions .button:only-child { grid-column: 1 / -1; }
   .field-grid { grid-template-columns: 1fr; gap: 0; }
+  .modal .date-field-grid { grid-template-columns: 1fr; gap: 16px; }
+  .modal .date-field-grid > label { margin-bottom: 0; }
+  .modal .date-field-grid { margin-bottom: 20px; }
   .type-options { grid-template-columns: 1fr; gap: 8px; }
   .type-options button { display: grid; grid-template-columns: 26px 1fr; gap: 4px 12px; padding: 14px; }
   .type-options svg { grid-row: 1 / 3; align-self: center; }
