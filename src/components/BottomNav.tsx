@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react';
-import { Menu, ScanLine, Smartphone } from 'lucide-react';
+import { ScanLine, Smartphone } from 'lucide-react';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedHome from './icons/AnimatedHome';
+import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAlignCenter';
 import './BottomNav.css';
 
 type Props = {
@@ -19,7 +20,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
     role === 'HOUSEHOLD_USER'
       ? { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone }
       : { path: '/caseta', label: 'Caseta', Icon: ScanLine },
-    { path: null, label: 'Más', Icon: Menu },
+    { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ];
   const current = items.findIndex(item => item.path === path);
   const activeIndex = menuOpen || current < 0 ? 3 : current;
@@ -48,7 +49,12 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
           aria-expanded={destination === null ? menuOpen : undefined}
           aria-controls={destination === null ? 'main-navigation' : undefined}
           aria-haspopup={destination === null ? 'dialog' : undefined}
-          onClick={event => destination === null ? onMore(event.currentTarget) : onNavigate(destination)}
+          onClick={event => {
+            if (destination === null) {
+              const trigger = event.currentTarget;
+              afterMenuIconAnimation(() => onMore(trigger));
+            } else onNavigate(destination);
+          }}
         >
           <span className="mobile-nav-icon" aria-hidden="true"><Icon size={25} strokeWidth={activeIndex === index ? 2.2 : 1.7}/></span>
           <span className="mobile-nav-label">{label}</span>

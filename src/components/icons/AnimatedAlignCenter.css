@@ -1,0 +1,2 @@
+.animated-align-center-icon { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-align-center-icon path { transform-box: fill-box; transform-origin: center; }
