@@ -1,0 +1,3 @@
+.animated-history-circle-icon { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-history-circle-icon .history-circle,
+.animated-history-circle-icon .history-clock-hand { transform-box: view-box; transform-origin: center; }
