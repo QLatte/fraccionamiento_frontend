@@ -1,38 +1,41 @@
-import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
-import { Trash2 } from 'lucide-react';
-import type { AnimatedIconHandle } from './types';
+import { useEffect, useRef } from 'react';
+import './AnimatedTrash.css';
 
-const TrashIcon = lazy(() => import('./trash-icon'));
-
+/** The lid and bin paths follow the Its Hover trash icon. */
 export default function AnimatedTrash({ size = 18 }: { size?: number }) {
-  const host = useRef<HTMLSpanElement>(null);
-  const icon = useRef<AnimatedIconHandle | null>(null);
-  const attachIcon = useCallback((handle: AnimatedIconHandle | null) => {
-    icon.current = handle;
-    const button = host.current?.closest('button');
-    if (handle && (button?.matches(':hover') || button?.matches(':focus-visible'))) handle.startAnimation();
-  }, []);
+  const icon = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    const button = host.current?.closest('button');
-    if (!button) return;
-    const start = () => icon.current?.startAnimation();
-    const stop = () => icon.current?.stopAnimation();
-    button.addEventListener('pointerenter', start);
-    button.addEventListener('pointerleave', stop);
-    button.addEventListener('pointerdown', start);
-    button.addEventListener('focus', start);
-    button.addEventListener('blur', stop);
+    const svg = icon.current;
+    const button = svg?.closest('button');
+    if (!svg || !button) return;
+
+    let release: number | undefined;
+    const press = () => {
+      window.clearTimeout(release);
+      svg.dataset.pressed = 'true';
+    };
+    const lift = () => {
+      window.clearTimeout(release);
+      release = window.setTimeout(() => { delete svg.dataset.pressed; }, 420);
+    };
+
+    button.addEventListener('pointerdown', press);
+    button.addEventListener('pointerup', lift);
+    button.addEventListener('pointercancel', lift);
     return () => {
-      button.removeEventListener('pointerenter', start);
-      button.removeEventListener('pointerleave', stop);
-      button.removeEventListener('pointerdown', start);
-      button.removeEventListener('focus', start);
-      button.removeEventListener('blur', stop);
+      window.clearTimeout(release);
+      button.removeEventListener('pointerdown', press);
+      button.removeEventListener('pointerup', lift);
+      button.removeEventListener('pointercancel', lift);
     };
   }, []);
 
-  return <span ref={host} aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
-    <Suspense fallback={<Trash2 size={size}/> }><TrashIcon ref={attachIcon} size={size} controlled/></Suspense>
-  </span>;
+  return <svg ref={icon} className="animated-trash-icon" aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path className="trash-lid-lower" d="M4 7l16 0"/>
+    <path d="M10 11l0 6"/>
+    <path d="M14 11l0 6"/>
+    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
+    <path className="trash-lid-upper" d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
+  </svg>;
 }

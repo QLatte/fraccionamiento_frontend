@@ -1,0 +1,23 @@
+.animated-trash-icon { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-trash-icon .trash-lid-lower,
+.animated-trash-icon .trash-lid-upper { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .25s ease-out; }
+
+@media (hover: hover) {
+  button:hover .animated-trash-icon .trash-lid-lower { transform: translateY(-4px) rotate(-25deg); }
+  button:hover .animated-trash-icon .trash-lid-upper { transform: translate(-2px, -6px) rotate(-35deg); }
+}
+
+button:focus-visible .animated-trash-icon .trash-lid-lower,
+.animated-trash-icon[data-pressed='true'] .trash-lid-lower { transform: translateY(-4px) rotate(-25deg); }
+button:focus-visible .animated-trash-icon .trash-lid-upper,
+.animated-trash-icon[data-pressed='true'] .trash-lid-upper { transform: translate(-2px, -6px) rotate(-35deg); }
+
+dialog[open] .modal-actions .animated-trash-icon .trash-lid-lower { animation: trash-lid-pop-lower .55s ease; }
+dialog[open] .modal-actions .animated-trash-icon .trash-lid-upper { animation: trash-lid-pop-upper .55s ease; }
+@keyframes trash-lid-pop-lower { 0%, 100% { transform: none; } 45% { transform: translateY(-4px) rotate(-25deg); } }
+@keyframes trash-lid-pop-upper { 0%, 100% { transform: none; } 45% { transform: translate(-2px, -6px) rotate(-35deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-trash-icon .trash-lid-lower,
+  .animated-trash-icon .trash-lid-upper { animation: none !important; transition: none !important; transform: none !important; }
+}
