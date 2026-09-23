@@ -7,6 +7,7 @@ import type { CreatedPass, Page, Pass, PassType, Status } from '../types';
 import { Badge, Button, Empty, ErrorBox, Info, Loading, Modal, PageHeader, TextLink } from '../components/ui';
 import { SharePass } from '../components/SharePass';
 import { CommunityArt } from '../components/CommunityArt';
+import './HomeOverview.css';
 export function CreatePass({ onClose, onCreated }: { onClose: () => void; onCreated: (pass: CreatedPass, name: string) => void }) {
   const { property } = useAuth(); const mutation = useMutation(); const [step, setStep] = useState(1);
   const [name, setName] = useState(''); const [vehicle, setVehicle] = useState(''); const [type, setType] = useState<PassType>('SINGLE_USE');
@@ -32,7 +33,7 @@ export function Passes({ home, navigate }: { home: boolean; navigate: (path: str
   async function more() { if (!cursor || moreBusy) return; const scope = listScope.current; setMoreBusy(true); setMoreError(''); try { const result = await api<Page<Pass>>(`/passes?propertyId=${id}&limit=20&cursor=${cursor}${filter ? `&status=${filter}` : ''}`); if (scope !== listScope.current) return; setExtra(old => [...old, ...result.data]); setCursor(result.nextCursor ?? null); } catch (e) { setMoreError(errorText(e)); } finally { setMoreBusy(false); } }
   function refresh() { query.refresh(); summary.refresh(); }
   async function cancel() { if (!revoke) return; const result = await mutation.run(`/passes/${revoke.id}?propertyId=${id}`, 'DELETE'); if (result) { setRevoke(null); setDetail(null); forgetPass(revoke.id); refresh(); } }
-  return <><PageHeader eyebrow={home ? dateText(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' }) : undefined} title={home ? `Hola, ${identity!.user.fullName.split(' ')[0]}.` : 'Mis pases'} text={home ? 'Aquí empieza la próxima visita a tu casa.' : 'Encuentra tus visitas, consulta sus horarios o cancela un pase.'} action={!home ? <Button onClick={() => setCreate(true)}><Plus size={18}/> Crear pase</Button> : undefined}/>
+  return <div className={home ? 'home-overview' : undefined}><PageHeader eyebrow={home ? dateText(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' }) : undefined} title={home ? `Hola, ${identity!.user.fullName.split(' ')[0]}.` : 'Mis pases'} text={home ? 'Aquí empieza la próxima visita a tu casa.' : 'Encuentra tus visitas, consulta sus horarios o cancela un pase.'} action={!home ? <Button onClick={() => setCreate(true)}><Plus size={18}/> Crear pase</Button> : undefined}/>
     {home && <section className="welcome-banner" aria-label="Invitar a una visita">
       <div><h2>Abre la puerta a tu próxima visita.</h2><p>Crea su pase y comparte el QR. Tu visitante solo tiene que presentarlo en la caseta.</p><Button onClick={() => setCreate(true)}><Plus size={18}/> Crear pase</Button></div>
       <CommunityArt/>
@@ -46,7 +47,7 @@ export function Passes({ home, navigate }: { home: boolean; navigate: (path: str
     {home && <div className="home-bottom"><div className="tip-card"><span className="tip-icon"><ShieldCheck size={24}/></span><div><h3>Comparte el pase con la persona indicada.</h3><p>El enlace permite presentar el QR. Si cambian los planes, cancélalo desde Mis pases.</p></div></div><button className="help-shortcut" onClick={() => navigate('/ayuda')}><span>¿Tu primera invitación?<strong>Cómo crear y compartir un pase</strong></span><ArrowUpRight size={22}/></button></div>}
     {create && <CreatePass onClose={() => setCreate(false)} onCreated={(value, name) => { setCreate(false); setShared({ value, name }); rememberPass(value); refresh(); }}/>} {shared && <Modal title="Tu pase está listo" onClose={() => setShared(null)}><SharePass url={shared.value.shareUrl} name={shared.name}/></Modal>}
     {detail && <PassDetails pass={detail} onClose={() => setDetail(null)} share={links[detail.id] ? () => { setShared({ value: links[detail.id], name: detail.guestName }); setDetail(null); } : undefined} onRevoke={() => { mutation.clear(); setRevoke(detail); setDetail(null); }}/>} {revoke && <Modal title="¿Cancelar este pase?" onClose={() => { if (!mutation.busy) setRevoke(null); }}><p>El pase de <strong>{revoke.guestName}</strong> dejará de permitir el acceso. Esta acción no se puede deshacer.</p><ErrorBox message={mutation.error}/><div className="modal-actions"><Button className="secondary" disabled={mutation.busy} onClick={() => setRevoke(null)}>Conservar pase</Button><Button className="danger" busy={mutation.busy} onClick={cancel}><XCircle size={17}/> Cancelar pase</Button></div></Modal>}
-  </>;
+  </div>;
 }
 function PassDetails({ pass, onClose, onRevoke, share }: { pass: Pass; onClose: () => void; onRevoke: () => void; share?: () => void }) {
   const status = useQuery<{ status: Status; syncPending: boolean }>(`/passes/${pass.id}/status?propertyId=${pass.propertyId}`, 10000);
