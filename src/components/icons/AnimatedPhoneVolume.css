@@ -1,0 +1,3 @@
+.animated-phone-volume-icon { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-phone-volume-icon .phone-wave-inner { transform-box: view-box; transform-origin: 21.5px 10.5px; }
+.animated-phone-volume-icon .phone-wave-outer { transform-box: view-box; transform-origin: 24px 8px; }

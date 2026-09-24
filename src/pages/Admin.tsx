@@ -5,9 +5,10 @@ import type { AdminUser, Gate, GateDevice, Health, Outbox, Page, Property } from
 import { Button, Empty, ErrorBox, Info, Loading, Modal, PageHeader, Success } from '../components/ui';
 import TrashIcon from '../components/icons/AnimatedTrash';
 import AnimatedUserPlus from '../components/icons/AnimatedUserPlus';
+import AnimatedPhoneVolume from '../components/icons/AnimatedPhoneVolume';
 export function Admin() {
   const [tab, setTab] = useState('invitations');
-  return <><PageHeader title="Administración" text="Crea invitaciones, autoriza equipos y consulta el estado del sistema."/><div className="admin-tabs">{[['invitations', 'Invitaciones', AnimatedUserPlus], ['gates', 'Dispositivos de caseta', Tablet], ['sync', 'Estado del sistema', Activity]].map(([key, title, Icon]) => { const Symbol = Icon as typeof Activity; return <button key={key as string} className={tab === key ? 'active' : ''} aria-pressed={tab === key} onClick={() => setTab(key as string)}><Symbol size={17}/>{title as string}</button>; })}</div>{tab === 'invitations' ? <Invitations/> : tab === 'gates' ? <GateDevices/> : <Sync/>}</>;
+  return <><PageHeader title="Administración" text="Crea invitaciones, autoriza equipos y consulta el estado del sistema."/><div className="admin-tabs">{[['invitations', 'Invitaciones', AnimatedUserPlus], ['gates', 'Dispositivos de caseta', AnimatedPhoneVolume], ['sync', 'Estado del sistema', Activity]].map(([key, title, Icon]) => { const Symbol = Icon as typeof Activity; return <button key={key as string} className={tab === key ? 'active' : ''} aria-pressed={tab === key} onClick={() => setTab(key as string)}><Symbol size={17}/>{title as string}</button>; })}</div>{tab === 'invitations' ? <Invitations/> : tab === 'gates' ? <GateDevices/> : <Sync/>}</>;
 }
 function Secret({ title, value, expiresAt }: { title: string; value: string; expiresAt?: string }) {
   const [copied, setCopied] = useState(false); const [error, setError] = useState(''); const [expired, setExpired] = useState(false);
