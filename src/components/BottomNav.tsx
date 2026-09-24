@@ -3,6 +3,9 @@ import { ScanLine, Smartphone } from 'lucide-react';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedHome from './icons/AnimatedHome';
 import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAlignCenter';
+import AnimatedUserPlus from './icons/AnimatedUserPlus';
+import AnimatedPhoneVolume from './icons/AnimatedPhoneVolume';
+import AnimatedRefresh from './icons/AnimatedRefresh';
 import './BottomNav.css';
 
 type Props = {
@@ -14,8 +17,11 @@ type Props = {
 };
 
 export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
-  if (role === 'ADMIN') return null;
-  const items = [
+  const items = role === 'ADMIN' ? [
+    { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
+    { path: '/admin/dispositivos', label: 'Dispositivos', Icon: AnimatedPhoneVolume },
+    { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
+  ] : [
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
     { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },
     role === 'HOUSEHOLD_USER'
@@ -24,11 +30,12 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ];
   const current = items.findIndex(item => item.path === path);
-  const activeIndex = menuOpen || current < 0 ? 3 : current;
-  // Four equally spaced centers within the bar's 12px side padding.
-  const offset = 9 - activeIndex * 6;
+  const activeIndex = menuOpen && role !== 'ADMIN' || current < 0 ? items.length - 1 : current;
+  // Equally spaced centers within the bar's 12px side padding.
+  const offset = 12 - 24 * (activeIndex + .5) / items.length;
   const style = {
-    '--nav-center': `calc(${(activeIndex + .5) * 25}% ${offset < 0 ? '-' : '+'} ${Math.abs(offset)}px)`,
+    '--nav-columns': items.length,
+    '--nav-center': `calc(${(activeIndex + .5) * 100 / items.length}% ${offset < 0 ? '-' : '+'} ${Math.abs(offset)}px)`,
   } as CSSProperties;
 
   return (
@@ -46,7 +53,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
           type="button"
           className={`mobile-nav-item${activeIndex === index ? ' active' : ''}`}
           aria-current={destination === path ? 'page' : undefined}
-          aria-label={destination === null ? 'Más opciones' : label}
+          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Dispositivos de caseta' : destination === '/admin/estado' ? 'Estado del sistema' : label}
           aria-expanded={destination === null ? menuOpen : undefined}
           aria-controls={destination === null ? 'main-navigation' : undefined}
           aria-haspopup={destination === null ? 'dialog' : undefined}
