@@ -513,3 +513,11 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 @media (max-width: 1024px) {
   .admin-layout .app-main main { padding-bottom: 32px; }
 }
+.admin-section-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-section-nav button { min-width: 0; text-align: center; }
+.admin-section-nav button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .admin-section-nav { display: flex; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+  .admin-section-nav button { flex: 0 0 auto; white-space: nowrap; scroll-snap-align: start; }
+}
