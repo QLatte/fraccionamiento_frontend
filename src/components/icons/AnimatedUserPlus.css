@@ -1,0 +1,3 @@
+.animated-user-plus-icon { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-user-plus-icon .user-plus-avatar { transform-box: view-box; transform-origin: 12px 10px; }
+.animated-user-plus-icon .user-plus-sign { transform-box: view-box; transform-origin: 19px 19px; }
