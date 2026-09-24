@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { CircleHelp, ScanLine, Smartphone } from 'lucide-react';
+import { ScanLine, Smartphone } from 'lucide-react';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedHome from './icons/AnimatedHome';
 import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAlignCenter';
@@ -23,8 +23,6 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
     { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
   ] : role === 'GUARD' ? [
     { path: '/caseta', label: 'Caseta', Icon: ScanLine },
-    { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone },
-    { path: '/ayuda', label: 'Ayuda', Icon: CircleHelp },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ] : [
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
