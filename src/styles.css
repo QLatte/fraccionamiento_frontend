@@ -509,3 +509,7 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+@media (max-width: 1024px) {
+  .admin-layout .app-main main { padding-bottom: 32px; }
+}

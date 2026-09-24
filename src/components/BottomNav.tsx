@@ -14,6 +14,7 @@ type Props = {
 };
 
 export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
+  if (role === 'ADMIN') return null;
   const items = [
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
     { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },
