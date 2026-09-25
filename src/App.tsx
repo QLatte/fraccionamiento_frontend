@@ -24,7 +24,7 @@ function Router() {
   const admin = identity?.user.globalRole === 'ADMIN';
   const guard = identity?.user.globalRole === 'GUARD';
   useEffect(() => {
-    const destination = path === '/caseta' || path.startsWith('/p/') ? null : admin && !adminSections.some(section => section.path === path) ? '/admin/invitaciones' : guard ? '/caseta' : identity && path.startsWith('/admin') ? '/' : null;
+    const destination = path === '/caseta' || path.startsWith('/p/') ? null : admin ? (adminSections.some(section => section.path === path) ? null : '/admin/invitaciones') : guard ? '/caseta' : identity && path.startsWith('/admin') ? '/' : null;
     if (destination && path !== destination) {
       history.replaceState(null, '', destination);
       window.dispatchEvent(new PopStateEvent('popstate'));
