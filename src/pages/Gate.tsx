@@ -162,12 +162,17 @@ export function Gate() {
       <div className="gate-layout">
         <section className="panel scanner-panel">
           <div className="panel-heading"><div><h2>¿Qué movimiento vas a registrar?</h2><p>Selecciona una opción antes de leer el QR.</p></div><ScanLine/></div>
-          <nav className="direction-toggle" aria-label="Movimiento del visitante">
+          <nav className={`direction-nav ${direction === 'ENTRY' ? 'entry-active' : 'exit-active'}`} aria-label="Movimiento del visitante">
+            <span className="direction-nav-fill direction-nav-fill-left" aria-hidden="true"/>
+            <svg className="direction-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
+            </svg>
+            <span className="direction-nav-fill direction-nav-fill-right" aria-hidden="true"/>
             <button type="button" disabled={scan.busy || !!attempt} className={direction === 'ENTRY' ? 'selected' : ''} aria-pressed={direction === 'ENTRY'} onClick={() => setDirection('ENTRY')}>
-              <LogIn size={20}/><span><strong>Entrada</strong><small>La visita llega</small></span>
+              <span className="direction-nav-icon"><LogIn size={21}/></span><span className="direction-nav-label"><strong>Entrada</strong><small>La visita llega</small></span>
             </button>
             <button type="button" disabled={scan.busy || !!attempt} className={direction === 'EXIT' ? 'selected' : ''} aria-pressed={direction === 'EXIT'} onClick={() => setDirection('EXIT')}>
-              <LogOut size={20}/><span><strong>Salida</strong><small>La visita se retira</small></span>
+              <span className="direction-nav-icon"><LogOut size={21}/></span><span className="direction-nav-label"><strong>Salida</strong><small>La visita se retira</small></span>
             </button>
           </nav>
           {camera && online ? <CameraReader onRead={raw => void read(raw)}/> : <div className="scanner-placeholder">
