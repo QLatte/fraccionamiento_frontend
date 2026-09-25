@@ -54,6 +54,7 @@ export function Gate() {
   const [station, setStation] = useState<GateStation | null>(null);
   const [checking, setChecking] = useState(true);
   const [stationError, setStationError] = useState('');
+  const [confirming, setConfirming] = useState(false);
   const [pairToken, setPairToken] = useState(() => {
     try {
       const legacy = JSON.parse(localStorage.getItem('sica:gate') ?? '{}') as { device?: unknown };
@@ -104,11 +105,18 @@ export function Gate() {
 
   async function activate(event: FormEvent) {
     event.preventDefault();
-    const value = await pair.run<GateStation>('/gate/pair', 'POST', { deviceToken: pairToken.trim() }, { public: true, station: true });
-    if (value) {
+    setStationError('');
+    const pending = await pair.run<GateStation>('/gate/pair', 'POST', { deviceToken: pairToken.trim() }, { public: true, station: true });
+    if (!pending) return;
+    setConfirming(true);
+    try {
+      await api<GateStation>('/gate/confirm', { method: 'POST', public: true, station: true });
+      const value = await api<GateStation>('/gate/station', { public: true, station: true });
       try { localStorage.removeItem('sica:gate'); } catch { /* Optional legacy storage. */ }
-      setStation(value); setPairToken(''); setStationError('');
-    }
+      setStation(value); setPairToken('');
+    } catch (cause) {
+      setStationError(errorText(cause));
+    } finally { setConfirming(false); }
   }
 
   async function read(raw: string, retry = false) {
@@ -139,7 +147,7 @@ export function Gate() {
       <form onSubmit={activate}>
         <label>Clave de vinculación<input required type="password" autoComplete="off" minLength={43} maxLength={43} value={pairToken} onChange={event => setPairToken(event.target.value)} placeholder="Pega la clave que entregó administración"/></label>
         <ErrorBox message={stationError || pair.error}/>
-        <Button className="full" type="submit" busy={pair.busy} disabled={!online}><ShieldCheck size={18}/> Vincular equipo</Button>
+        <Button className="full" type="submit" busy={pair.busy || confirming} disabled={!online}><ShieldCheck size={18}/> Vincular equipo</Button>
       </form>
     </section> : <>
       <div className="gate-session">

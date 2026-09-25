@@ -22,7 +22,7 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   options.signal?.addEventListener('abort', abort, { once: true });
   if (options.signal?.aborted) controller.abort();
   try {
-    const response = await fetch(base + path, { method: options.method ?? 'GET', cache: 'no-store', credentials: options.station ? 'include' : 'omit', signal: controller.signal,
+    const response = await fetch((options.station ? '/api/v1' : base) + path, { method: options.method ?? 'GET', cache: 'no-store', credentials: options.station ? 'include' : 'omit', signal: controller.signal,
       headers: { ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(auth ? { Authorization: `Bearer ${auth}` } : {}), ...(options.key ? { 'Idempotency-Key': options.key } : {}) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
