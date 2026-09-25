@@ -6,7 +6,7 @@ import { statusLabel } from '../hooks';
 import { lockPageScroll } from './lockPageScroll';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedX from './icons/AnimatedX';
-export function Brand({ light = false, onHome }: { light?: boolean; onHome?: () => void }) { return <a className={`brand ${light ? 'light' : ''}`} href="/" onClick={onHome ? e => { e.preventDefault(); onHome(); } : undefined}><span className="brand-mark"><AnimatedQr size={25}/></span><span>Zentry<span className="brand-dot">.</span></span></a>; }
+export function Brand({ light = false, onHome, href = '/' }: { light?: boolean; onHome?: () => void; href?: string }) { return <a className={`brand ${light ? 'light' : ''}`} href={href} onClick={onHome ? e => { e.preventDefault(); onHome(); } : undefined}><span className="brand-mark"><AnimatedQr size={25}/></span><span>Zentry<span className="brand-dot">.</span></span></a>; }
 export function Button({ children, className = '', busy, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { busy?: boolean }) { return <button type="button" {...props} aria-busy={busy || undefined} disabled={props.disabled || busy} className={`button ${className}`}>{busy && <LoaderCircle className="spin" size={17}/>} {children}</button>; }
 export function ErrorBox({ message, retry }: { message?: string; retry?: () => void }) { if (!message) return null; return <div className="error-box" role="alert"><AlertCircle size={18}/><span>{message}</span>{retry && <button type="button" onClick={retry}>Reintentar</button>}</div>; }
 export function Badge({ status }: { status: Status }) { return <span className={`badge ${status.toLowerCase()}`}><span/>{statusLabel[status]}</span>; }

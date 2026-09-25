@@ -13,7 +13,7 @@ export function errorText(error: unknown): string {
   if (error instanceof DOMException && ['NotAllowedError', 'AbortError'].includes(error.name)) return 'La operación se canceló o no recibió permiso. Puedes intentarlo de nuevo.';
   return error instanceof Error ? error.message : 'No se pudo completar la acción. Inténtalo de nuevo.';
 }
-export async function api<T>(path: string, options: { method?: string; body?: unknown; key?: string; token?: string; public?: boolean; device?: string; signal?: AbortSignal } = {}): Promise<T> {
+export async function api<T>(path: string, options: { method?: string; body?: unknown; key?: string; token?: string; public?: boolean; station?: boolean; signal?: AbortSignal } = {}): Promise<T> {
   if (!navigator.onLine) throw new ApiError(0, 'OFFLINE', 'No tienes conexión. Vuelve a intentarlo cuando estés en línea.');
   const auth = options.public ? null : options.token ?? token;
   const controller = new AbortController();
@@ -22,8 +22,8 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   options.signal?.addEventListener('abort', abort, { once: true });
   if (options.signal?.aborted) controller.abort();
   try {
-    const response = await fetch(base + path, { method: options.method ?? 'GET', cache: 'no-store', credentials: 'omit', signal: controller.signal,
-      headers: { ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(auth ? { Authorization: `Bearer ${auth}` } : {}), ...(options.key ? { 'Idempotency-Key': options.key } : {}), ...(options.device ? { 'X-Gate-Device-Token': options.device } : {}) },
+    const response = await fetch(base + path, { method: options.method ?? 'GET', cache: 'no-store', credentials: options.station ? 'include' : 'omit', signal: controller.signal,
+      headers: { ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(auth ? { Authorization: `Bearer ${auth}` } : {}), ...(options.key ? { 'Idempotency-Key': options.key } : {}) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
     if (response.status === 204) return undefined as T;

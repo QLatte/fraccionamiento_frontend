@@ -24,13 +24,23 @@ function Router() {
   const admin = identity?.user.globalRole === 'ADMIN';
   const guard = identity?.user.globalRole === 'GUARD';
   useEffect(() => {
-    const destination = admin && !path.startsWith('/p/') && !adminSections.some(section => section.path === path) ? '/admin/invitaciones' : guard && (path === '/' || path === '/pases' || path.startsWith('/pases/') || path === '/dispositivos') ? '/caseta' : identity && !admin && path.startsWith('/admin') ? (guard ? '/caseta' : '/') : null;
+    const destination = path === '/caseta' || path.startsWith('/p/') ? null : admin && !adminSections.some(section => section.path === path) ? '/admin/invitaciones' : guard ? '/caseta' : identity && path.startsWith('/admin') ? '/' : null;
     if (destination && path !== destination) {
       history.replaceState(null, '', destination);
       window.dispatchEvent(new PopStateEvent('popstate'));
     }
   }, [admin, guard, identity, path]);
-  return <><UpdateNotice/>{!online && <div className="offline-bar" role="status"><WifiOff size={17}/> Sin conexión. Puedes abrir la app; las acciones estarán disponibles al reconectarte.</div>}{path.startsWith('/p/') ? <PublicPass/> : !identity ? <Login/> : <Shell path={admin && !adminSections.some(section => section.path === path) ? '/admin/invitaciones' : guard && (path === '/' || path === '/pases' || path.startsWith('/pases/') || path === '/dispositivos') ? '/caseta' : path} navigate={navigate}/>}</>;
+  return <><UpdateNotice/>{!online && <div className="offline-bar" role="status"><WifiOff size={17}/> Sin conexión. Puedes abrir la app; las acciones estarán disponibles al reconectarte.</div>}{path.startsWith('/p/') ? <PublicPass/> : path === '/caseta' ? <GateStationPage/> : !identity ? <Login/> : guard ? <GateStationPage/> : <Shell path={admin && !adminSections.some(section => section.path === path) ? '/admin/invitaciones' : guard && (path === '/' || path === '/pases' || path.startsWith('/pases/') || path === '/dispositivos') ? '/caseta' : path} navigate={navigate}/>}</>;
+}
+function GateStationPage() {
+  useEffect(() => {
+    const manifest = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (!manifest) return;
+    const previous = manifest.href;
+    manifest.href = '/caseta.webmanifest';
+    return () => { manifest.href = previous; };
+  }, []);
+  return <div className="gate-station-page"><header className="gate-station-header"><Brand href="/caseta"/><span>Equipo de caseta</span></header><main><Gate/></main></div>;
 }
 function Shell({ path, navigate }: { path: string; navigate: (p: string) => void }) {
   const { identity, properties, property, select, logout } = useAuth(); const [mobile, setMobile] = useState(false); const online = useOnline();

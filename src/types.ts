@@ -10,7 +10,8 @@ export interface CreatedPass { id: string; shareUrl: string; encryptedToken: str
 export interface Device { id: string; deviceLabel: string | null; createdAt: string; lastUsedAt: string | null; userId: string }
 export interface Notification { id: string; eventType: string; createdAt: string }
 export interface Gate { id: string; label: string; clusters: { id: string; name: string }[] }
-export interface GateDevice { id: string; gateId: string; label: string; active: boolean; createdAt: string; gate: { label: string } }
+export interface GateDevice { id: string; gateId: string; label: string; active: boolean; pairedAt: string | null; createdAt: string; gate: { label: string } }
+export interface GateStation { id: string; label: string; gate: { id: string; label: string } }
 export interface AdminUser { id: string; fullName: string; email: string; globalRole: Role }
 export interface Outbox { id: string; eventType: string; status: string; retries: number; createdAt: string; lastError: string | null }
 export interface Health { pending: number; failed: number; averagePropagationMs: number; oldestPendingMs: number; scansLast24h: { result: string; _count: number }[] }

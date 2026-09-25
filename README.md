@@ -23,6 +23,12 @@ Abre `http://localhost:5173`. Vite envía `/api` a `http://127.0.0.1:3000`; camb
 
 Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde esta carpeta con `npm run build`. Despliega la API y el sitio estático por separado. Configura `VITE_API_BASE_URL=https://api.example.com/api/v1` al compilar el frontend, y `APP_ORIGIN`/CORS con el origen público de la PWA. El alojamiento estático debe dirigir rutas de navegación a `index.html` y servir `sw.js` sin caché persistente. No utilices `vite preview` como servidor de producción.
 
+## Caseta compartida
+
+Abre `/caseta` en el equipo dedicado e instala la PWA desde esa ruta para que el acceso directo abra Caseta. Administración genera la clave en **Dispositivos de caseta** y la introduce una vez en esa pantalla. A partir de entonces el escáner se abre sin cuenta de vigilante, PIN ni biometría; el permiso temporal se renueva mientras el equipo siga autorizado. Administración puede desactivarlo.
+
+La PWA y la API deben estar en el mismo sitio HTTPS o detrás de un proxy de origen compatible con cookies. El equipo debe permanecer físicamente bajo control de la caseta. Las lecturas se auditan por equipo, no por empleado. Antes de publicar este cambio, despliega la migración y el backend nuevos; una PWA nueva frente a la API anterior no podrá vincular el equipo.
+
 ## Pruebas
 
 ```sh

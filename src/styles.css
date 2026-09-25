@@ -522,3 +522,13 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .admin-layout .app-main main { padding-bottom: 142px; }
   .admin-section-nav { display: none; }
 }
+
+.gate-station-page { min-height: 100dvh; }
+.gate-station-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 88px; padding: 16px clamp(20px, 4vw, 48px); border-bottom: 1px solid var(--line); background: var(--surface); }
+.gate-station-header > span { color: var(--muted); font-size: 14px; }
+.gate-station-page main { max-width: 1440px; margin: 0 auto; padding: 36px clamp(20px, 4vw, 48px) 48px; }
+.station-entry-link { display: block; width: fit-content; margin: 18px auto 0; padding: 10px; color: var(--brand); font-size: 14px; font-weight: 650; text-underline-offset: 4px; }
+@media (max-width: 640px) {
+  .gate-station-page main { padding: 24px 16px 40px; }
+  .gate-station-header { min-height: 72px; padding-inline: 16px; }
+}
