@@ -527,7 +527,11 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .gate-station-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 88px; padding: 16px clamp(20px, 4vw, 48px); border-bottom: 1px solid var(--line); background: var(--surface); }
 .gate-station-header > span { color: var(--muted); font-size: 14px; }
 .gate-station-page main { max-width: 1440px; margin: 0 auto; padding: 36px clamp(20px, 4vw, 48px) 48px; }
-.station-entry-link { display: block; width: fit-content; margin: 18px auto 0; padding: 10px; color: var(--brand); font-size: 14px; font-weight: 650; text-underline-offset: 4px; }
+.station-entry-link { display: flex; flex-direction: column; gap: 4px; width: 100%; margin: 0 0 22px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--brand); text-decoration: none; transition: border-color .2s ease, transform .2s ease; }
+.station-entry-link:hover { border-color: var(--brand); transform: translateY(-1px); }
+.station-entry-link strong { font-size: 14px; }
+.station-entry-link span { color: var(--muted); font-size: 12px; }
+.station-entry-link:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
 @media (max-width: 640px) {
   .gate-station-page main { padding: 24px 16px 40px; }
   .gate-station-header { min-height: 72px; padding-inline: 16px; }

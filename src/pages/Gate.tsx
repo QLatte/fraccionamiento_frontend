@@ -7,6 +7,8 @@ import { api, ApiError, errorText } from '../api';
 import type { GateStation, ScanResult } from '../types';
 import AnimatedQr from '../components/icons/AnimatedQr';
 
+const stationModeKey = 'zentry:gate-station';
+
 function CameraReader({ onRead }: { onRead: (raw: string) => void }) {
   const video = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState('');
@@ -76,6 +78,7 @@ export function Gate() {
   const refreshStation = useCallback(async () => {
     try {
       const value = await api<GateStation>('/gate/station', { public: true, station: true });
+      try { localStorage.setItem(stationModeKey, '1'); } catch { /* Direct /caseta remains available when storage is disabled. */ }
       setStation(value);
       setStationError('');
     } catch (cause) {
@@ -112,7 +115,7 @@ export function Gate() {
     try {
       await api<GateStation>('/gate/confirm', { method: 'POST', public: true, station: true });
       const value = await api<GateStation>('/gate/station', { public: true, station: true });
-      try { localStorage.removeItem('sica:gate'); } catch { /* Optional legacy storage. */ }
+      try { localStorage.removeItem('sica:gate'); localStorage.setItem(stationModeKey, '1'); } catch { /* Optional browser storage. */ }
       setStation(value); setPairToken('');
     } catch (cause) {
       setStationError(errorText(cause));

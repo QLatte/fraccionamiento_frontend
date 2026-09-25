@@ -1,4 +1,4 @@
-import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Component, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Bell, ChevronDown, CircleHelp, LogOut, MapPin, ScanLine, ShieldCheck, Smartphone, WifiOff } from 'lucide-react';
 import { AuthProvider, useAuth } from './auth';
 import { useOnline, useQuery } from './hooks';
@@ -17,7 +17,17 @@ import { Devices } from './pages/Devices';
 import { Gate } from './pages/Gate';
 import { Admin, adminSections } from './pages/Admin';
 import { InstallButton, UpdateNotice } from './pwa';
-function usePath() { const [path, set] = useState(location.pathname); useEffect(() => { const update = () => set(location.pathname); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []); return { path, navigate: (next: string) => { if (next !== location.pathname) history.pushState(null, '', next); set(location.pathname); window.scrollTo(0, 0); } }; }
+function initialPath() {
+  try { if (location.pathname === '/' && localStorage.getItem('zentry:gate-station') === '1') return '/caseta'; }
+  catch { /* Storage may be disabled; direct /caseta remains available. */ }
+  return location.pathname;
+}
+function usePath() {
+  const [path, set] = useState(initialPath);
+  useLayoutEffect(() => { if (location.pathname !== path) history.replaceState(null, '', path); }, []);
+  useEffect(() => { const update = () => set(location.pathname); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []);
+  return { path, navigate: (next: string) => { if (next !== location.pathname) history.pushState(null, '', next); set(location.pathname); window.scrollTo(0, 0); } };
+}
 export default function App() { return <ErrorBoundary><AuthProvider><Router/></AuthProvider></ErrorBoundary>; }
 function Router() {
   const { path, navigate } = usePath(); const online = useOnline(); const { identity } = useAuth();
