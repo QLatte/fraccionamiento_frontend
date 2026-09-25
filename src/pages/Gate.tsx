@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import jsQR from 'jsqr';
-import { Camera, Check, ClipboardPaste, DoorOpen, ScanLine, ShieldCheck, XCircle, RotateCw } from 'lucide-react';
+import { Camera, Check, ClipboardPaste, DoorOpen, LogIn, LogOut, ScanLine, ShieldCheck, XCircle, RotateCw } from 'lucide-react';
 import { Button, Empty, ErrorBox, Info, Loading, PageHeader } from '../components/ui';
 import { extractToken, useMutation, useOnline } from '../hooks';
 import { api, ApiError, errorText } from '../api';
@@ -66,6 +66,7 @@ export function Gate() {
   const [camera, setCamera] = useState(false);
   const [manual, setManual] = useState('');
   const [direction, setDirection] = useState<'ENTRY' | 'EXIT'>('ENTRY');
+  const directionName = direction === 'ENTRY' ? 'entrada' : 'salida';
   const [result, setResult] = useState<ScanResult | null>(null);
   const [attempt, setAttempt] = useState<{ token: string; direction: 'ENTRY' | 'EXIT' } | null>(null);
   const [error, setError] = useState('');
@@ -142,7 +143,7 @@ export function Gate() {
   function reset() { setResult(null); setAttempt(null); setManual(''); setError(''); scan.clear(); }
 
   return <div className="gate-station">
-    <PageHeader title="Caseta" text="Comprueba cada visita antes de autorizar su entrada."/>
+    <PageHeader title="Caseta" text="Escanea un pase y registra claramente si la visita entra o sale."/>
     {checking && !station ? <Loading/> : !station ? <section className="panel setup-panel">
       <div className="setup-symbol"><DoorOpen size={31}/></div>
       <h2>Vincula este equipo una sola vez</h2>
@@ -160,20 +161,27 @@ export function Gate() {
       <ErrorBox message={stationError}/>
       <div className="gate-layout">
         <section className="panel scanner-panel">
-          <div className="panel-heading"><div><h2>Validar un pase</h2><p>Una lectura por cada acceso.</p></div><ScanLine/></div>
-          <div className="direction-toggle">{(['ENTRY', 'EXIT'] as const).map(value => <button disabled={scan.busy || !!attempt} key={value} className={direction === value ? 'selected' : ''} aria-pressed={direction === value} onClick={() => setDirection(value)}>{value === 'ENTRY' ? 'Entrada' : 'Salida'}</button>)}</div>
+          <div className="panel-heading"><div><h2>¿Qué movimiento vas a registrar?</h2><p>Selecciona una opción antes de leer el QR.</p></div><ScanLine/></div>
+          <nav className="direction-toggle" aria-label="Movimiento del visitante">
+            <button type="button" disabled={scan.busy || !!attempt} className={direction === 'ENTRY' ? 'selected' : ''} aria-pressed={direction === 'ENTRY'} onClick={() => setDirection('ENTRY')}>
+              <LogIn size={20}/><span><strong>Entrada</strong><small>La visita llega</small></span>
+            </button>
+            <button type="button" disabled={scan.busy || !!attempt} className={direction === 'EXIT' ? 'selected' : ''} aria-pressed={direction === 'EXIT'} onClick={() => setDirection('EXIT')}>
+              <LogOut size={20}/><span><strong>Salida</strong><small>La visita se retira</small></span>
+            </button>
+          </nav>
           {camera && online ? <CameraReader onRead={raw => void read(raw)}/> : <div className="scanner-placeholder">
             <div className="scan-frame"><AnimatedQr size={56} strokeWidth={1.3}/></div>
-            <h3>{scan.busy ? 'Validando el pase…' : attempt ? 'Lectura completada' : 'Listo para recibir visitas'}</h3>
-            <p>{online ? 'Abre la cámara o pega el enlace de un pase.' : 'Recupera la conexión para continuar.'}</p>
-            <Button disabled={!online || scan.busy || !!attempt} onClick={() => setCamera(true)}><Camera size={18}/> Abrir cámara</Button>
+            <h3>{scan.busy ? `Validando ${directionName}…` : attempt ? 'Lectura completada' : `Listo para registrar ${directionName}`}</h3>
+            <p>{online ? `Lee el QR del visitante para registrar su ${directionName}.` : 'Recupera la conexión para continuar.'}</p>
+            <Button disabled={!online || scan.busy || !!attempt} onClick={() => setCamera(true)}><Camera size={18}/> Escanear {directionName}</Button>
           </div>}
           {camera && <Button className="secondary full" onClick={() => setCamera(false)}>Cerrar cámara</Button>}
-          <div className="manual-entry"><span>También puedes pegar el enlace</span><form onSubmit={event => { event.preventDefault(); void read(manual); }}><input aria-label="Enlace o token del pase" placeholder="https://…/p/…" value={manual} onChange={event => setManual(event.target.value)} disabled={!!attempt || scan.busy}/><Button type="submit" className="secondary" disabled={!manual || !!attempt || !online} busy={scan.busy}><ClipboardPaste size={17}/> Validar</Button></form></div>
+          <div className="manual-entry"><span>También puedes pegar el enlace</span><form onSubmit={event => { event.preventDefault(); void read(manual); }}><input aria-label="Enlace o token del pase" placeholder="https://…/p/…" value={manual} onChange={event => setManual(event.target.value)} disabled={!!attempt || scan.busy}/><Button type="submit" className="secondary" disabled={!manual || !!attempt || !online} busy={scan.busy}><ClipboardPaste size={17}/> Validar {directionName}</Button></form></div>
           <ErrorBox message={error}/>
         </section>
         <aside ref={resultPanel} tabIndex={-1} aria-label="Resultado de la lectura" className="panel scan-result" aria-live="polite" aria-atomic="true">
-          {result ? <><div className="result-symbol granted"><Check size={34}/></div><h2>Acceso autorizado</h2><p>Confirma los datos del visitante.</p><dl className="details"><div><dt>Visitante</dt><dd>{result.guestName}</dd></div><div><dt>Vehículo</dt><dd>{result.guestVehicle || 'Peatonal'}</dd></div><div><dt>Destino</dt><dd>{result.property.street} {result.property.houseNumber}</dd></div><div><dt>Residente</dt><dd>{result.residentName}</dd></div><div><dt>Movimiento</dt><dd>{attempt?.direction === 'ENTRY' ? 'Entrada' : 'Salida'}</dd></div></dl><Button className="full" onClick={reset}>Siguiente visita</Button><p className="small muted">Esta pantalla no acciona una barrera automáticamente.</p></> :
+          {result ? <><div className="result-symbol granted"><Check size={34}/></div><h2>{attempt?.direction === 'ENTRY' ? 'Entrada autorizada' : 'Salida autorizada'}</h2><p>Confirma los datos del visitante.</p><dl className="details"><div><dt>Visitante</dt><dd>{result.guestName}</dd></div><div><dt>Vehículo</dt><dd>{result.guestVehicle || 'Peatonal'}</dd></div><div><dt>Destino</dt><dd>{result.property.street} {result.property.houseNumber}</dd></div><div><dt>Residente</dt><dd>{result.residentName}</dd></div><div><dt>Movimiento</dt><dd>{attempt?.direction === 'ENTRY' ? 'Entrada' : 'Salida'}</dd></div></dl><Button className="full" onClick={reset}>Siguiente visita</Button><p className="small muted">Esta pantalla no acciona una barrera automáticamente.</p></> :
             scan.error ? <><div className="result-symbol denied"><XCircle size={34}/></div><h2>No autorices el acceso</h2><ErrorBox message={scan.error}/><div className="stack"><Button className="secondary" disabled={!online} busy={scan.busy} onClick={() => attempt && void read(attempt.token, true)}>Reintentar esta lectura</Button><Button onClick={reset}>Leer otro pase</Button></div></> :
             <Empty icon={<ShieldCheck/>} title={scan.busy ? 'Comprobando acceso' : 'El resultado aparecerá aquí'} text="La caseta revisa la vigencia, la vivienda y el estado del pase antes de autorizar."/>}
         </aside>

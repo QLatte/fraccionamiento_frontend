@@ -314,9 +314,14 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .gate-session span:not(.connection-dot) { font-size: 13px; color: var(--muted); }
 .gate-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .scanner-panel { padding-bottom: 24px; }
-.direction-toggle { display: flex; gap: 4px; padding: 5px; margin: 0 24px 24px; background: var(--soft); border-radius: 11px; }
-.direction-toggle button { min-height: 44px; flex: 1; padding: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
-.direction-toggle .selected { background: var(--brand); color: #fff; font-weight: 650; }
+.direction-toggle { display: flex; gap: 6px; padding: 6px; margin: 0 24px 20px; background: var(--soft); border-radius: 12px; }
+.direction-toggle button { display: flex; min-width: 0; min-height: 62px; flex: 1; align-items: center; justify-content: center; gap: 10px; padding: 9px 12px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--muted); text-align: left; transition: background .18s ease, color .18s ease, border-color .18s ease; }
+.direction-toggle button > span { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.direction-toggle button strong { color: inherit; font-size: 14px; }
+.direction-toggle button small { color: inherit; font-size: 11px; opacity: .76; }
+.direction-toggle button.selected { border-color: var(--brand); background: var(--brand); color: #fff; }
+.direction-toggle button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+.direction-toggle button:disabled:not(.selected) { opacity: .58; }
 .scanner-placeholder { margin: 0 24px; padding: 30px 20px; background: #f7fafb; border: 1px dashed #a8c2ce; border-radius: 14px; text-align: center; }
 .scan-frame { display: grid; place-items: center; width: 96px; height: 96px; border: 2px solid #6d96a6; border-radius: 22px; color: #477385; margin: 0 auto 20px; }
 .scanner-placeholder p { margin-inline: auto; }
