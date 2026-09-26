@@ -1,0 +1,20 @@
+.animated-arrow-dashed { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-arrow-dashed .arrow-group { transform-box: fill-box; }
+
+/* Its Hover motion: the arrow nudges 4px along its direction and returns (0.5s, ease-in-out).
+   It plays on hover and whenever its button becomes selected, so touch screens see it too. */
+@media (hover: hover) {
+  button:hover .animated-arrow-dashed.right .arrow-group { animation: arrow-dashed-right .5s ease-in-out; }
+  button:hover .animated-arrow-dashed.left .arrow-group { animation: arrow-dashed-left .5s ease-in-out; }
+}
+button.selected .animated-arrow-dashed.right .arrow-group,
+button:focus-visible .animated-arrow-dashed.right .arrow-group { animation: arrow-dashed-right .5s ease-in-out; }
+button.selected .animated-arrow-dashed.left .arrow-group,
+button:focus-visible .animated-arrow-dashed.left .arrow-group { animation: arrow-dashed-left .5s ease-in-out; }
+
+@keyframes arrow-dashed-right { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@keyframes arrow-dashed-left { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-4px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-arrow-dashed .arrow-group { animation: none !important; }
+}

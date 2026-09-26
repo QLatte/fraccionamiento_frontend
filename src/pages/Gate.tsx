@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import jsQR from 'jsqr';
-import { Camera, Check, ClipboardPaste, DoorOpen, History, LogIn, LogOut, ScanLine, ShieldCheck, Users, XCircle, RotateCw } from 'lucide-react';
+import { Camera, Check, ClipboardPaste, DoorOpen, History, ScanLine, ShieldCheck, Users, XCircle, RotateCw } from 'lucide-react';
 import { Button, Empty, ErrorBox, Info, Loading, PageHeader } from '../components/ui';
 import { dateText, extractToken, useMutation, useOnline } from '../hooks';
 import { api, ApiError, codeText, errorText } from '../api';
 import type { GateLog, GateStation, ScanResult } from '../types';
 import AnimatedQr from '../components/icons/AnimatedQr';
+import AnimatedArrowRightDashed from '../components/icons/AnimatedArrowRightDashed';
+import AnimatedArrowLeftDashed from '../components/icons/AnimatedArrowLeftDashed';
 
 const stationModeKey = 'zentry:gate-station';
 
@@ -290,10 +292,10 @@ export function Gate() {
             </svg>
             <span className="direction-nav-fill direction-nav-fill-right" aria-hidden="true"/>
             <button type="button" disabled={scan.busy || !!attempt} className={direction === 'ENTRY' ? 'selected' : ''} aria-pressed={direction === 'ENTRY'} onClick={() => setDirection('ENTRY')}>
-              <span className="direction-nav-icon"><LogIn size={21}/></span><span className="direction-nav-label"><strong>Entrada</strong><small>La visita llega</small></span>
+              <span className="direction-nav-icon"><AnimatedArrowRightDashed size={21}/></span><span className="direction-nav-label"><strong>Entrada</strong><small>La visita llega</small></span>
             </button>
             <button type="button" disabled={scan.busy || !!attempt} className={direction === 'EXIT' ? 'selected' : ''} aria-pressed={direction === 'EXIT'} onClick={() => setDirection('EXIT')}>
-              <span className="direction-nav-icon"><LogOut size={21}/></span><span className="direction-nav-label"><strong>Salida</strong><small>La visita se retira</small></span>
+              <span className="direction-nav-icon"><AnimatedArrowLeftDashed size={21}/></span><span className="direction-nav-label"><strong>Salida</strong><small>La visita se retira</small></span>
             </button>
           </nav>
           {camera && online ? <CameraReader onRead={raw => void read(raw)}/> : <div className="scanner-placeholder">
