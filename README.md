@@ -21,7 +21,7 @@ Abre `http://localhost:5173`. Vite envía `/api` a `http://127.0.0.1:3000`; camb
 
 ## Estilos y Tailwind
 
-Los estilos base están escritos a mano en `src/styles.css`. Tailwind CSS v4 está instalado con `@tailwindcss/vite` para usar sus utilidades en clases (por ejemplo, `scheme-light` en los campos de fecha al crear un pase, para que el calendario nativo se vea claro aunque el teléfono esté en modo oscuro).
+Los estilos base están escritos a mano en `src/styles.css`. Tailwind CSS v4 está instalado con `@tailwindcss/vite` para usar sus utilidades en clases (por ejemplo, `scheme-light-dark` en los campos de fecha al crear un pase: el calendario nativo se ve claro u oscuro según el modo del teléfono, y en modo oscuro `styles.css` invierte el icono del campo para que siga visible sobre el fondo blanco).
 
 `src/tailwind.css` importa solo el tema y las utilidades de Tailwind. **No incluye Preflight** (su reinicio global de estilos) a propósito: cambiaría márgenes, botones y títulos en toda la app. Las utilidades viven en una capa de cascada, así que si `styles.css` y una utilidad definen la misma propiedad, gana `styles.css`.
 
