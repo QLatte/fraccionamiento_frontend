@@ -19,17 +19,18 @@ export function useMutation() {
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const pending = useRef<{ signature: string; key: string; started: number } | null>(null);
   const locked = useRef(false);
+  const lastCode = useRef('');
   async function run<T>(path: string, method: string, body?: unknown, extras: { token?: string; public?: boolean; station?: boolean } = {}): Promise<T | undefined> {
     if (locked.current) return;
-    locked.current = true; setBusy(true); setError('');
+    locked.current = true; setBusy(true); setError(''); lastCode.current = '';
     const signature = JSON.stringify([path, method, body]);
     if (!pending.current || pending.current.signature !== signature) pending.current = { signature, key: crypto.randomUUID(), started: Date.now() };
     if (Date.now() - pending.current.started >= 290000) { locked.current = false; setBusy(false); setError('No pudimos confirmar la acción a tiempo. Revisa el listado antes de iniciar una nueva operación.'); return; }
     try { const data = await api<T>(path, { method, body, key: pending.current.key, ...extras }); pending.current = null; return data ?? (true as T); }
-    catch (e) { if (e instanceof ApiError && e.status >= 400 && e.status < 500) pending.current = null; setError(errorText(e)); }
+    catch (e) { if (e instanceof ApiError) { lastCode.current = e.code; if (e.status >= 400 && e.status < 500) pending.current = null; } setError(errorText(e)); }
     finally { locked.current = false; setBusy(false); }
   }
-  return { run, busy, error, clear: () => setError('') };
+  return { run, busy, error, code: () => lastCode.current, clear: () => setError('') };
 }
 export function useOnline() {
   const [online, set] = useState(navigator.onLine);

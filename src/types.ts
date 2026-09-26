@@ -15,4 +15,6 @@ export interface GateStation { id: string; label: string; gate: { id: string; la
 export interface AdminUser { id: string; fullName: string; email: string; globalRole: Role }
 export interface Outbox { id: string; eventType: string; status: string; retries: number; createdAt: string; lastError: string | null }
 export interface Health { pending: number; failed: number; averagePropagationMs: number; oldestPendingMs: number; scansLast24h: { result: string; _count: number }[] }
+export interface GateGuest { guestName: string; guestVehicle: string | null; property: { street: string; houseNumber: string } }
+export interface GateLog { recent: ({ id: string; timestamp: string; direction: 'ENTRY' | 'EXIT'; result: string } & Partial<GateGuest>)[]; inside: ({ id: string; since: string } & GateGuest)[] }
 export interface ScanResult { result: 'GRANTED'; guestName: string; guestVehicle: string | null; property: { street: string; houseNumber: string }; residentName: string; validationSource: string }

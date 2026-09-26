@@ -6,9 +6,11 @@ export class ApiError extends Error {
 }
 const messages: Record<string, string> = {
   DENIED_USED: 'Este pase ya fue utilizado.', DENIED_REVOKED: 'El residente canceló este pase.', DENIED_EXPIRED: 'El pase está fuera de su horario de acceso.', DENIED_NOT_FOUND: 'El pase no es válido para esta caseta.', DENIED_RATE_LIMITED: 'Se alcanzó el límite de lecturas. Espera un minuto.',
+  DENIED_ALREADY_INSIDE: 'Este pase tiene una entrada sin salida. Si la visita salió sin registrarse, registra primero su salida.', DENIED_NOT_INSIDE: 'Este pase no tiene una entrada registrada, así que no hay salida que registrar.',
   UNAUTHENTICATED: 'La sesión terminó o no se pudo verificar. Vuelve a ingresar.', INVALID_CHALLENGE: 'La solicitud de acceso venció. Inténtalo de nuevo.', INVALID_ENROLLMENT: 'La invitación venció o ya se utilizó. Solicita una nueva.', INVALID_WEBAUTHN: 'No se pudo verificar tu llave de acceso. Inténtalo de nuevo.',
   DEVICE_LIMIT_REACHED: 'Tu vivienda ya tiene dos dispositivos registrados. Contacta a administración.', NOT_PROPERTY_MEMBER: 'Ya no tienes acceso a esta vivienda. Actualiza tu sesión.', IDEMPOTENCY_CONFLICT: 'Esta acción cambió durante el reintento. Revisa los datos y vuelve a abrir el formulario.', INVALID_GATE_DEVICE: 'Este dispositivo no está autorizado en la caseta.', AUTH_RATE_LIMITED: 'Demasiados intentos. Espera un minuto para volver a ingresar.',
 };
+export const codeText = (code: string): string | undefined => messages[code];
 export function errorText(error: unknown): string {
   if (error instanceof DOMException && ['NotAllowedError', 'AbortError'].includes(error.name)) return 'La operación se canceló o no recibió permiso. Puedes intentarlo de nuevo.';
   return error instanceof Error ? error.message : 'No se pudo completar la acción. Inténtalo de nuevo.';

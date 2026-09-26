@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import jsQR from 'jsqr';
-import { Camera, Check, ClipboardPaste, DoorOpen, LogIn, LogOut, ScanLine, ShieldCheck, XCircle, RotateCw } from 'lucide-react';
+import { Camera, Check, ClipboardPaste, DoorOpen, History, LogIn, LogOut, ScanLine, ShieldCheck, Users, XCircle, RotateCw } from 'lucide-react';
 import { Button, Empty, ErrorBox, Info, Loading, PageHeader } from '../components/ui';
-import { extractToken, useMutation, useOnline } from '../hooks';
-import { api, ApiError, errorText } from '../api';
-import type { GateStation, ScanResult } from '../types';
+import { dateText, extractToken, useMutation, useOnline } from '../hooks';
+import { api, ApiError, codeText, errorText } from '../api';
+import type { GateLog, GateStation, ScanResult } from '../types';
 import AnimatedQr from '../components/icons/AnimatedQr';
 
 const stationModeKey = 'zentry:gate-station';
@@ -52,6 +52,38 @@ function CameraReader({ onRead }: { onRead: (raw: string) => void }) {
   return <><div className="camera-view"><video ref={video} muted playsInline aria-label="Cámara para escanear pases"/><div className="camera-guide"><i/><i/><i/><i/></div><span>Coloca el QR dentro del recuadro</span></div><ErrorBox message={error}/></>;
 }
 
+function ShiftLog({ version, online }: { version: number; online: boolean }) {
+  const [tab, setTab] = useState<'inside' | 'recent'>('inside');
+  const [log, setLog] = useState<GateLog | null>(null);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    try { setLog(await api<GateLog>('/gate/scan/log', { public: true, station: true })); setError(''); }
+    // An expired permit is renewed by the station check; the next refresh recovers.
+    catch (cause) { if (!(cause instanceof ApiError && cause.code === 'GATE_SESSION_REQUIRED')) setError(errorText(cause)); }
+  }, []);
+  useEffect(() => { if (online) void load(); }, [load, online, version]);
+  useEffect(() => {
+    const id = window.setInterval(() => { if (document.visibilityState === 'visible' && navigator.onLine) void load(); }, 60_000);
+    return () => window.clearInterval(id);
+  }, [load]);
+  const time = (value: string) => dateText(value, { hour: '2-digit', minute: '2-digit' });
+  return <section className="panel shift-log">
+    <div className="panel-heading"><div><h2>Bitácora del turno</h2><p>Visitas dentro del fraccionamiento y lecturas de este equipo en las últimas 12 horas.</p></div><History/></div>
+    <div className="tabs" role="tablist">
+      <button role="tab" aria-selected={tab === 'inside'} className={tab === 'inside' ? 'active' : ''} onClick={() => setTab('inside')}>Dentro ahora{log ? ` (${log.inside.length})` : ''}</button>
+      <button role="tab" aria-selected={tab === 'recent'} className={tab === 'recent' ? 'active' : ''} onClick={() => setTab('recent')}>Últimas lecturas</button>
+    </div>
+    <ErrorBox message={error} retry={() => void load()}/>
+    {!log ? (error ? null : <Loading/>) : tab === 'inside' ? (!log.inside.length ? <Empty icon={<Users/>} title="No hay visitas dentro" text="Las visitas aparecen aquí al registrar su entrada y salen al registrar su salida."/> :
+      <div className="device-list">{log.inside.map(row => <div className="device-row" key={row.id}><div><h3>{row.guestName}</h3><p>{row.property.street} {row.property.houseNumber} · {row.guestVehicle || 'Peatonal'}</p><small>Entró el {dateText(row.since)}</small></div></div>)}</div>) :
+      (!log.recent.length ? <Empty icon={<History/>} title="Sin lecturas recientes" text="Las lecturas de este equipo aparecerán aquí."/> :
+      <div className="device-list">{log.recent.map(row => {
+        const granted = row.result === 'GRANTED';
+        return <div className="device-row" key={row.id}><div><span className={'badge' + (granted ? (row.direction === 'EXIT' ? ' used' : '') : ' revoked')}><span/>{granted ? (row.direction === 'ENTRY' ? 'Entrada' : 'Salida') : row.direction === 'ENTRY' ? 'Entrada rechazada' : 'Salida rechazada'}</span><h3>{row.guestName ?? 'Pase no reconocido'}</h3>{row.property && <p>{row.property.street} {row.property.houseNumber}</p>}<small>{time(row.timestamp)}{granted ? '' : ' · ' + (codeText(row.result) ?? 'Lectura rechazada.')}</small></div></div>;
+      })}</div>)}
+  </section>;
+}
+
 export function Gate() {
   const [station, setStation] = useState<GateStation | null>(null);
   const [checking, setChecking] = useState(true);
@@ -70,11 +102,30 @@ export function Gate() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [attempt, setAttempt] = useState<{ token: string; direction: 'ENTRY' | 'EXIT' } | null>(null);
   const [error, setError] = useState('');
+  const [logVersion, setLogVersion] = useState(0);
   const pair = useMutation();
   const scan = useMutation();
   const online = useOnline();
   const scanning = useRef(false);
   const resultPanel = useRef<HTMLElement>(null);
+  const audio = useRef<AudioContext | null>(null);
+
+  // Browsers only allow audio after a tap, so the context is opened from the scan buttons.
+  function unlockAudio() {
+    try { audio.current ??= new AudioContext(); void audio.current.resume(); } catch { /* Sound is optional. */ }
+  }
+  function signal(granted: boolean) {
+    try { navigator.vibrate?.(granted ? 90 : [140, 90, 140]); } catch { /* Vibration is optional. */ }
+    const ctx = audio.current;
+    if (!ctx) return;
+    (granted ? [880] : [330, 330]).forEach((frequency, index) => {
+      const tone = ctx.createOscillator(); const gain = ctx.createGain();
+      tone.frequency.value = frequency; gain.gain.value = 0.15;
+      tone.connect(gain).connect(ctx.destination);
+      const at = ctx.currentTime + index * 0.25;
+      tone.start(at); tone.stop(at + 0.16);
+    });
+  }
 
   const refreshStation = useCallback(async () => {
     try {
@@ -82,11 +133,13 @@ export function Gate() {
       try { localStorage.setItem(stationModeKey, '1'); } catch { /* Direct /caseta remains available when storage is disabled. */ }
       setStation(value);
       setStationError('');
+      return true;
     } catch (cause) {
       if (cause instanceof ApiError && [401, 403].includes(cause.status)) {
         setStation(null);
         setStationError(cause.status === 403 ? errorText(cause) : '');
       } else setStationError(errorText(cause));
+      return false;
     } finally { setChecking(false); }
   }, []);
 
@@ -134,9 +187,13 @@ export function Gate() {
     const action = retry && attempt ? attempt : { token, direction };
     setAttempt(action);
     setResult(null);
-    const value = await scan.run<ScanResult>('/gate/scan', 'POST', action, { public: true, station: true });
+    let value = await scan.run<ScanResult>('/gate/scan', 'POST', action, { public: true, station: true });
+    // The scan permit lapses while the station sleeps; renew it and retry once.
+    if (!value && scan.code() === 'GATE_SESSION_REQUIRED' && await refreshStation()) value = await scan.run<ScanResult>('/gate/scan', 'POST', action, { public: true, station: true });
     if (value) setResult(value);
     else void refreshStation();
+    signal(!!value);
+    setLogVersion(v => v + 1);
     scanning.current = false;
   }
 
@@ -179,18 +236,19 @@ export function Gate() {
             <div className="scan-frame"><AnimatedQr size={56} strokeWidth={1.3}/></div>
             <h3>{scan.busy ? `Validando ${directionName}…` : attempt ? 'Lectura completada' : `Listo para registrar ${directionName}`}</h3>
             <p>{online ? `Lee el QR del visitante para registrar su ${directionName}.` : 'Recupera la conexión para continuar.'}</p>
-            <Button disabled={!online || scan.busy || !!attempt} onClick={() => setCamera(true)}><Camera size={18}/> Escanear {directionName}</Button>
+            <Button disabled={!online || scan.busy || !!attempt} onClick={() => { unlockAudio(); setCamera(true); }}><Camera size={18}/> Escanear {directionName}</Button>
           </div>}
           {camera && <Button className="secondary full" onClick={() => setCamera(false)}>Cerrar cámara</Button>}
-          <div className="manual-entry"><span>También puedes pegar el enlace</span><form onSubmit={event => { event.preventDefault(); void read(manual); }}><input aria-label="Enlace o token del pase" placeholder="https://…/p/…" value={manual} onChange={event => setManual(event.target.value)} disabled={!!attempt || scan.busy}/><Button type="submit" className="secondary" disabled={!manual || !!attempt || !online} busy={scan.busy}><ClipboardPaste size={17}/> Validar {directionName}</Button></form></div>
+          <div className="manual-entry"><span>También puedes pegar el enlace</span><form onSubmit={event => { event.preventDefault(); unlockAudio(); void read(manual); }}><input aria-label="Enlace o token del pase" placeholder="https://…/p/…" value={manual} onChange={event => setManual(event.target.value)} disabled={!!attempt || scan.busy}/><Button type="submit" className="secondary" disabled={!manual || !!attempt || !online} busy={scan.busy}><ClipboardPaste size={17}/> Validar {directionName}</Button></form></div>
           <ErrorBox message={error}/>
         </section>
         <aside ref={resultPanel} tabIndex={-1} aria-label="Resultado de la lectura" className="panel scan-result" aria-live="polite" aria-atomic="true">
-          {result ? <><div className="result-symbol granted"><Check size={34}/></div><h2>{attempt?.direction === 'ENTRY' ? 'Entrada autorizada' : 'Salida autorizada'}</h2><p>Confirma los datos del visitante.</p><dl className="details"><div><dt>Visitante</dt><dd>{result.guestName}</dd></div><div><dt>Vehículo</dt><dd>{result.guestVehicle || 'Peatonal'}</dd></div><div><dt>Destino</dt><dd>{result.property.street} {result.property.houseNumber}</dd></div><div><dt>Residente</dt><dd>{result.residentName}</dd></div><div><dt>Movimiento</dt><dd>{attempt?.direction === 'ENTRY' ? 'Entrada' : 'Salida'}</dd></div></dl><Button className="full" onClick={reset}>Siguiente visita</Button><p className="small muted">Esta pantalla no acciona una barrera automáticamente.</p></> :
-            scan.error ? <><div className="result-symbol denied"><XCircle size={34}/></div><h2>No autorices el acceso</h2><ErrorBox message={scan.error}/><div className="stack"><Button className="secondary" disabled={!online} busy={scan.busy} onClick={() => attempt && void read(attempt.token, true)}>Reintentar esta lectura</Button><Button onClick={reset}>Leer otro pase</Button></div></> :
+          {result ? <><div className="result-symbol granted"><Check size={34}/></div><h2>{attempt?.direction === 'ENTRY' ? 'Entrada autorizada' : 'Salida registrada'}</h2><p>Confirma los datos del visitante.</p><dl className="details"><div><dt>Visitante</dt><dd>{result.guestName}</dd></div><div><dt>Vehículo</dt><dd>{result.guestVehicle || 'Peatonal'}</dd></div><div><dt>Destino</dt><dd>{result.property.street} {result.property.houseNumber}</dd></div><div><dt>Residente</dt><dd>{result.residentName}</dd></div><div><dt>Movimiento</dt><dd>{attempt?.direction === 'ENTRY' ? 'Entrada' : 'Salida'}</dd></div></dl><Button className="full" onClick={reset}>Siguiente visita</Button><p className="small muted">Esta pantalla no acciona una barrera automáticamente.</p></> :
+            scan.error ? <><div className="result-symbol denied"><XCircle size={34}/></div><h2>{attempt?.direction === 'EXIT' ? 'No se registró la salida' : 'No autorices el acceso'}</h2><ErrorBox message={scan.error}/><div className="stack"><Button className="secondary" disabled={!online} busy={scan.busy} onClick={() => attempt && void read(attempt.token, true)}>Reintentar esta lectura</Button><Button onClick={reset}>Leer otro pase</Button></div></> :
             <Empty icon={<ShieldCheck/>} title={scan.busy ? 'Comprobando acceso' : 'El resultado aparecerá aquí'} text="La caseta revisa la vigencia, la vivienda y el estado del pase antes de autorizar."/>}
         </aside>
       </div>
+      <ShiftLog version={logVersion} online={online}/>
       <Info>Sin conexión no se autorizan accesos. Si una respuesta se pierde, reintenta la misma lectura para evitar duplicarla.</Info>
     </>}
   </div>;

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { ScanLine, Smartphone } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedHome from './icons/AnimatedHome';
 import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAlignCenter';
@@ -21,15 +21,10 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
     { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
     { path: '/admin/dispositivos', label: 'Dispositivos', Icon: AnimatedPhoneVolume },
     { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
-  ] : role === 'GUARD' ? [
-    { path: '/caseta', label: 'Caseta', Icon: ScanLine },
-    { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ] : [
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
     { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },
-    role === 'HOUSEHOLD_USER'
-      ? { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone }
-      : { path: '/caseta', label: 'Caseta', Icon: ScanLine },
+    { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ];
   const current = items.findIndex(item => item.path === path);
