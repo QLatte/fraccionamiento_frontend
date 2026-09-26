@@ -33,6 +33,10 @@ Cada pantalla principal se descarga solo cuando se usa (`React.lazy` en `src/App
 
 Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde esta carpeta con `npm run build`. En el **Static Site del frontend** de Render (`https://zentry.qlatte.com`), crea en Redirects/Rewrites una regla `Rewrite` con Source `/api/*` y Destination `https://fraccionamiento-backend.onrender.com/api/*`, por encima del fallback `/*` → `/index.html`. La caseta usa siempre `/api/v1` en el origen de la PWA; para el resto de la app, quita el `VITE_API_BASE_URL` anterior o ponlo en `/api/v1`. Configura `APP_ORIGIN=https://zentry.qlatte.com` en el backend. Un API en un sitio distinto no puede conservar estas cookies `SameSite=Strict` si se llama directamente. Sirve `sw.js` sin caché persistente. No utilices `vite preview` como servidor de producción.
 
+## Compartir un pase
+
+Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace en el texto como respaldo. La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
+
 ## Caseta compartida
 
 Abre `/caseta` en el equipo dedicado e instala la PWA desde esa ruta para que el acceso directo abra Caseta. Administración genera la clave en **Dispositivos de caseta** y la introduce una vez en esa pantalla. A partir de entonces el escáner se abre sin cuenta de vigilante, PIN ni biometría; el permiso temporal se renueva mientras el equipo siga autorizado. Administración puede desactivarlo.

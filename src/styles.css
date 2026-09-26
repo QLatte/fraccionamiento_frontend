@@ -246,6 +246,11 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .ticket-label { padding-top: 22px; font-size: 13px; color: var(--muted); }
 .qr-ticket h3 { font-size: 24px; margin: 8px 16px 4px; }
 .qr-ticket canvas { display: block; max-width: 100%; height: auto !important; margin: auto; }
+.ticket-details { margin: 4px 20px 14px; text-align: left; font-size: 13px; line-height: 1.45; }
+.ticket-details > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); }
+.ticket-details dt { flex-shrink: 0; color: var(--muted); }
+.ticket-details dd { display: flex; flex-direction: column; align-items: flex-end; margin: 0; color: var(--ink); text-align: right; }
+.ticket-details dd span:first-child { font-weight: 650; color: var(--brand); }
 .ticket-bottom { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; border-top: 1px dashed #b9cbd3; background: #f2f7f9; color: var(--brand); font-size: 13px; }
 .share-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
 .copy-label { color: var(--muted); }
