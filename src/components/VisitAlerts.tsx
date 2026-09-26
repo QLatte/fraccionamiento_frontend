@@ -38,11 +38,11 @@ export function VisitAlerts({ propertyId }: { propertyId: string }) {
   const text = support === 'install'
     ? 'En iPhone, primero instala Zentry: toca Compartir en Safari y elige «Agregar a inicio». Luego ábrela desde tu pantalla de inicio.'
     : denied ? 'Las notificaciones están bloqueadas para Zentry. Actívalas en los ajustes del navegador o del teléfono.'
-    : on ? 'Te avisaremos en este teléfono cuando tu visita entre y cuando salga.'
-    : 'Recibe un aviso en este teléfono cuando tu visita entre y cuando salga del fraccionamiento.';
-  return <section className={'panel visit-alerts' + (on ? ' on' : '')} aria-label="Avisos de tus visitas">
+    : on ? 'Te avisaremos en este teléfono cuando una visita de tu vivienda entre y cuando salga.'
+    : 'Recibe un aviso en este teléfono cuando una visita de tu vivienda entre y cuando salga del fraccionamiento.';
+  return <section className={'panel visit-alerts' + (on ? ' on' : '')} aria-label="Avisos de visitas">
     <span className="visit-alerts-icon"><Icon size={22}/></span>
-    <div><h2>{on ? 'Avisos activados' : 'Avisos de tus visitas'}</h2><p>{text}</p><ErrorBox message={error}/></div>
+    <div><h2>{on ? 'Avisos activados' : 'Avisos de visitas'}</h2><p>{text}</p><ErrorBox message={error}/></div>
     {support === 'ok' && !denied && <Button className={on ? 'secondary' : ''} busy={busy} onClick={() => void toggle()}>{on ? 'Desactivar' : 'Activar avisos'}</Button>}
   </section>;
 }

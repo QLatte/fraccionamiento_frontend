@@ -39,7 +39,7 @@ Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Com
 
 ## Avisos de visitas
 
-En Inicio, el panel **Avisos de tus visitas** activa las notificaciones push en ese teléfono para la vivienda seleccionada (`src/push.ts` y `src/components/VisitAlerts.tsx`). El residente que creó el pase recibe «Tu visita llegó» al validarse la entrada en caseta y «Tu visita salió» al registrarse la salida; el aviso de salida reemplaza al de entrada. El service worker (`scripts/build-sw.mjs`) muestra el aviso y abre Mis pases al tocarlo. Al cerrar sesión se desactivan en ese dispositivo. En iPhone solo funcionan con Zentry instalada en la pantalla de inicio (iOS 16.4+); el panel lo explica. El servidor necesita las claves VAPID (ver el README del backend). El service worker solo se registra en producción, así que en `npm run dev` el panel no aparece.
+En Inicio, el panel **Avisos de visitas** activa las notificaciones push en ese teléfono para la vivienda seleccionada (`src/push.ts` y `src/components/VisitAlerts.tsx`). Todos los integrantes de la vivienda con avisos activados reciben un aviso al validarse la entrada en caseta y otro al registrarse la salida: quien creó el pase ve «Tu visita llegó/salió» y los demás «Llegó/Salió una visita … · Invitó *nombre*». El aviso de salida reemplaza al de entrada. El service worker (`scripts/build-sw.mjs`) muestra el aviso y abre Mis pases al tocarlo. Al cerrar sesión se desactivan en ese dispositivo. En iPhone solo funcionan con Zentry instalada en la pantalla de inicio (iOS 16.4+); el panel lo explica. El servidor necesita las claves VAPID (ver el README del backend). El service worker solo se registra en producción, así que en `npm run dev` el panel no aparece.
 
 ## Caseta compartida
 
