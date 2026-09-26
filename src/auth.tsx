@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api, setToken } from './api';
 import type { CreatedPass, Identity, Page, Property, SessionResult } from './types';
-type Auth = { links: Record<string, CreatedPass>; rememberPass: (pass: CreatedPass) => void; forgetPass: (id: string) => void; identity: Identity | null; properties: Property[]; property: Property | null; select: (id: string) => void; accept: (session: SessionResult) => Promise<void>; logout: () => Promise<void>; expired: boolean };
+type Auth = { links: Record<string, CreatedPass>; rememberPass: (pass: CreatedPass) => void; forgetPass: (id: string) => void; identity: Identity | null; properties: Property[]; property: Property | null; select: (id: string) => void; accept: (session: SessionResult) => Promise<void>; logout: () => Promise<void>; switchProfile: (profile: 'RESIDENT' | 'ADMIN' | 'SUPERADMIN', clusterId?: string) => Promise<void>; expired: boolean };
 const Context = createContext<Auth>(null!);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [links, setLinks] = useState<Record<string, CreatedPass>>({});
@@ -16,6 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) { clear(); throw e; }
   }
   async function logout() { try { await api('/auth/logout', { method: 'POST' }); } finally { clear(); } }
-  return <Context.Provider value={{ links, rememberPass: pass => setLinks(old => ({ ...old, [pass.id]: pass })), forgetPass: id => setLinks(old => { const next = { ...old }; delete next[id]; return next; }), identity, properties, property: properties.find(p => p.id === selected) ?? properties[0] ?? null, select: setSelected, accept, logout, expired }}>{children}</Context.Provider>;
+  async function switchProfile(profile: 'RESIDENT' | 'ADMIN' | 'SUPERADMIN', clusterId?: string) { const session = await api<SessionResult>('/auth/context', { method: 'POST', body: JSON.stringify({ profile, clusterId }) }); await accept(session); }
+  return <Context.Provider value={{ links, rememberPass: pass => setLinks(old => ({ ...old, [pass.id]: pass })), forgetPass: id => setLinks(old => { const next = { ...old }; delete next[id]; return next; }), identity, properties, property: properties.find(p => p.id === selected) ?? properties[0] ?? null, select: setSelected, accept, logout, switchProfile, expired }}>{children}</Context.Provider>;
 }
 export const useAuth = () => useContext(Context);
