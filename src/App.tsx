@@ -1,24 +1,27 @@
-import { Component, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Component, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Bell, ChevronDown, CircleHelp, LogOut, MapPin, ShieldCheck, Smartphone, WifiOff } from 'lucide-react';
-import { Platform } from './pages/Platform';
 import { errorText } from './api';
 import { AuthProvider, useAuth } from './auth';
 import { useOnline, useQuery } from './hooks';
 import type { Notification, Page } from './types';
-import { Brand, Button, Empty, PageHeader, Step } from './components/ui';
-import { PublicPass } from './components/SharePass';
+import { Brand, Button, Empty, Loading, PageHeader, Step } from './components/ui';
 import { BottomNav } from './components/BottomNav';
 import AnimatedQr from './components/icons/AnimatedQr';
 import AnimatedHome from './components/icons/AnimatedHome';
 import AnimatedAlignCenter, { afterMenuIconAnimation } from './components/icons/AnimatedAlignCenter';
 import AnimatedX from './components/icons/AnimatedX';
 import AnimatedSlidersHorizontal, { afterSlidersAnimation } from './components/icons/AnimatedSlidersHorizontal';
-import { Login } from './pages/Login';
-import { Passes } from './pages/Passes';
-import { Devices } from './pages/Devices';
-import { Gate } from './pages/Gate';
-import { Admin, adminSections } from './pages/Admin';
+import { adminSections } from './pages/adminSections';
 import { InstallButton, UpdateNotice } from './pwa';
+// Each profile only downloads its own screens: the gate scanner (jsQR), QR sharing
+// (qrcode), WebAuthn login, admin and platform pages load on first use.
+const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Passes = lazy(() => import('./pages/Passes').then(m => ({ default: m.Passes })));
+const Devices = lazy(() => import('./pages/Devices').then(m => ({ default: m.Devices })));
+const Gate = lazy(() => import('./pages/Gate').then(m => ({ default: m.Gate })));
+const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
+const Platform = lazy(() => import('./pages/Platform').then(m => ({ default: m.Platform })));
+const PublicPass = lazy(() => import('./components/SharePass').then(m => ({ default: m.PublicPass })));
 function initialPath() {
   try { if (location.pathname === '/' && localStorage.getItem('zentry:gate-station') === '1') return '/caseta'; }
   catch { /* Storage may be disabled; direct /caseta remains available. */ }
@@ -43,7 +46,7 @@ function Router() {
       window.dispatchEvent(new PopStateEvent('popstate'));
     }
   }, [admin, guard, identity, path, profile]);
-  return <><UpdateNotice/>{!online && <div className="offline-bar" role="status"><WifiOff size={17}/> Sin conexión. Puedes abrir la app; las acciones estarán disponibles al reconectarte.</div>}{path.startsWith('/p/') ? <PublicPass/> : path === '/caseta' ? <GateStationPage/> : !identity ? <Login/> : guard ? <GateStationPage/> : <Shell path={admin && !(profile === 'SUPERADMIN' && path === '/plataforma' || adminSections.some(section => section.path === path)) ? (profile === 'SUPERADMIN' ? '/plataforma' : '/admin/invitaciones') : path} navigate={navigate}/>}</>;
+  return <><UpdateNotice/>{!online && <div className="offline-bar" role="status"><WifiOff size={17}/> Sin conexión. Puedes abrir la app; las acciones estarán disponibles al reconectarte.</div>}<Suspense fallback={<Loading/>}>{path.startsWith('/p/') ? <PublicPass/> : path === '/caseta' ? <GateStationPage/> : !identity ? <Login/> : guard ? <GateStationPage/> : <Shell path={admin && !(profile === 'SUPERADMIN' && path === '/plataforma' || adminSections.some(section => section.path === path)) ? (profile === 'SUPERADMIN' ? '/plataforma' : '/admin/invitaciones') : path} navigate={navigate}/>}</Suspense></>;
 }
 function GateStationPage() {
   // Legacy GUARD accounts land here after login; the station itself needs no session.
@@ -107,7 +110,7 @@ function Shell({ path, navigate }: { path: string; navigate: (p: string) => void
   return <div className={`app-layout${(role === 'ADMIN' || role === 'SUPERADMIN') ? ' admin-layout' : ''}`}><a href="#main" className="skip-link">Ir al contenido</a>{mobile && <button className="sidebar-scrim" aria-label="Cerrar menú" onClick={() => setMobile(false)}/>}<aside ref={sidebar} id="main-navigation" role={mobile ? 'dialog' : undefined} aria-modal={mobile || undefined} aria-label="Menú de Zentry" className={`sidebar ${mobile ? 'open' : ''}`}><div className="sidebar-brand"><Brand onHome={() => go('/')}/><AnimatedX className="mobile-close" label="Cerrar menú" onClose={() => setMobile(false)}/></div><div className="community-label"><span className="connection-dot"/> Tu comunidad</div><nav aria-label="Navegación principal">{nav.map(({ path: p, label, Icon }) => <button key={p} className={path === p || (p === '/admin/invitaciones' && path.startsWith('/admin/')) ? 'active' : ''} aria-current={path === p || (p === '/admin/invitaciones' && path.startsWith('/admin/')) ? 'page' : undefined} onClick={() => { if (p === '/admin/invitaciones' && mobile) afterSlidersAnimation(() => go(p)); else go(p); }}><Icon size={20}/>{label}{(path === p || (p === '/admin/invitaciones' && path.startsWith('/admin/'))) && <span className="nav-dot"/>}</button>)}</nav>{(role !== 'ADMIN' && role !== 'SUPERADMIN') && <div className="sidebar-install"><div className="install-art"><Smartphone size={29}/><span><ShieldCheck size={15}/></span></div><h3>Zentry en tu teléfono</h3><p>Instala Zentry en tu teléfono y abre la app con un toque.</p><InstallButton/></div>}<div className="sidebar-bottom">{profileError && <p role="alert">{profileError}</p>}{profileNotice && <p role="status">{profileNotice}</p>}{identity?.contexts?.superadmin && role !== 'SUPERADMIN' && <button onClick={() => void changeProfile('SUPERADMIN')}>Cambiar a plataforma</button>}{identity?.contexts?.admin?.filter(a => a.clusterId === sessionCluster).map(a => <button key={a.clusterId} onClick={() => void changeProfile('ADMIN', a.clusterId)}>Administrar {a.cluster?.name ?? 'fraccionamiento'}</button>)}{!!identity?.contexts?.resident?.length && (role === 'ADMIN' || role === 'SUPERADMIN') && <button onClick={() => void changeProfile('RESIDENT')}>Cambiar a residente</button>}{(role !== 'ADMIN' && role !== 'SUPERADMIN') && <button onClick={() => go('/ayuda')} className={path === '/ayuda' ? 'active' : ''}><CircleHelp size={19}/> Ayuda y primeros pasos</button>}<button onClick={() => void logout().catch(() => {})}><LogOut size={19}/> Cerrar sesión</button><div className="sidebar-user"><span className="avatar">{identity!.user.fullName.slice(0, 1)}</span><span><strong>{identity!.user.fullName}</strong><small>{(role === 'ADMIN' || role === 'SUPERADMIN') ? (role === 'SUPERADMIN' ? 'Superadmin' : 'Administración') : 'Residente'}</small></span></div></div></aside>
     <div className="app-main" inert={mobile}><header className="topbar"><button className="icon-button menu-button" aria-label="Abrir menú" aria-expanded={mobile} aria-controls="main-navigation" onClick={event => { const trigger = event.currentTarget; afterMenuIconAnimation(() => { menuTrigger.current = trigger; setMobile(true); }); }}><AnimatedAlignCenter/></button>{(role !== 'ADMIN' && role !== 'SUPERADMIN') && <div className="property-select"><MapPin size={19}/><div><span>Tu vivienda</span><select aria-label="Seleccionar vivienda" value={property?.id ?? ''} onChange={e => { select(e.target.value); setMobile(false); }}>{properties.map(p => <option key={p.id} value={p.id}>{p.street} {p.houseNumber} · {p.cluster.name}</option>)}</select></div><ChevronDown size={15}/></div>}<div className="topbar-actions"><span className="online-label"><span className={`connection-dot ${online ? '' : 'offline'}`}/>{online ? 'En línea' : 'Sin conexión'}</span>{(role !== 'ADMIN' && role !== 'SUPERADMIN') && <button className="notification-button" aria-label={`Avisos de seguridad${alerts.data?.data.length ? ': ' + alerts.data.data.length : ''}`} onClick={() => go('/dispositivos')}><Bell size={20}/>{!!alerts.data?.data.length && <i/>}</button>}<span className="avatar top-avatar">{identity!.user.fullName.slice(0, 1)}</span></div></header><main id="main" tabIndex={-1} key={property?.id}>
     <div key={(role === 'ADMIN' || role === 'SUPERADMIN') ? 'admin' : path} className={(role === 'ADMIN' || role === 'SUPERADMIN') || path === '/' ? undefined : 'page-enter'}>
-      {(role === 'ADMIN' || role === 'SUPERADMIN') ? (role === 'SUPERADMIN' && path === '/plataforma' ? <Platform/> : <Admin path={path} navigate={go}/>) : !property ? <Empty title="No hay viviendas disponibles" text="Contacta a administración para revisar tus membresías."/> : path === '/' || path === '/pases' ? <Passes key={path} home={path === '/'} navigate={go}/> : path === '/dispositivos' ? <Devices/> : path === '/ayuda' ? <Help/> : <Empty title="Esta página no está disponible" text="Vuelve al inicio para continuar." action={<Button onClick={() => go('/')}>Ir al inicio</Button>}/>}
+      <Suspense fallback={<Loading/>}>{(role === 'ADMIN' || role === 'SUPERADMIN') ? (role === 'SUPERADMIN' && path === '/plataforma' ? <Platform/> : <Admin path={path} navigate={go}/>) : !property ? <Empty title="No hay viviendas disponibles" text="Contacta a administración para revisar tus membresías."/> : path === '/' || path === '/pases' ? <Passes key={path} home={path === '/'} navigate={go}/> : path === '/dispositivos' ? <Devices/> : path === '/ayuda' ? <Help/> : <Empty title="Esta página no está disponible" text="Vuelve al inicio para continuar." action={<Button onClick={() => go('/')}>Ir al inicio</Button>}/>}</Suspense>
     </div>
     <footer className="app-footer"><span>Zentry. Acceso a tu comunidad.</span><span><ShieldCheck size={13}/> Cada visita, con tranquilidad.</span></footer></main></div><BottomNav path={path} role={role} menuOpen={mobile} onNavigate={go} onMore={trigger => { menuTrigger.current = trigger; setMobile(true); }}/></div>;
 }

@@ -19,6 +19,16 @@ node scripts/dev-all.mjs
 
 Abre `http://localhost:5173`. Vite envía `/api` a `http://127.0.0.1:3000`; cambia `API_PROXY_TARGET` si hace falta. Configura `APP_ORIGIN=http://localhost:5173` y `WEBAUTHN_RP_ID=localhost` en el backend. Para iniciar solo la API/worker o Vite, ejecuta `npm run dev` o `npm run worker:dev` en el backend y `npm run dev` aquí.
 
+## Estilos y Tailwind
+
+Los estilos base están escritos a mano en `src/styles.css`. Tailwind CSS v4 está instalado con `@tailwindcss/vite` para usar sus utilidades en clases (por ejemplo, `scheme-light` en los campos de fecha al crear un pase, para que el calendario nativo se vea claro aunque el teléfono esté en modo oscuro).
+
+`src/tailwind.css` importa solo el tema y las utilidades de Tailwind. **No incluye Preflight** (su reinicio global de estilos) a propósito: cambiaría márgenes, botones y títulos en toda la app. Las utilidades viven en una capa de cascada, así que si `styles.css` y una utilidad definen la misma propiedad, gana `styles.css`.
+
+## Carga por partes
+
+Cada pantalla principal se descarga solo cuando se usa (`React.lazy` en `src/App.tsx`): el escáner de caseta (con jsQR), el QR compartido (con qrcode), el login WebAuthn, los pases, los dispositivos, la administración y la plataforma. React va en su propio archivo, que casi no cambia y queda en caché entre despliegues. Para enrutar sin cargar la administración, la lista de secciones vive en `src/pages/adminSections.ts`. Si tras un despliegue una pestaña abierta pide una parte que ya no existe, la app se recarga una vez para tomar la versión nueva. El service worker guarda todas las partes de `dist`, así que la PWA sigue abriendo sin conexión.
+
 ## Producción
 
 Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde esta carpeta con `npm run build`. En el **Static Site del frontend** de Render (`https://zentry.qlatte.com`), crea en Redirects/Rewrites una regla `Rewrite` con Source `/api/*` y Destination `https://fraccionamiento-backend.onrender.com/api/*`, por encima del fallback `/*` → `/index.html`. La caseta usa siempre `/api/v1` en el origen de la PWA; para el resto de la app, quita el `VITE_API_BASE_URL` anterior o ponlo en `/api/v1`. Configura `APP_ORIGIN=https://zentry.qlatte.com` en el backend. Un API en un sitio distinto no puede conservar estas cookies `SameSite=Strict` si se llama directamente. Sirve `sw.js` sin caché persistente. No utilices `vite preview` como servidor de producción.

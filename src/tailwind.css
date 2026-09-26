@@ -1,0 +1,7 @@
+/* Tailwind utilities only. Preflight (Tailwind's global reset) is deliberately left
+   out: the app's hand-written styles.css defines the base look, and the reset would
+   change margins, buttons and headings on every screen. Utilities live in a cascade
+   layer, so rules in styles.css still win when both set the same property. */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);

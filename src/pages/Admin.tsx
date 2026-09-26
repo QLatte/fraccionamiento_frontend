@@ -1,17 +1,9 @@
 import { useAuth } from '../auth';
 import { PageHeader } from '../components/ui';
-import AnimatedUserPlus from '../components/icons/AnimatedUserPlus';
-import AnimatedPhoneVolume from '../components/icons/AnimatedPhoneVolume';
-import AnimatedRefresh from '../components/icons/AnimatedRefresh';
 import { AdminInvitations } from './AdminInvitations';
 import { AdminGateDevices } from './AdminGateDevices';
 import { AdminSystemStatus } from './AdminSystemStatus';
-
-export const adminSections = [
-  { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
-  { path: '/admin/dispositivos', label: 'Dispositivos de caseta', Icon: AnimatedPhoneVolume },
-  { path: '/admin/estado', label: 'Estado del sistema', Icon: AnimatedRefresh },
-] as const;
+import { adminSections } from './adminSections';
 
 export function Admin({ path, navigate }: { path: string; navigate: (path: string) => void }) {
   const useRole = useAuth().identity?.session.profile;
