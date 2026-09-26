@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import jsQR from 'jsqr';
 import { Camera, Check, ClipboardPaste, DoorOpen, History, LogIn, LogOut, ScanLine, ShieldCheck, Users, XCircle, RotateCw } from 'lucide-react';
 import { Button, Empty, ErrorBox, Info, Loading, PageHeader } from '../components/ui';
@@ -75,6 +75,32 @@ function useShiftLog(enabled: boolean, online: boolean, version: number) {
     return () => window.clearInterval(id);
   }, [enabled, load]);
   return { log, error, loading, updatedAt, load };
+}
+
+// Floating "liquid glass" navbar: a frosted capsule whose pill slides to the active section.
+function GateNav({ view, onChange, inside }: { view: GateView; onChange: (view: GateView) => void; inside?: number }) {
+  const nav = useRef<HTMLElement>(null);
+  const [pill, setPill] = useState<{ x: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const bar = nav.current;
+    if (!bar) return;
+    const place = () => {
+      const active = bar.querySelector<HTMLElement>('.gate-nav-item.active');
+      if (active) setPill({ x: active.offsetLeft, width: active.offsetWidth });
+    };
+    place();
+    // Labels change width (count badge, fonts loading), so re-measure on resize.
+    const observer = new ResizeObserver(place);
+    bar.querySelectorAll('.gate-nav-item').forEach(item => observer.observe(item));
+    return () => observer.disconnect();
+  }, [view, inside]);
+  const items: { id: GateView; label: string; Icon: typeof ScanLine }[] = [{ id: 'scan', label: 'Escanear', Icon: ScanLine }, { id: 'log', label: 'Bitácora', Icon: History }];
+  return <nav ref={nav} className="gate-nav" role="tablist" aria-label="Secciones de caseta">
+    {pill && <span className="gate-nav-pill" aria-hidden="true" style={{ transform: `translateX(${pill.x}px)`, width: pill.width }}/>}
+    {items.map(({ id, label, Icon }) => <button key={id} type="button" role="tab" id={`gate-tab-${id}`} aria-controls="gate-view" aria-selected={view === id} className={'gate-nav-item' + (view === id ? ' active' : '')} onClick={() => onChange(id)}>
+      <Icon size={18}/><span>{label}</span>{id === 'log' && inside !== undefined && <span className="gate-nav-count" aria-label={`${inside} visitas dentro`}>{inside}</span>}
+    </button>)}
+  </nav>;
 }
 
 function ShiftLog({ log, error, loading, updatedAt, load, online }: ReturnType<typeof useShiftLog> & { online: boolean }) {
@@ -234,7 +260,7 @@ export function Gate() {
 
   function reset() { setResult(null); setAttempt(null); setManual(''); setError(''); scan.clear(); }
 
-  return <div className="gate-station">
+  return <div className={'gate-station' + (station ? ' has-nav' : '')}>
     <PageHeader title={station && view === 'log' ? 'Bitácora' : 'Caseta'} text={station && view === 'log' ? 'Consulta quién sigue dentro y las lecturas recientes de este equipo.' : 'Escanea un pase y registra claramente si la visita entra o sale.'}/>
     {checking && !station ? <Loading/> : !station ? <section className="panel setup-panel">
       <div className="setup-symbol"><DoorOpen size={31}/></div>
@@ -251,10 +277,7 @@ export function Gate() {
         <Button className="secondary small-button" onClick={() => void refreshStation()} disabled={!online}><RotateCw size={15}/> Comprobar conexión</Button>
       </div>
       <ErrorBox message={stationError}/>
-      <nav className="gate-views" role="tablist" aria-label="Secciones de caseta">
-        <button type="button" role="tab" id="gate-tab-scan" aria-controls="gate-view" aria-selected={view === 'scan'} className={view === 'scan' ? 'active' : ''} onClick={() => openView('scan')}><ScanLine size={20}/> Escanear</button>
-        <button type="button" role="tab" id="gate-tab-log" aria-controls="gate-view" aria-selected={view === 'log'} className={view === 'log' ? 'active' : ''} onClick={() => openView('log')}><History size={20}/> Bitácora{shiftLog.log && <span className="gate-views-count" aria-label={`${shiftLog.log.inside.length} visitas dentro`}>{shiftLog.log.inside.length} dentro</span>}</button>
-      </nav>
+      <GateNav view={view} onChange={openView} inside={shiftLog.log?.inside.length}/>
       <div id="gate-view" role="tabpanel" aria-labelledby={view === 'scan' ? 'gate-tab-scan' : 'gate-tab-log'}>
       {view === 'log' ? <ShiftLog {...shiftLog} online={online}/> : <>
       <div className="gate-layout">

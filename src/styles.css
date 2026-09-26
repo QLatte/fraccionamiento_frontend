@@ -314,13 +314,18 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .gate-session span:not(.connection-dot) { font-size: 13px; color: var(--muted); }
 .gate-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .scanner-panel { padding-bottom: 24px; }
-.gate-views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 24px; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); }
-.gate-views button { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; min-height: 52px; padding: 10px 14px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 15px; font-weight: 600; transition: background-color .15s, color .15s; }
-.gate-views button:hover:not(.active) { background: #fff; color: var(--brand); }
-.gate-views button.active { background: var(--brand); color: #fff; box-shadow: 0 2px 8px #123c4a26; }
-.gate-views button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
-.gate-views-count { padding: 2px 9px; border-radius: 999px; background: #fff; color: var(--brand); font-size: 12px; font-weight: 700; white-space: nowrap; }
-.gate-views button.active .gate-views-count { background: #ffffff26; color: #fff; }
+/* Liquid glass navbar: frosted floating capsule with a sliding pill. */
+.gate-station.has-nav { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.gate-nav { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom)); z-index: 30; display: flex; gap: 4px; padding: 6px; overflow: hidden; transform: translateX(-50%); border: 1px solid #ffffffb3; border-radius: 999px; background: linear-gradient(135deg, #ffffffcc, #e9f1f4b8); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); box-shadow: 0 12px 34px #123c4a2e, 0 2px 6px #123c4a14, inset 0 1px 0 #ffffffe6, inset 0 -1px 0 #123c4a0f; }
+.gate-nav-pill { position: absolute; top: 6px; bottom: 6px; left: 0; border-radius: 999px; background: linear-gradient(180deg, #20586b, var(--brand)); box-shadow: 0 6px 16px #123c4a47, inset 0 1px 0 #ffffff40, inset 0 -2px 4px #0000001f; transition: transform 460ms cubic-bezier(.34, 1.56, .64, 1), width 460ms cubic-bezier(.34, 1.56, .64, 1); pointer-events: none; }
+.gate-nav-item { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 10px 20px; border: 0; border-radius: 999px; background: transparent; color: var(--brand); font-size: 15px; font-weight: 600; white-space: nowrap; transition: color 260ms ease; }
+.gate-nav-item:not(.active):hover { background: #ffffff80; }
+.gate-nav-item.active { color: #fff; }
+.gate-nav-item:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+.gate-nav-count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 12px; font-weight: 700; text-align: center; transition: background-color 260ms ease, color 260ms ease; }
+.gate-nav-item.active .gate-nav-count { background: #fff; color: var(--brand); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .gate-nav { background: #f7fafbf2; } }
+@media (prefers-reduced-motion: reduce) { .gate-nav-pill, .gate-nav-item, .gate-nav-count { transition: none; } }
 .shift-log-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 20px; }
 .shift-log-toolbar p { margin: 0; font-size: 14px; }
 .shift-log-tabs { display: none; margin-bottom: 16px; }
@@ -466,7 +471,7 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .tabs { width: 100%; flex-wrap: nowrap; overflow-x: auto; padding: 4px; margin: -4px; scrollbar-width: thin; }
   .tabs button { flex-shrink: 0; padding: 9px 11px; }
   .shift-log .shift-log-tabs { margin: 0 0 16px; padding: 4px; }
-  .gate-views button { min-height: 48px; font-size: 14px; gap: 8px; padding-inline: 8px; }
+  .gate-nav-item { padding-inline: 16px; font-size: 14px; }
   .shift-log-toolbar .button { width: 100%; }
   .search-field { max-width: none; width: 100%; flex-basis: 100%; }
   .search-hint { padding-inline: 18px; }
