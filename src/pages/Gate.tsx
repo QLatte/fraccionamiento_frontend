@@ -52,36 +52,61 @@ function CameraReader({ onRead }: { onRead: (raw: string) => void }) {
   return <><div className="camera-view"><video ref={video} muted playsInline aria-label="Cámara para escanear pases"/><div className="camera-guide"><i/><i/><i/><i/></div><span>Coloca el QR dentro del recuadro</span></div><ErrorBox message={error}/></>;
 }
 
-function ShiftLog({ version, online }: { version: number; online: boolean }) {
-  const [tab, setTab] = useState<'inside' | 'recent'>('inside');
+type GateView = 'scan' | 'log';
+const gateViewKey = 'zentry:gate-view';
+
+// Loaded once for the whole station so the "inside" count stays current while scanning.
+function useShiftLog(enabled: boolean, online: boolean, version: number) {
   const [log, setLog] = useState<GateLog | null>(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const load = useCallback(async () => {
-    try { setLog(await api<GateLog>('/gate/scan/log', { public: true, station: true })); setError(''); }
+    setLoading(true);
+    try { setLog(await api<GateLog>('/gate/scan/log', { public: true, station: true })); setError(''); setUpdatedAt(new Date()); }
     // An expired permit is renewed by the station check; the next refresh recovers.
     catch (cause) { if (!(cause instanceof ApiError && cause.code === 'GATE_SESSION_REQUIRED')) setError(errorText(cause)); }
+    finally { setLoading(false); }
   }, []);
-  useEffect(() => { if (online) void load(); }, [load, online, version]);
+  useEffect(() => { if (enabled && online) void load(); }, [enabled, load, online, version]);
   useEffect(() => {
+    if (!enabled) return;
     const id = window.setInterval(() => { if (document.visibilityState === 'visible' && navigator.onLine) void load(); }, 60_000);
     return () => window.clearInterval(id);
-  }, [load]);
-  const time = (value: string) => dateText(value, { hour: '2-digit', minute: '2-digit' });
-  return <section className="panel shift-log">
-    <div className="panel-heading"><div><h2>Bitácora del turno</h2><p>Visitas dentro del fraccionamiento y lecturas de este equipo en las últimas 12 horas.</p></div><History/></div>
-    <div className="tabs" role="tablist">
+  }, [enabled, load]);
+  return { log, error, loading, updatedAt, load };
+}
+
+function ShiftLog({ log, error, loading, updatedAt, load, online }: ReturnType<typeof useShiftLog> & { online: boolean }) {
+  // Narrow screens show one list at a time; wide screens show both side by side.
+  const [tab, setTab] = useState<'inside' | 'recent'>('inside');
+  const time = (value: string | Date) => dateText(typeof value === 'string' ? value : value.toISOString(), { hour: '2-digit', minute: '2-digit' });
+  return <div className="shift-log">
+    <div className="shift-log-toolbar">
+      <p>Visitas dentro del fraccionamiento y lecturas de este equipo en las últimas 12 horas.{updatedAt && <><br/>Última actualización: {time(updatedAt)}</>}</p>
+      <Button className="secondary small-button" onClick={() => void load()} disabled={!online} busy={loading}><RotateCw size={15}/> Actualizar</Button>
+    </div>
+    <ErrorBox message={error} retry={() => void load()}/>
+    <div className="tabs shift-log-tabs" role="tablist" aria-label="Listas de la bitácora">
       <button role="tab" aria-selected={tab === 'inside'} className={tab === 'inside' ? 'active' : ''} onClick={() => setTab('inside')}>Dentro ahora{log ? ` (${log.inside.length})` : ''}</button>
       <button role="tab" aria-selected={tab === 'recent'} className={tab === 'recent' ? 'active' : ''} onClick={() => setTab('recent')}>Últimas lecturas</button>
     </div>
-    <ErrorBox message={error} retry={() => void load()}/>
-    {!log ? (error ? null : <Loading/>) : tab === 'inside' ? (!log.inside.length ? <Empty icon={<Users/>} title="No hay visitas dentro" text="Las visitas aparecen aquí al registrar su entrada y salen al registrar su salida."/> :
-      <div className="device-list">{log.inside.map(row => <div className="device-row" key={row.id}><div><h3>{row.guestName}</h3><p>{row.property.street} {row.property.houseNumber} · {row.guestVehicle || 'Peatonal'}</p><small>Entró el {dateText(row.since)}</small></div></div>)}</div>) :
-      (!log.recent.length ? <Empty icon={<History/>} title="Sin lecturas recientes" text="Las lecturas de este equipo aparecerán aquí."/> :
-      <div className="device-list">{log.recent.map(row => {
-        const granted = row.result === 'GRANTED';
-        return <div className="device-row" key={row.id}><div><span className={'badge' + (granted ? (row.direction === 'EXIT' ? ' used' : '') : ' revoked')}><span/>{granted ? (row.direction === 'ENTRY' ? 'Entrada' : 'Salida') : row.direction === 'ENTRY' ? 'Entrada rechazada' : 'Salida rechazada'}</span><h3>{row.guestName ?? 'Pase no reconocido'}</h3>{row.property && <p>{row.property.street} {row.property.houseNumber}</p>}<small>{time(row.timestamp)}{granted ? '' : ' · ' + (codeText(row.result) ?? 'Lectura rechazada.')}</small></div></div>;
-      })}</div>)}
-  </section>;
+    {!log ? (error ? null : <Loading/>) : <div className="shift-log-grid">
+      <section className={'panel' + (tab === 'inside' ? '' : ' narrow-hidden')} aria-label="Visitas dentro">
+        <div className="panel-heading"><div><h2>Dentro ahora</h2><p>{log.inside.length === 1 ? '1 visita con entrada sin salida.' : `${log.inside.length} visitas con entrada sin salida.`}</p></div><Users/></div>
+        {!log.inside.length ? <Empty icon={<Users/>} title="No hay visitas dentro" text="Las visitas aparecen aquí al registrar su entrada y salen al registrar su salida."/> :
+          <div className="device-list">{log.inside.map(row => <div className="device-row" key={row.id}><div><h3>{row.guestName}</h3><p>{row.property.street} {row.property.houseNumber} · {row.guestVehicle || 'Peatonal'}</p><small>Entró el {dateText(row.since)}</small></div></div>)}</div>}
+      </section>
+      <section className={'panel' + (tab === 'recent' ? '' : ' narrow-hidden')} aria-label="Últimas lecturas">
+        <div className="panel-heading"><div><h2>Últimas lecturas</h2><p>Entradas, salidas y rechazos de este equipo.</p></div><History/></div>
+        {!log.recent.length ? <Empty icon={<History/>} title="Sin lecturas recientes" text="Las lecturas de este equipo aparecerán aquí."/> :
+          <div className="device-list">{log.recent.map(row => {
+            const granted = row.result === 'GRANTED';
+            return <div className="device-row" key={row.id}><div><span className={'badge' + (granted ? (row.direction === 'EXIT' ? ' used' : '') : ' revoked')}><span/>{granted ? (row.direction === 'ENTRY' ? 'Entrada' : 'Salida') : row.direction === 'ENTRY' ? 'Entrada rechazada' : 'Salida rechazada'}</span><h3>{row.guestName ?? 'Pase no reconocido'}</h3>{row.property && <p>{row.property.street} {row.property.houseNumber}</p>}<small>{time(row.timestamp)}{granted ? '' : ' · ' + (codeText(row.result) ?? 'Lectura rechazada.')}</small></div></div>;
+          })}</div>}
+      </section>
+    </div>}
+  </div>;
 }
 
 export function Gate() {
@@ -103,9 +128,19 @@ export function Gate() {
   const [attempt, setAttempt] = useState<{ token: string; direction: 'ENTRY' | 'EXIT' } | null>(null);
   const [error, setError] = useState('');
   const [logVersion, setLogVersion] = useState(0);
+  const [view, setView] = useState<GateView>(() => {
+    try { return localStorage.getItem(gateViewKey) === 'log' ? 'log' : 'scan'; } catch { return 'scan'; }
+  });
   const pair = useMutation();
   const scan = useMutation();
   const online = useOnline();
+  const shiftLog = useShiftLog(!!station, online, logVersion);
+
+  function openView(next: GateView) {
+    setView(next);
+    if (next === 'log') setCamera(false);
+    try { localStorage.setItem(gateViewKey, next); } catch { /* The scanner is the default view. */ }
+  }
   const scanning = useRef(false);
   const resultPanel = useRef<HTMLElement>(null);
   const audio = useRef<AudioContext | null>(null);
@@ -200,7 +235,7 @@ export function Gate() {
   function reset() { setResult(null); setAttempt(null); setManual(''); setError(''); scan.clear(); }
 
   return <div className="gate-station">
-    <PageHeader title="Caseta" text="Escanea un pase y registra claramente si la visita entra o sale."/>
+    <PageHeader title={station && view === 'log' ? 'Bitácora' : 'Caseta'} text={station && view === 'log' ? 'Consulta quién sigue dentro y las lecturas recientes de este equipo.' : 'Escanea un pase y registra claramente si la visita entra o sale.'}/>
     {checking && !station ? <Loading/> : !station ? <section className="panel setup-panel">
       <div className="setup-symbol"><DoorOpen size={31}/></div>
       <h2>Vincula este equipo una sola vez</h2>
@@ -216,6 +251,12 @@ export function Gate() {
         <Button className="secondary small-button" onClick={() => void refreshStation()} disabled={!online}><RotateCw size={15}/> Comprobar conexión</Button>
       </div>
       <ErrorBox message={stationError}/>
+      <nav className="gate-views" role="tablist" aria-label="Secciones de caseta">
+        <button type="button" role="tab" id="gate-tab-scan" aria-controls="gate-view" aria-selected={view === 'scan'} className={view === 'scan' ? 'active' : ''} onClick={() => openView('scan')}><ScanLine size={20}/> Escanear</button>
+        <button type="button" role="tab" id="gate-tab-log" aria-controls="gate-view" aria-selected={view === 'log'} className={view === 'log' ? 'active' : ''} onClick={() => openView('log')}><History size={20}/> Bitácora{shiftLog.log && <span className="gate-views-count" aria-label={`${shiftLog.log.inside.length} visitas dentro`}>{shiftLog.log.inside.length} dentro</span>}</button>
+      </nav>
+      <div id="gate-view" role="tabpanel" aria-labelledby={view === 'scan' ? 'gate-tab-scan' : 'gate-tab-log'}>
+      {view === 'log' ? <ShiftLog {...shiftLog} online={online}/> : <>
       <div className="gate-layout">
         <section className="panel scanner-panel">
           <div className="panel-heading"><div><h2>¿Qué movimiento vas a registrar?</h2><p>Selecciona una opción antes de leer el QR.</p></div><ScanLine/></div>
@@ -248,8 +289,9 @@ export function Gate() {
             <Empty icon={<ShieldCheck/>} title={scan.busy ? 'Comprobando acceso' : 'El resultado aparecerá aquí'} text="La caseta revisa la vigencia, la vivienda y el estado del pase antes de autorizar."/>}
         </aside>
       </div>
-      <ShiftLog version={logVersion} online={online}/>
       <Info>Sin conexión no se autorizan accesos. Si una respuesta se pierde, reintenta la misma lectura para evitar duplicarla.</Info>
+      </>}
+      </div>
     </>}
   </div>;
 }

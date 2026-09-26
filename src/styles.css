@@ -314,8 +314,18 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .gate-session span:not(.connection-dot) { font-size: 13px; color: var(--muted); }
 .gate-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .scanner-panel { padding-bottom: 24px; }
-.shift-log { margin-top: 24px; padding-bottom: 8px; }
-.shift-log .tabs { padding: 0 24px 8px; }
+.gate-views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 24px; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); }
+.gate-views button { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; min-height: 52px; padding: 10px 14px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 15px; font-weight: 600; transition: background-color .15s, color .15s; }
+.gate-views button:hover:not(.active) { background: #fff; color: var(--brand); }
+.gate-views button.active { background: var(--brand); color: #fff; box-shadow: 0 2px 8px #123c4a26; }
+.gate-views button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+.gate-views-count { padding: 2px 9px; border-radius: 999px; background: #fff; color: var(--brand); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.gate-views button.active .gate-views-count { background: #ffffff26; color: #fff; }
+.shift-log-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 20px; }
+.shift-log-toolbar p { margin: 0; font-size: 14px; }
+.shift-log-tabs { display: none; margin-bottom: 16px; }
+.shift-log-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.shift-log-grid .panel { padding-bottom: 8px; }
 .shift-log .device-row { padding: 16px 0; }
 .shift-log .device-row .badge { margin-bottom: 6px; }
 .direction-nav { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); height: 84px; margin: 0 24px 24px; isolation: isolate; border-radius: 18px 18px 24px 24px; background: var(--soft); }
@@ -401,6 +411,12 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .gate-layout, .device-layout, .admin-columns, .help-grid { grid-template-columns: 1fr; }
   .security-tip h2 br { display: none; }
 }
+/* Below tablet width the two shift-log lists become tabs. */
+@media (max-width: 900px) {
+  .shift-log-tabs { display: flex; }
+  .shift-log-grid { grid-template-columns: 1fr; }
+  .shift-log-grid .narrow-hidden { display: none; }
+}
 @media (max-width: 1024px) {
   .sidebar { visibility: hidden; transform: translateX(-100%); width: min(320px, calc(100vw - 48px)); transition: transform .2s ease, visibility .2s; padding-bottom: env(safe-area-inset-bottom); }
   .sidebar.open { visibility: visible; transform: translateX(0); }
@@ -449,7 +465,9 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .table-controls { padding: 0 18px 16px; gap: 14px; }
   .tabs { width: 100%; flex-wrap: nowrap; overflow-x: auto; padding: 4px; margin: -4px; scrollbar-width: thin; }
   .tabs button { flex-shrink: 0; padding: 9px 11px; }
-  .shift-log .tabs { width: auto; margin: 0; padding: 0 18px 8px; }
+  .shift-log .shift-log-tabs { margin: 0 0 16px; padding: 4px; }
+  .gate-views button { min-height: 48px; font-size: 14px; gap: 8px; padding-inline: 8px; }
+  .shift-log-toolbar .button { width: 100%; }
   .search-field { max-width: none; width: 100%; flex-basis: 100%; }
   .search-hint { padding-inline: 18px; }
   .table-head { display: none; }
