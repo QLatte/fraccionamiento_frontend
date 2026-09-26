@@ -31,7 +31,8 @@ export async function api<T>(path: string, options: { method?: string; body?: un
     if (response.status === 204) return undefined as T;
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      if (response.status === 401 && auth && !options.token && !options.public) window.dispatchEvent(new Event('sica:expired'));
+      // A profile switch revokes the previous token; a request still in flight with it must not end the new session.
+      if (response.status === 401 && auth && auth === token && !options.token && !options.public) window.dispatchEvent(new Event('sica:expired'));
       throw new ApiError(response.status, data?.error?.code ?? 'REQUEST_FAILED', messages[data?.error?.code] ?? data?.error?.message ?? 'El servidor no pudo completar la solicitud.');
     }
     if (data === null) throw new ApiError(502, 'INVALID_RESPONSE', 'La respuesta del servidor no es válida.');
