@@ -10,14 +10,14 @@ import './BottomNav.css';
 
 type Props = {
   path: string;
-  role: 'ADMIN' | 'GUARD' | 'HOUSEHOLD_USER';
+  role: 'SUPERADMIN' | 'ADMIN' | 'GUARD' | 'RESIDENT';
   menuOpen: boolean;
   onNavigate: (path: string) => void;
   onMore: (trigger: HTMLButtonElement) => void;
 };
 
 export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
-  const items = role === 'ADMIN' ? [
+  const items = (role === 'ADMIN' || role === 'SUPERADMIN') ? [
     { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
     { path: '/admin/dispositivos', label: 'Dispositivos', Icon: AnimatedPhoneVolume },
     { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
@@ -28,7 +28,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ];
   const current = items.findIndex(item => item.path === path);
-  const activeIndex = menuOpen && role !== 'ADMIN' || current < 0 ? items.length - 1 : current;
+  const activeIndex = menuOpen && (role !== 'ADMIN' && role !== 'SUPERADMIN') || current < 0 ? items.length - 1 : current;
   // Equally spaced centers within the bar's 12px side padding.
   const offset = 12 - 24 * (activeIndex + .5) / items.length;
   const style = {

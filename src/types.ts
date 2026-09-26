@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'GUARD' | 'HOUSEHOLD_USER';
+export type Role = 'SUPERADMIN' | 'ADMIN' | 'GUARD' | 'RESIDENT';
 export type Status = 'ACTIVE' | 'USED' | 'REVOKED' | 'EXPIRED';
 export type PassType = 'SINGLE_USE' | 'TEMPORARY' | 'RECURRING';
 export interface Identity { user: { id: string; email: string; fullName: string; globalRole: Role }; session: { propertyId: string; gateId: string | null; gateDeviceId: string | null; expiresAt: string } }
