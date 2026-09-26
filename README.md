@@ -35,7 +35,7 @@ Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde est
 
 ## Compartir un pase
 
-Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace en el texto como respaldo. La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
+Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace del pase y la ubicación en Google Maps en el texto (el enlace de Maps está en `src/config.ts`). La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
 
 ## Caseta compartida
 

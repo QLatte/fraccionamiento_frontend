@@ -5,6 +5,7 @@ import { Button, ErrorBox, Brand } from './ui';
 import { errorText, api } from '../api';
 import { extractToken, useOnline } from '../hooks';
 import { passFileName, renderPassCard, validityLines, type PassPlace, type PassSummary } from './passCard';
+import { COMMUNITY_MAPS_URL } from '../config';
 export function SharePass({ url, name, pass, place }: { url: string; name?: string; pass?: PassSummary; place?: PassPlace }) {
   const canvas = useRef<HTMLCanvasElement>(null); const [error, setError] = useState(''); const [copied, setCopied] = useState(false); const [ready, setReady] = useState(false);
   // With pass details, the shared/downloaded file is a full card image (guest, QR, validity,
@@ -21,12 +22,12 @@ export function SharePass({ url, name, pass, place }: { url: string; name?: stri
       .catch(() => { if (current) setCardFailed(true); /* Sharing falls back to the link. */ });
     return () => { current = false; };
   }, [url, pass, place]);
-  const message = `${pass ? `Pase de visita para ${pass.guestName}. ` : ''}Presenta este QR al llegar a la caseta.`;
+  const message = `${pass ? `Pase de visita para ${pass.guestName}. ` : ''}Presenta este QR al llegar a la caseta.\nCómo llegar: ${COMMUNITY_MAPS_URL}`;
   async function copy() { try { await navigator.clipboard.writeText(url); setCopied(true); } catch { setError('No se pudo copiar automáticamente. Selecciona y copia el enlace que aparece abajo.'); } }
   async function share() {
     setError('');
     try {
-      if (card && navigator.canShare?.({ files: [card] })) await navigator.share({ files: [card], title: 'Tu pase de acceso · Zentry', text: `${message}\n${url}` });
+      if (card && navigator.canShare?.({ files: [card] })) await navigator.share({ files: [card], title: 'Tu pase de acceso · Zentry', text: `${message}\nTu pase: ${url}` });
       else if (navigator.share) await navigator.share({ title: 'Tu pase de acceso · Zentry', text: message, url });
       else await copy();
     } catch (e) { if (!(e instanceof DOMException && e.name === 'AbortError')) setError(errorText(e)); }
