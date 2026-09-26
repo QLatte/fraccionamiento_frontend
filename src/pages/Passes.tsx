@@ -29,7 +29,7 @@ export function CreatePass({ onClose, onCreated }: { onClose: () => void; onCrea
 }
 export function Passes({ home, navigate }: { home: boolean; navigate: (path: string) => void }) {
   const { identity, property, links, rememberPass, forgetPass } = useAuth(); const id = property!.id; const [filter, setFilter] = useState<Status | ''>(() => { const value = new URLSearchParams(location.search).get('estado'); return value && ['ACTIVE', 'USED', 'EXPIRED', 'REVOKED'].includes(value) ? value as Status : ''; }); const [search, setSearch] = useState(''); const [extra, setExtra] = useState<Pass[]>([]); const [cursor, setCursor] = useState<string | null>(null); const [moreBusy, setMoreBusy] = useState(false); const [moreError, setMoreError] = useState('');
-  const canCreate = identity?.user.globalRole === 'RESIDENT';
+  const canCreate = identity?.session.profile === 'RESIDENT';
   const listScope = useRef(''); listScope.current = `${id}:${filter}:${home}`;
   const query = useQuery<Page<Pass>>(`/passes?propertyId=${id}&limit=${home ? 5 : 20}${filter ? `&status=${filter}` : ''}`);
   const summary = useQuery<Record<Status, number>>(`/passes/summary?propertyId=${id}`, 30000);

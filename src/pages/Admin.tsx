@@ -1,3 +1,4 @@
+import { useAuth } from '../auth';
 import { PageHeader } from '../components/ui';
 import AnimatedUserPlus from '../components/icons/AnimatedUserPlus';
 import AnimatedPhoneVolume from '../components/icons/AnimatedPhoneVolume';
@@ -13,12 +14,14 @@ export const adminSections = [
 ] as const;
 
 export function Admin({ path, navigate }: { path: string; navigate: (path: string) => void }) {
-  const current = adminSections.find(section => section.path === path)?.path ?? adminSections[0].path;
+  const useRole = useAuth().identity?.session.profile;
+  const sections = adminSections.filter(s => s.path !== '/admin/estado' || useRole === 'SUPERADMIN');
+  const current = sections.find(section => section.path === path)?.path ?? adminSections[0].path;
 
   return <>
     <PageHeader title="Administración" text="Crea invitaciones, autoriza equipos y consulta el estado del sistema."/>
     <nav className="admin-tabs admin-section-nav" aria-label="Secciones de administración">
-      {adminSections.map(({ path: destination, label, Icon }) =>
+      {sections.map(({ path: destination, label, Icon }) =>
         <button
           key={destination}
           type="button"

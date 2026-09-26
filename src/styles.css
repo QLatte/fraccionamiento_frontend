@@ -556,3 +556,19 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .gate-station-page main { padding: 24px 16px 40px; }
   .gate-station-header { min-height: 72px; padding-inline: 16px; }
 }
+
+.platform-panel { padding: 24px; margin-bottom: 24px; }
+.platform-table { overflow-x: auto; }
+.platform-table table { width: 100%; border-collapse: collapse; text-align: left; }
+.platform-table th, .platform-table td { padding: 12px; border-bottom: 1px solid #ddd; }
+.platform-person { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 0; }
+.platform-panel form { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; margin: 24px 0; }
+.platform-panel form label { flex: 1; min-width: 200px; }
+@media (max-width: 600px) {
+  .platform-table table, .platform-table tbody, .platform-table tr, .platform-table td { display: block; width: 100%; }
+  .platform-table thead { display: none; }
+  .platform-table tr { padding: 12px 0; border-bottom: 1px solid #ddd; }
+  .platform-table td { padding: 6px 0; border: 0; overflow-wrap: anywhere; }
+  .platform-table td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; color: #526975; }
+  .platform-person { flex-wrap: wrap; overflow-wrap: anywhere; }
+}

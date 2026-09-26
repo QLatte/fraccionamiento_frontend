@@ -17,10 +17,15 @@ type Props = {
 };
 
 export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
-  const items = (role === 'ADMIN' || role === 'SUPERADMIN') ? [
+  const items = role === 'SUPERADMIN' ? [
+    { path: '/plataforma', label: 'Plataforma', Icon: AnimatedHome },
+    { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
+    { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
+    { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
+  ] : (role === 'ADMIN') ? [
     { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
     { path: '/admin/dispositivos', label: 'Dispositivos', Icon: AnimatedPhoneVolume },
-    { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
+    { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ] : [
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
     { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },

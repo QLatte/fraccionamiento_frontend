@@ -1,7 +1,7 @@
 export type Role = 'SUPERADMIN' | 'ADMIN' | 'GUARD' | 'RESIDENT';
 export type Status = 'ACTIVE' | 'USED' | 'REVOKED' | 'EXPIRED';
 export type PassType = 'SINGLE_USE' | 'TEMPORARY' | 'RECURRING';
-export interface Identity { user: { id: string; email: string; fullName: string; globalRole: Role }; session: { propertyId: string; gateId: string | null; gateDeviceId: string | null; expiresAt: string; profile: Role }; contexts?: { resident: { propertyId: string }[]; admin: { clusterId: string }[]; superadmin: boolean } }
+export interface Identity { user: { id: string; email: string; fullName: string; globalRole: Role }; session: { propertyId: string; gateId: string | null; gateDeviceId: string | null; expiresAt: string; profile: Role }; contexts?: { resident: { propertyId: string }[]; admin: { clusterId: string; cluster?: { name: string } }[]; superadmin: boolean } }
 export interface Property { id: string; street: string; houseNumber: string; status: string; membershipRole?: 'RESIDENT_OWNER' | 'FAMILY_MEMBER'; cluster: { id: string; name: string; type: string } }
 export interface Pass { id: string; propertyId: string; createdById: string; guestName: string; guestVehicle: string | null; passType: PassType; status: Status; validFrom: string; validUntil: string; createdAt: string; timezone: string; windowSeconds: number; recurrenceRule: string | null }
 export interface Page<T> { data: T[]; nextCursor?: string | null }

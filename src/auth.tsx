@@ -16,7 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) { clear(); throw e; }
   }
   async function logout() { try { await api('/auth/logout', { method: 'POST' }); } finally { clear(); } }
-  async function switchProfile(profile: 'RESIDENT' | 'ADMIN' | 'SUPERADMIN', clusterId?: string) { const session = await api<SessionResult>('/auth/context', { method: 'POST', body: JSON.stringify({ profile, clusterId }) }); await accept(session); }
+  async function switchProfile(profile: 'RESIDENT' | 'ADMIN' | 'SUPERADMIN', clusterId?: string) { const session = await api<SessionResult>('/auth/context', { method: 'POST', body: { profile, clusterId } }); await accept(session); }
   return <Context.Provider value={{ links, rememberPass: pass => setLinks(old => ({ ...old, [pass.id]: pass })), forgetPass: id => setLinks(old => { const next = { ...old }; delete next[id]; return next; }), identity, properties, property: properties.find(p => p.id === selected) ?? properties[0] ?? null, select: setSelected, accept, logout, switchProfile, expired }}>{children}</Context.Provider>;
 }
 export const useAuth = () => useContext(Context);
