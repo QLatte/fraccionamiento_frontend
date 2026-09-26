@@ -37,6 +37,10 @@ Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde est
 
 Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace del pase y la ubicación en Google Maps en el texto (el enlace de Maps está en `src/config.ts`). La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
 
+## Avisos de visitas
+
+En Inicio, el panel **Avisos de tus visitas** activa las notificaciones push en ese teléfono para la vivienda seleccionada (`src/push.ts` y `src/components/VisitAlerts.tsx`). El residente que creó el pase recibe «Tu visita llegó» al validarse la entrada en caseta y «Tu visita salió» al registrarse la salida; el aviso de salida reemplaza al de entrada. El service worker (`scripts/build-sw.mjs`) muestra el aviso y abre Mis pases al tocarlo. Al cerrar sesión se desactivan en ese dispositivo. En iPhone solo funcionan con Zentry instalada en la pantalla de inicio (iOS 16.4+); el panel lo explica. El servidor necesita las claves VAPID (ver el README del backend). El service worker solo se registra en producción, así que en `npm run dev` el panel no aparece.
+
 ## Caseta compartida
 
 Abre `/caseta` en el equipo dedicado e instala la PWA desde esa ruta para que el acceso directo abra Caseta. Administración genera la clave en **Dispositivos de caseta** y la introduce una vez en esa pantalla. A partir de entonces el escáner se abre sin cuenta de vigilante, PIN ni biometría; el permiso temporal se renueva mientras el equipo siga autorizado. Administración puede desactivarlo.

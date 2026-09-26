@@ -12,5 +12,9 @@ self.addEventListener('message',event=>{if(event.data?.type==='ACTIVATE')self.sk
 self.addEventListener('fetch',event=>{const request=event.request;const url=new URL(request.url);if(request.method!=='GET'||url.origin!==self.location.origin||url.pathname.startsWith('/api/')||request.headers.has('authorization'))return;
 if(request.mode==='navigate'){event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match('/index.html'))||fetch(request)));return;}
 if(ASSETS.includes(url.pathname))event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match(url.pathname))||fetch(request)));
-});`);
+});
+self.addEventListener('push',event=>{let data={};try{data=event.data?event.data.json():{};}catch{}
+event.waitUntil(self.registration.showNotification(data.title||'Zentry',{body:data.body||'',tag:data.tag,renotify:!!data.tag,icon:'/icon-192.png',badge:'/icon-192.png',data:{url:data.url||'/'}}));});
+self.addEventListener('notificationclick',event=>{event.notification.close();const target=new URL(event.notification.data?.url||'/',self.location.origin).href;
+event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{const open=list.find(c=>c.url.startsWith(self.location.origin));if(open){return open.navigate(target).catch(()=>open).then(c=>(c||open).focus());}return self.clients.openWindow(target);}));});`);
 console.log('PWA shell:', name, '·', files.length, 'assets. API and QR URLs are never cached.');

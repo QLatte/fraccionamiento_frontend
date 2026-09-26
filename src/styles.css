@@ -246,6 +246,14 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .ticket-label { padding-top: 22px; font-size: 13px; color: var(--muted); }
 .qr-ticket h3 { font-size: 24px; margin: 8px 16px 4px; }
 .qr-ticket canvas { display: block; max-width: 100%; height: auto !important; margin: auto; }
+.visit-alerts { display: flex; align-items: center; gap: 18px; margin-bottom: 28px; padding: 20px 24px; }
+.visit-alerts > div { flex: 1; min-width: 0; }
+.visit-alerts h2 { font-size: 18px; margin-bottom: 4px; }
+.visit-alerts p { margin: 0; font-size: 14px; }
+.visit-alerts .button { flex-shrink: 0; }
+.visit-alerts-icon { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: #fbefd3; color: #7a5712; }
+.visit-alerts.on .visit-alerts-icon { background: #e7f3ed; color: #286648; }
+@media (max-width: 700px) { .visit-alerts { flex-wrap: wrap; padding: 18px; } .visit-alerts .button { width: 100%; } }
 .ticket-details { margin: 4px 20px 14px; text-align: left; font-size: 13px; line-height: 1.45; }
 .ticket-details > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); }
 .ticket-details dt { flex-shrink: 0; color: var(--muted); }
