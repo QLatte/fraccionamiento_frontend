@@ -16,5 +16,15 @@ export interface AdminUser { id: string; fullName: string; email: string; global
 export interface Outbox { id: string; eventType: string; status: string; retries: number; createdAt: string; lastError: string | null }
 export interface Health { pending: number; failed: number; averagePropagationMs: number; oldestPendingMs: number; scansLast24h: { result: string; _count: number }[] }
 export interface GateGuest { guestName: string; guestVehicle: string | null; property: { street: string; houseNumber: string } }
-export interface GateLog { recent: ({ id: string; timestamp: string; direction: 'ENTRY' | 'EXIT'; result: string } & Partial<GateGuest>)[]; inside: ({ id: string; since: string } & GateGuest)[] }
+export interface GateLog {
+  recent: ({ id: string; kind?: 'pass' | 'walkin'; walkInId?: string; timestamp: string; direction: 'ENTRY' | 'EXIT'; result: string; authorizedBy?: string | null } & Partial<GateGuest>)[];
+  inside: ({ id: string; kind?: 'pass' | 'walkin'; since: string; authorizedBy?: string | null } & GateGuest)[];
+}
+export type WalkInReason = 'VISIT' | 'DELIVERY' | 'SERVICE' | 'OTHER';
+export type IdDocumentType = 'INE' | 'LICENSE' | 'PASSPORT' | 'OTHER';
+/** A visitor without a pass, as the gate sees it while waiting for the household. */
+export interface WalkInView { id: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'; method: 'APP' | 'PHONE' | null; notified: number; expiresAt: string; canCall: boolean; guestName: string; guestVehicle: string | null; reason: WalkInReason; property: { street: string; houseNumber: string } | null; authorizedBy: string | null; enteredAt: string | null; exitedAt: string | null }
+/** A pending request shown to household members. */
+export interface WalkInPending { id: string; createdAt: string; expiresAt: string; reason: WalkInReason; idType: IdDocumentType; guestName: string; guestVehicle: string | null; idLast4: string }
+export interface GateProperty { id: string; street: string; houseNumber: string; cluster: { name: string } }
 export interface ScanResult { result: 'GRANTED'; guestName: string; guestVehicle: string | null; property: { street: string; houseNumber: string }; residentName: string; validationSource: string }

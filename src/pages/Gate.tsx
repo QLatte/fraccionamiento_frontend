@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import jsQR from 'jsqr';
-import { Camera, Check, ClipboardPaste, DoorOpen, History, ScanLine, ShieldCheck, Users, XCircle, RotateCw } from 'lucide-react';
+import { Camera, Check, ClipboardPaste, DoorOpen, History, ScanLine, UserPlus, ShieldCheck, Users, XCircle, RotateCw } from 'lucide-react';
 import { Button, Empty, ErrorBox, Info, Loading, PageHeader } from '../components/ui';
 import { dateText, extractToken, useMutation, useOnline } from '../hooks';
 import { api, ApiError, codeText, errorText } from '../api';
 import type { GateLog, GateStation, ScanResult } from '../types';
 import AnimatedQr from '../components/icons/AnimatedQr';
+import { GateWalkIn } from './GateWalkIn';
 import AnimatedArrowRightDashed from '../components/icons/AnimatedArrowRightDashed';
 import AnimatedArrowLeftDashed from '../components/icons/AnimatedArrowLeftDashed';
 
@@ -105,7 +106,7 @@ function GateNav({ view, onChange, inside }: { view: GateView; onChange: (view: 
   </nav>;
 }
 
-function ShiftLog({ log, error, loading, updatedAt, load, online }: ReturnType<typeof useShiftLog> & { online: boolean }) {
+function ShiftLog({ log, error, loading, updatedAt, load, online, exiting, onExit }: ReturnType<typeof useShiftLog> & { online: boolean; exiting: string | null; onExit: (id: string) => Promise<void> }) {
   // Narrow screens show one list at a time; wide screens show both side by side.
   const [tab, setTab] = useState<'inside' | 'recent'>('inside');
   const time = (value: string | Date) => dateText(typeof value === 'string' ? value : value.toISOString(), { hour: '2-digit', minute: '2-digit' });
@@ -123,14 +124,19 @@ function ShiftLog({ log, error, loading, updatedAt, load, online }: ReturnType<t
       <section className={'panel' + (tab === 'inside' ? '' : ' narrow-hidden')} aria-label="Visitas dentro">
         <div className="panel-heading"><div><h2>Dentro ahora</h2><p>{log.inside.length === 1 ? '1 visita con entrada sin salida.' : `${log.inside.length} visitas con entrada sin salida.`}</p></div><Users/></div>
         {!log.inside.length ? <Empty icon={<Users/>} title="No hay visitas dentro" text="Las visitas aparecen aquí al registrar su entrada y salen al registrar su salida."/> :
-          <div className="device-list">{log.inside.map(row => <div className="device-row" key={row.id}><div><h3>{row.guestName}</h3><p>{row.property.street} {row.property.houseNumber} · {row.guestVehicle || 'Peatonal'}</p><small>Entró el {dateText(row.since)}</small></div></div>)}</div>}
+          <div className="device-list">{log.inside.map(row => <div className="device-row" key={row.id}><div>{row.kind === 'walkin' && <span className="badge expired"><span/>Sin pase</span>}<h3>{row.guestName}</h3><p>{row.property.street} {row.property.houseNumber} · {row.guestVehicle || 'Peatonal'}</p><small>Entró el {dateText(row.since)}{row.authorizedBy ? ` · Autorizó ${row.authorizedBy}` : ''}</small></div>
+            {/* Walk-ins have no QR to scan on the way out. */}
+            {row.kind === 'walkin' && <Button className="secondary small-button" disabled={!online || !!exiting} busy={exiting === row.id} onClick={() => void onExit(row.id)}>Registrar salida</Button>}</div>)}</div>}
       </section>
       <section className={'panel' + (tab === 'recent' ? '' : ' narrow-hidden')} aria-label="Últimas lecturas">
         <div className="panel-heading"><div><h2>Últimas lecturas</h2><p>Entradas, salidas y rechazos de este equipo.</p></div><History/></div>
         {!log.recent.length ? <Empty icon={<History/>} title="Sin lecturas recientes" text="Las lecturas de este equipo aparecerán aquí."/> :
           <div className="device-list">{log.recent.map(row => {
             const granted = row.result === 'GRANTED';
-            return <div className="device-row" key={row.id}><div><span className={'badge' + (granted ? (row.direction === 'EXIT' ? ' used' : '') : ' revoked')}><span/>{granted ? (row.direction === 'ENTRY' ? 'Entrada' : 'Salida') : row.direction === 'ENTRY' ? 'Entrada rechazada' : 'Salida rechazada'}</span><h3>{row.guestName ?? 'Pase no reconocido'}</h3>{row.property && <p>{row.property.street} {row.property.houseNumber}</p>}<small>{time(row.timestamp)}{granted ? '' : ' · ' + (codeText(row.result) ?? 'Lectura rechazada.')}</small></div></div>;
+            const walkIn = row.kind === 'walkin';
+            const label = granted ? (row.direction === 'ENTRY' ? 'Entrada' : 'Salida') : walkIn ? (row.result === 'WALKIN_PENDING' ? 'Esperando respuesta' : row.result === 'WALKIN_CANCELLED' ? 'Cancelada' : 'Entrada rechazada') : row.direction === 'ENTRY' ? 'Entrada rechazada' : 'Salida rechazada';
+            const tone = granted ? (row.direction === 'EXIT' ? ' used' : '') : row.result === 'WALKIN_PENDING' || row.result === 'WALKIN_CANCELLED' ? ' expired' : ' revoked';
+            return <div className="device-row" key={row.id}><div><span className={'badge' + tone}><span/>{label}{walkIn ? ' · sin pase' : ''}</span><h3>{row.guestName ?? 'Pase no reconocido'}</h3>{row.property && <p>{row.property.street} {row.property.houseNumber}</p>}<small>{time(row.timestamp)}{row.authorizedBy ? ` · Autorizó ${row.authorizedBy}` : ''}{granted ? '' : ' · ' + (codeText(row.result) ?? 'Lectura rechazada.')}</small></div></div>;
           })}</div>}
       </section>
     </div>}
@@ -163,6 +169,15 @@ export function Gate() {
   const scan = useMutation();
   const online = useOnline();
   const shiftLog = useShiftLog(!!station, online, logVersion);
+  const [walkIn, setWalkIn] = useState(false);
+  const exit = useMutation();
+  const [exiting, setExiting] = useState<string | null>(null);
+
+  async function exitWalkIn(id: string) {
+    setExiting(id);
+    if (await exit.run(`/gate/scan/walk-ins/${id}/exit`, 'POST', {}, { public: true, station: true })) setLogVersion(v => v + 1);
+    setExiting(null);
+  }
 
   function openView(next: GateView) {
     setView(next);
@@ -280,8 +295,9 @@ export function Gate() {
       </div>
       <ErrorBox message={stationError}/>
       <GateNav view={view} onChange={openView} inside={shiftLog.log?.inside.length}/>
+      {walkIn && <GateWalkIn online={online} onClose={() => setWalkIn(false)} onFinished={granted => { if (granted !== null) signal(granted); setLogVersion(v => v + 1); }}/>}
       <div id="gate-view" role="tabpanel" aria-labelledby={view === 'scan' ? 'gate-tab-scan' : 'gate-tab-log'}>
-      {view === 'log' ? <ShiftLog {...shiftLog} online={online}/> : <>
+      {view === 'log' ? <><ShiftLog {...shiftLog} online={online} exiting={exiting} onExit={exitWalkIn}/><ErrorBox message={exit.error}/></> : <>
       <div className="gate-layout">
         <section className="panel scanner-panel">
           <div className="panel-heading"><div><h2>¿Qué movimiento vas a registrar?</h2><p>Selecciona una opción antes de leer el QR.</p></div><ScanLine/></div>
@@ -306,6 +322,7 @@ export function Gate() {
           </div>}
           {camera && <Button className="secondary full" onClick={() => setCamera(false)}>Cerrar cámara</Button>}
           <div className="manual-entry"><span>También puedes pegar el enlace</span><form onSubmit={event => { event.preventDefault(); unlockAudio(); void read(manual); }}><input aria-label="Enlace o token del pase" placeholder="https://…/p/…" value={manual} onChange={event => setManual(event.target.value)} disabled={!!attempt || scan.busy}/><Button type="submit" className="secondary" disabled={!manual || !!attempt || !online} busy={scan.busy}><ClipboardPaste size={17}/> Validar {directionName}</Button></form></div>
+          <div className="walkin-entry"><div><strong>¿Llegó sin pase?</strong><span>Pide autorización a la vivienda desde aquí.</span></div><Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setCamera(false); setWalkIn(true); }}><UserPlus size={17}/> Visita sin pase</Button></div>
           <ErrorBox message={error}/>
         </section>
         <aside ref={resultPanel} tabIndex={-1} aria-label="Resultado de la lectura" className="panel scan-result" aria-live="polite" aria-atomic="true">
