@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { api, setToken } from './api';
 import { disablePush } from './push';
 import type { CreatedPass, Identity, Page, Property, SessionResult } from './types';
-type Auth = { links: Record<string, CreatedPass>; rememberPass: (pass: CreatedPass) => void; forgetPass: (id: string) => void; identity: Identity | null; properties: Property[]; property: Property | null; select: (id: string) => void; accept: (session: SessionResult) => Promise<void>; logout: () => Promise<void>; switchProfile: (profile: 'RESIDENT' | 'ADMIN' | 'SUPERADMIN', clusterId?: string) => Promise<SessionResult>; expired: boolean };
+type Auth = { links: Record<string, CreatedPass>; rememberPass: (pass: CreatedPass) => void; forgetPass: (id: string) => void; identity: Identity | null; properties: Property[]; property: Property | null; select: (id: string) => void; accept: (session: SessionResult) => Promise<void>; logout: () => Promise<void>; switchProfile: (profile: 'RESIDENT' | 'ADMIN' | 'SUPERADMIN', clusterId?: string) => Promise<SessionResult>; refreshIdentity: () => Promise<void>; expired: boolean };
 const Context = createContext<Auth>(null!);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [links, setLinks] = useState<Record<string, CreatedPass>>({});
@@ -21,7 +21,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await disablePush().catch(() => { /* The session may already be gone; alerts then stop at the membership check. */ });
     try { await api('/auth/logout', { method: 'POST' }); } finally { clear(); }
   }
+  // Re-reads who is signed in, e.g. after the person edits their name in Mi perfil.
+  async function refreshIdentity() { setIdentity(await api<Identity>('/auth/me')); }
   async function switchProfile(profile: 'RESIDENT' | 'ADMIN' | 'SUPERADMIN', clusterId?: string) { const session = await api<SessionResult>('/auth/context', { method: 'POST', body: { profile, clusterId } }); await accept(session); return session; }
-  return <Context.Provider value={{ links, rememberPass: pass => setLinks(old => ({ ...old, [pass.id]: pass })), forgetPass: id => setLinks(old => { const next = { ...old }; delete next[id]; return next; }), identity, properties, property: properties.find(p => p.id === selected) ?? properties[0] ?? null, select: setSelected, accept, logout, switchProfile, expired }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ links, rememberPass: pass => setLinks(old => ({ ...old, [pass.id]: pass })), forgetPass: id => setLinks(old => { const next = { ...old }; delete next[id]; return next; }), identity, properties, property: properties.find(p => p.id === selected) ?? properties[0] ?? null, select: setSelected, accept, logout, switchProfile, refreshIdentity, expired }}>{children}</Context.Provider>;
 }
 export const useAuth = () => useContext(Context);

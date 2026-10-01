@@ -4,8 +4,11 @@ import { Button, ErrorBox } from './ui';
 import { errorText } from '../api';
 import { disablePush, enablePush, pushRegistration, pushSubscribed, pushSupport } from '../push';
 
-/** Lets a resident turn on push alerts for when their visitors enter and leave. */
-export function VisitAlerts({ propertyId }: { propertyId: string }) {
+/**
+ * Lets a resident turn on push alerts for when their visitors enter and leave.
+ * On Inicio (`compact`) it only invites people to turn alerts on; Mi perfil shows the full control.
+ */
+export function VisitAlerts({ propertyId, compact = false }: { propertyId: string; compact?: boolean }) {
   const support = pushSupport();
   const [ready, setReady] = useState(false);
   const [on, setOn] = useState(false);
@@ -33,7 +36,7 @@ export function VisitAlerts({ propertyId }: { propertyId: string }) {
     finally { setBusy(false); }
   }
 
-  if (support === 'unsupported' || (support === 'ok' && !ready)) return null;
+  if (support === 'unsupported' || (support === 'ok' && !ready) || (compact && on)) return null;
   const Icon = support === 'install' ? Smartphone : denied ? BellOff : on ? BellRing : Bell;
   const text = support === 'install'
     ? 'En iPhone, primero instala Zentry: toca Compartir en Safari y elige «Agregar a inicio». Luego ábrela desde tu pantalla de inicio.'

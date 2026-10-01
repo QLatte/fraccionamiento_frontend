@@ -41,6 +41,14 @@ Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde est
 
 Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace del pase y la ubicación en Google Maps en el texto (el enlace de Maps está en `src/config.ts`). La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
 
+## Mi perfil
+
+Al tocar el nombre en la barra lateral (por ejemplo, «Administrador de prueba · Mi perfil») se abre `/perfil` (`src/pages/Profile.tsx`), disponible en cualquier perfil:
+
+- **Datos personales:** editar el nombre. Es el que ve la caseta al escanear y el que aparece en «Invitó …»; cada cambio queda en la auditoría.
+- **Avisos:** activar los avisos en este teléfono, elegir entradas y salidas, y **No molestar** (horario en que se silencian entradas y salidas, en la zona horaria del teléfono). Las solicitudes de visitas sin pase siempre llegan. Aplica en todos los teléfonos de la persona. En Inicio, el panel de avisos solo aparece mientras estén apagados.
+- **Mi cuenta:** correo (solo lectura; lo cambia administración porque es la identidad de acceso), viviendas con su rol, acceso a Mis dispositivos y Cerrar sesión.
+
 ## Visitas sin pase
 
 En el escáner, **Visita sin pase** (`src/pages/GateWalkIn.tsx`) guía al vigilante: elige la vivienda, captura nombre, placas, motivo, tipo de identificación y sus **últimos 4 caracteres**, y confirma que revisó la identificación en persona (no se guarda foto ni documento). La vivienda recibe un push y una tarjeta **Visita en la caseta** en cualquier pantalla de la app (`src/components/WalkInRequests.tsx`) para **Permitir** o **Rechazar**; responde cualquier integrante y gana la primera respuesta. La caseta muestra una cuenta regresiva de 3 minutos; al terminar, o de inmediato si nadie tiene avisos activados, ofrece registrar una autorización por teléfono con el nombre de quien contestó. Las visitas aprobadas aparecen en la Bitácora con la etiqueta **Sin pase** y su salida se registra con **Registrar salida**.
