@@ -7,7 +7,7 @@ const listeners = new Set<() => void>();
 export function markAppReady() { if (appReady) return; appReady = true; listeners.forEach(listener => listener()); }
 
 const sessionKey = 'zentry:splash-shown';
-const INTRO_MS = 2450;   // house draws → roof lifts → QR emerges and settles → name slides up
+const INTRO_MS = 2500;   // house appears → door opens → QR floats out toward the camera → name lights up
 const EXIT_MS = 750;     // the dark backdrop drains and uncovers the app
 const MAX_WAIT_MS = 6000;
 
@@ -18,7 +18,7 @@ export function shouldShowSplash() {
   return true;
 }
 
-// A small, stylised QR (not scannable): finder patterns plus a few modules on a 21×21 grid.
+// A stylised QR (decorative, not scannable): finder patterns plus a few modules on a 21×21 grid.
 const QR_MODULES = [
   [8, 1], [10, 1], [12, 1], [9, 3], [11, 3], [8, 5], [12, 5], [1, 8], [3, 8], [5, 8], [8, 8], [10, 8], [13, 8], [15, 8], [18, 8],
   [9, 9], [11, 10], [14, 10], [17, 10], [19, 10], [2, 10], [4, 11], [8, 11], [12, 12], [15, 12], [18, 12], [1, 12], [6, 12],
@@ -27,7 +27,7 @@ const QR_MODULES = [
 const QR_ACCENTS = new Set(['11,10', '15,16', '9,13']);
 
 function QrMark() {
-  const finder = (x: number, y: number) => <g key={`${x}-${y}`}><rect x={x + 0.5} y={y + 0.5} width="6" height="6" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1"/><rect x={x + 2} y={y + 2} width="3" height="3" rx=".8" fill="currentColor"/></g>;
+  const finder = (x: number, y: number) => <g key={`${x}-${y}`}><rect className="splash-qr-ring" x={x + 0.5} y={y + 0.5} width="6" height="6" rx="1.6"/><rect x={x + 2} y={y + 2} width="3" height="3" rx=".8"/></g>;
   return <svg className="splash-qr-code" viewBox="0 0 21 21" aria-hidden="true">
     {finder(0, 0)}{finder(14, 0)}{finder(0, 14)}
     {QR_MODULES.map(([x, y]) => <rect key={`${x},${y}`} className={QR_ACCENTS.has(`${x},${y}`) ? 'splash-qr-accent' : undefined} x={x + 0.06} y={y + 0.06} width=".88" height=".88" rx=".24"/>)}
@@ -35,9 +35,40 @@ function QrMark() {
 }
 
 /**
- * Opening animation, replacing the loading spinner on app launch: a line-drawn
- * house opens its roof like a box, a QR emerges and bounces into the center as
- * the house fades, then the app name slides up. The backdrop then drains away.
+ * Minimal isometric house (2.5D, flat shading). Front-bottom corner at (100,165);
+ * right wall runs along (0.866,-0.5)·70, left wall along (-0.866,-0.5)·60, walls 55 high,
+ * gable roof with its ridge parallel to the right wall. The door sits on the right wall.
+ */
+function IsoHouse() {
+  return <svg className="splash-house" viewBox="0 0 200 200" aria-hidden="true">
+    <defs>
+      <linearGradient id="splash-left" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2b7d91"/><stop offset="1" stopColor="#1d5a6c"/></linearGradient>
+      <linearGradient id="splash-right" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a4c5c"/><stop offset="1" stopColor="#123c4a"/></linearGradient>
+      <linearGradient id="splash-roof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#0f3140"/><stop offset="1" stopColor="#0b2632"/></linearGradient>
+      <radialGradient id="splash-glow"><stop offset="0" stopColor="#bffcf3"/><stop offset=".55" stopColor="#5fe3d0"/><stop offset="1" stopColor="#5fe3d0" stopOpacity="0"/></radialGradient>
+    </defs>
+    <ellipse className="splash-house-shadow" cx="104" cy="168" rx="70" ry="18"/>
+    {/* Left wall with the gable end (faces the viewer's left). */}
+    <path fill="url(#splash-left)" d="M100 165 L48 135 L48 80 L74 65 L100 110 Z"/>
+    {/* Right wall (faces the viewer's right). */}
+    <path fill="url(#splash-right)" d="M100 165 L160.6 130 L160.6 75 L100 110 Z"/>
+    {/* Front roof slope with a warm eave line. */}
+    <path fill="url(#splash-roof)" d="M96 113 L164 74 L136 26 L71 63 Z"/>
+    <path className="splash-eave" d="M96 113 L164 74"/>
+    <path className="splash-ridge" d="M71 63 L136 26"/>
+    {/* Window on the gable wall. */}
+    <path className="splash-window" d="M66 112 L80 120 L80 104 L66 96 Z"/>
+    {/* Doorway: light spills out as the door swings open. */}
+    <path className="splash-doorway" d="M123 151.7 L137.6 143.3 L137.6 107.3 L123 115.7 Z"/>
+    <ellipse className="splash-door-glow" cx="131" cy="130" rx="26" ry="30" fill="url(#splash-glow)"/>
+    <path className="splash-door" d="M123 151.7 L137.6 143.3 L137.6 107.3 L123 115.7 Z"/>
+  </svg>;
+}
+
+/**
+ * Opening animation, replacing the loading spinner on app launch: a minimal
+ * isometric house opens its door, a holographic QR floats out toward the camera
+ * while the house blurs into the background, then the name lights up below.
  */
 export function Splash({ onDone }: { onDone: () => void }) {
   const [leaving, setLeaving] = useState(false);
@@ -63,13 +94,10 @@ export function Splash({ onDone }: { onDone: () => void }) {
     <div className="splash-fill"/>
     <div className="splash-content">
       <div className="splash-stage">
-        <svg className="splash-house" viewBox="0 0 120 120" aria-hidden="true">
-          <g className="splash-roof"><path pathLength="1" d="M18 62 L60 26 L102 62"/><path className="splash-chimney" pathLength="1" d="M82 44 V30 H90 V51"/></g>
-          <g className="splash-body"><path pathLength="1" d="M28 58 V96 Q28 102 34 102 H86 Q92 102 92 96 V58"/><path className="splash-door" pathLength="1" d="M52 102 V82 Q52 78 56 78 H64 Q68 78 68 82 V102"/></g>
-        </svg>
-        <div className="splash-qr"><QrMark/></div>
+        <div className="splash-house-wrap"><IsoHouse/></div>
+        <div className="splash-qr"><span className="splash-qr-shine"/><QrMark/></div>
       </div>
-      <div className="splash-name-clip"><span className="splash-name">Zentry<span className="splash-dot">.</span></span></div>
+      <div className="splash-name"><span className="splash-name-text">Zentry<span className="splash-dot">.</span></span></div>
     </div>
   </div>;
 }
