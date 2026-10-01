@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Component, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Bell, ChevronDown, CircleHelp, LogOut, MapPin, ShieldCheck, Smartphone, WifiOff } from 'lucide-react';
 import { errorText } from './api';
 import { AuthProvider, useAuth } from './auth';
@@ -6,6 +6,7 @@ import { useOnline, useQuery } from './hooks';
 import type { Notification, Page } from './types';
 import { Brand, Button, Empty, Loading, PageHeader, Step } from './components/ui';
 import { BottomNav } from './components/BottomNav';
+import { AppReady, shouldShowSplash, Splash } from './components/Splash';
 import { WalkInRequests } from './components/WalkInRequests';
 import AnimatedQr from './components/icons/AnimatedQr';
 import AnimatedHome from './components/icons/AnimatedHome';
@@ -34,7 +35,12 @@ function usePath() {
   useEffect(() => { const update = () => set(location.pathname); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []);
   return { path, navigate: (next: string) => { if (next !== location.pathname) history.pushState(null, '', next); set(location.pathname); window.scrollTo(0, 0); } };
 }
-export default function App() { return <ErrorBoundary><AuthProvider><Router/></AuthProvider></ErrorBoundary>; }
+export default function App() {
+  // Opening animation on launch, instead of the loading spinner; the app renders underneath.
+  const [splash, setSplash] = useState(shouldShowSplash);
+  const hideSplash = useCallback(() => setSplash(false), []);
+  return <ErrorBoundary><AuthProvider><Router/></AuthProvider>{splash && <Splash onDone={hideSplash}/>}</ErrorBoundary>;
+}
 function Router() {
   const { path, navigate } = usePath(); const online = useOnline(); const { identity } = useAuth();
   const profile = identity?.session.profile ?? identity?.user.globalRole;
@@ -47,7 +53,7 @@ function Router() {
       window.dispatchEvent(new PopStateEvent('popstate'));
     }
   }, [admin, guard, identity, path, profile]);
-  return <><UpdateNotice/>{!online && <div className="offline-bar" role="status"><WifiOff size={17}/> Sin conexión. Puedes abrir la app; las acciones estarán disponibles al reconectarte.</div>}<Suspense fallback={<Loading/>}>{path.startsWith('/p/') ? <PublicPass/> : path === '/caseta' ? <GateStationPage/> : !identity ? <Login/> : guard ? <GateStationPage/> : <Shell path={admin && !(profile === 'SUPERADMIN' && path === '/plataforma' || adminSections.some(section => section.path === path)) ? (profile === 'SUPERADMIN' ? '/plataforma' : '/admin/invitaciones') : path} navigate={navigate}/>}</Suspense></>;
+  return <><UpdateNotice/>{!online && <div className="offline-bar" role="status"><WifiOff size={17}/> Sin conexión. Puedes abrir la app; las acciones estarán disponibles al reconectarte.</div>}<Suspense fallback={<Loading/>}><AppReady/>{path.startsWith('/p/') ? <PublicPass/> : path === '/caseta' ? <GateStationPage/> : !identity ? <Login/> : guard ? <GateStationPage/> : <Shell path={admin && !(profile === 'SUPERADMIN' && path === '/plataforma' || adminSections.some(section => section.path === path)) ? (profile === 'SUPERADMIN' ? '/plataforma' : '/admin/invitaciones') : path} navigate={navigate}/>}</Suspense></>;
 }
 function GateStationPage() {
   // Legacy GUARD accounts land here after login; the station itself needs no session.

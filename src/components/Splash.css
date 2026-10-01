@@ -1,0 +1,74 @@
+/* Opening animation. Only transform and opacity animate, on custom curves:
+   0–550ms mark appears · 500–1250ms color wave rises · 1250–1950ms name slides out
+   · exit: wave drains down and uncovers the app. */
+.splash {
+  --splash-ease: cubic-bezier(.76, 0, .24, 1);
+  --splash-spring: cubic-bezier(.32, .72, 0, 1);
+  position: fixed; inset: 0; z-index: 100; overflow: hidden;
+  display: grid; place-items: center;
+  background: #f2f7f9;
+}
+/* The light backdrop gives way once the wave covers it, so the exit reveals the app beneath. */
+.splash { animation: splash-backdrop 1ms 1.25s forwards; }
+@keyframes splash-backdrop { to { background: transparent; } }
+
+.splash-fill {
+  position: absolute; left: -30%; right: -30%; top: -12%; height: 130%;
+  /* Wide ellipse top edge: the "wave" curve while it rises and drains. */
+  border-radius: 50% 50% 0 0 / 18% 18% 0 0;
+  background: radial-gradient(120% 60% at 50% 0%, #20586b 0%, #123c4a 55%, #0b2a35 100%);
+  transform: translateY(105%);
+  animation: splash-rise .75s var(--splash-ease) .5s forwards;
+  will-change: transform;
+}
+@keyframes splash-rise { to { transform: translateY(0); } }
+
+.splash-brand { position: relative; display: flex; align-items: center; gap: 14px; }
+.splash-mark {
+  position: relative; display: grid; place-items: center; width: 76px; height: 76px; color: #fff;
+  border-radius: 22px 22px 8px 8px;
+  opacity: 0; transform: translateX(var(--splash-shift, 0)) scale(.8);
+  animation: splash-mark-in .55s var(--splash-spring) forwards, splash-mark-slide .7s var(--splash-ease) 1.25s forwards;
+}
+.splash-mark > svg { position: relative; }
+.splash-mark-bg {
+  position: absolute; inset: 0; border-radius: inherit; background: #123c4a;
+  box-shadow: 0 18px 40px -12px #123c4a66, inset 0 1px 0 #ffffff26;
+  /* Melts into the wave once the color has covered the screen. */
+  animation: splash-fade-out .45s var(--splash-ease) 1.05s forwards;
+}
+@keyframes splash-mark-in { to { opacity: 1; transform: translateX(var(--splash-shift, 0)) scale(1); } }
+@keyframes splash-mark-slide { from { opacity: 1; transform: translateX(var(--splash-shift, 0)) scale(1); } to { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes splash-fade-out { to { opacity: 0; } }
+
+/* The name is masked and slides out from behind the mark. */
+.splash-word-clip { overflow: hidden; display: inline-flex; padding: 6px 4px 6px 0; }
+.splash-word {
+  display: inline-block; color: #fff; font-family: var(--display); font-size: 50px; font-weight: 700; letter-spacing: -1.5px; line-height: 1;
+  opacity: 0; transform: translateX(-60%);
+  animation: splash-word-in .7s var(--splash-spring) 1.32s forwards;
+}
+.splash-dot { color: var(--sun, #e6b85c); }
+@keyframes splash-word-in { to { opacity: 1; transform: translateX(0); } }
+
+/* Exit: the brand lifts away and the wave drains downward. */
+.splash-leaving { pointer-events: none; }
+.splash-leaving .splash-brand { animation: splash-brand-out .45s var(--splash-ease) forwards; }
+.splash-leaving .splash-fill { transform: translateY(0); animation: splash-drain .75s var(--splash-ease) .1s forwards; }
+@keyframes splash-brand-out { to { opacity: 0; transform: translateY(-14px) scale(.97); } }
+@keyframes splash-drain { from { transform: translateY(0); } to { transform: translateY(108%); } }
+
+@media (max-width: 420px) {
+  .splash-mark { width: 68px; height: 68px; }
+  .splash-word { font-size: 44px; }
+}
+
+/* Reduced motion: no wave or slides, just the finished mark on brand color, then a fade. */
+@media (prefers-reduced-motion: reduce) {
+  .splash, .splash-fill, .splash-mark, .splash-mark-bg, .splash-word, .splash-leaving .splash-brand, .splash-leaving .splash-fill { animation: none !important; }
+  .splash { background: #123c4a; transition: opacity .25s; }
+  .splash-fill { transform: none; }
+  .splash-mark, .splash-word { opacity: 1; transform: none; }
+  .splash-mark-bg { opacity: 0; }
+  .splash-leaving { opacity: 0; }
+}

@@ -25,6 +25,10 @@ Los estilos base están escritos a mano en `src/styles.css`. Tailwind CSS v4 est
 
 `src/tailwind.css` importa solo el tema y las utilidades de Tailwind. **No incluye Preflight** (su reinicio global de estilos) a propósito: cambiaría márgenes, botones y títulos en toda la app. Las utilidades viven en una capa de cascada, así que si `styles.css` y una utilidad definen la misma propiedad, gana `styles.css`.
 
+## Animación de entrada
+
+Al abrir la app, en lugar del indicador «Cargando información…», se reproduce una animación de marca (`src/components/Splash.tsx` y `Splash.css`): aparece el logo, el azul Zentry sube como una ola, el cuadro del logo se funde y «Zentry.» se desliza fuera del logo; después la ola baja y descubre la primera pantalla, que ya se cargó debajo. Dura unos 2.4 s; si la app aún no está lista se queda en el logo hasta que lo esté (máximo 6 s). La app avisa que está lista con `<AppReady/>` dentro del `Suspense` principal. Se muestra una vez por sesión del navegador (cada vez que se abre la PWA), nunca en el enlace público del QR (`/p/…`), y con «reducir movimiento» activado solo aparece el logo y se desvanece. Solo anima `transform` y `opacity`.
+
 ## Carga por partes
 
 Cada pantalla principal se descarga solo cuando se usa (`React.lazy` en `src/App.tsx`): el escáner de caseta (con jsQR), el QR compartido (con qrcode), el login WebAuthn, los pases, los dispositivos, la administración y la plataforma. React va en su propio archivo, que casi no cambia y queda en caché entre despliegues. Para enrutar sin cargar la administración, la lista de secciones vive en `src/pages/adminSections.ts`. Si tras un despliegue una pestaña abierta pide una parte que ya no existe, la app se recarga una vez para tomar la versión nueva. El service worker guarda todas las partes de `dist`, así que la PWA sigue abriendo sin conexión.
