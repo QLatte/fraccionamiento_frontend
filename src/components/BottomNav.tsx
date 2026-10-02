@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Smartphone } from 'lucide-react';
 import AnimatedQr from './icons/AnimatedQr';
-import AnimatedFilledBell from './icons/AnimatedFilledBell';
 import AnimatedHome from './icons/AnimatedHome';
 import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAlignCenter';
 import AnimatedUserPlus from './icons/AnimatedUserPlus';
@@ -17,11 +16,9 @@ type Props = {
   onMore: (trigger: HTMLButtonElement) => void;
   /** Unread security alerts, shown as a dot on Dispositivos. */
   deviceAlerts?: number;
-  /** New activity events, shown as a count on Actividad. */
-  activityUnread?: number;
 };
 
-export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAlerts = 0, activityUnread = 0 }: Props) {
+export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAlerts = 0 }: Props) {
   const items = role === 'SUPERADMIN' ? [
     { path: '/plataforma', label: 'Plataforma', Icon: AnimatedHome },
     { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
@@ -34,7 +31,6 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
   ] : [
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
     { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },
-    { path: '/actividad', label: 'Actividad', Icon: AnimatedFilledBell },
     { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ];
@@ -62,7 +58,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
           type="button"
           className={`mobile-nav-item${activeIndex === index ? ' active' : ''}`}
           aria-current={destination === path ? 'page' : undefined}
-          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Dispositivos de caseta' : destination === '/admin/estado' ? 'Estado del sistema' : destination === '/dispositivos' && deviceAlerts ? `${label}: ${deviceAlerts} avisos de seguridad` : destination === '/actividad' && activityUnread ? `${label}: ${activityUnread} novedades` : label}
+          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Dispositivos de caseta' : destination === '/admin/estado' ? 'Estado del sistema' : destination === '/dispositivos' && deviceAlerts ? `${label}: ${deviceAlerts} avisos de seguridad` : label}
           aria-expanded={destination === null ? menuOpen : undefined}
           aria-controls={destination === null ? 'main-navigation' : undefined}
           aria-haspopup={destination === null ? 'dialog' : undefined}
@@ -73,7 +69,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
             } else onNavigate(destination);
           }}
         >
-          <span className="mobile-nav-icon" aria-hidden="true"><Icon size={25} strokeWidth={activeIndex === index ? 2.2 : 1.7}/>{destination === '/dispositivos' && deviceAlerts > 0 && <i className="mobile-nav-alert"/>}{destination === '/actividad' && activityUnread > 0 && <i className="mobile-nav-count">{activityUnread > 9 ? '9+' : activityUnread}</i>}</span>
+          <span className="mobile-nav-icon" aria-hidden="true"><Icon size={25} strokeWidth={activeIndex === index ? 2.2 : 1.7}/>{destination === '/dispositivos' && deviceAlerts > 0 && <i className="mobile-nav-alert"/>}</span>
           <span className="mobile-nav-label">{label}</span>
         </button>
       ))}

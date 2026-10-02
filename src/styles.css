@@ -181,10 +181,11 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .activity-item { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; padding: 10px 6px; }
   .activity-icon { width: 36px; height: 36px; }
 }
-/* Unread counter on Actividad (sidebar and mobile bar). */
-.nav-count { min-width: 20px; height: 20px; margin-left: auto; padding: 0 6px; border-radius: 999px; background: #b1711b; color: #fff; font-size: 11px; font-weight: 700; line-height: 20px; text-align: center; font-style: normal; }
-.sidebar nav button.active .nav-count { background: #fff; color: var(--brand); }
-.mobile-nav-count { position: absolute; top: 0; right: -2px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #b1711b; color: #fff; font-size: 10px; font-weight: 700; line-height: 17px; text-align: center; font-style: normal; box-shadow: 0 0 0 2px #fff; }
+/* Actividad bell in the top bar, with the count of new events. */
+.activity-button { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--brand); transition: background-color .2s cubic-bezier(.32, .72, 0, 1); }
+.activity-button:hover, .activity-button.active { background: var(--soft); }
+.activity-button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+.activity-count { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #b1711b; color: #fff; font-size: 10px; font-weight: 700; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #fff; font-variant-numeric: tabular-nums; }
 /* Unread security alerts: a dot on Dispositivos (sidebar and mobile bar) instead of a top-bar bell. */
 .nav-alert { width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: #b1711b; box-shadow: 0 0 0 2px #fff; flex-shrink: 0; }
 .mobile-nav-icon { position: relative; }
