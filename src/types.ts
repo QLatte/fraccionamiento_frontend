@@ -26,6 +26,11 @@ export type IdDocumentType = 'INE' | 'LICENSE' | 'PASSPORT' | 'OTHER';
 export interface WalkInView { id: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'; method: 'APP' | 'PHONE' | null; notified: number; expiresAt: string; canCall: boolean; guestName: string; guestVehicle: string | null; reason: WalkInReason; property: { street: string; houseNumber: string } | null; authorizedBy: string | null; enteredAt: string | null; exitedAt: string | null }
 /** A pending request shown to household members. */
 export interface WalkInPending { id: string; createdAt: string; expiresAt: string; reason: WalkInReason; idType: IdDocumentType; guestName: string; guestVehicle: string | null; idLast4: string }
+/** One event in a household's gate activity (Actividad). */
+export interface ActivityItem {
+  id: string; at: string; guestName: string | null; gate: string | null; by: string | null; method: 'APP' | 'PHONE' | null; reason: string | null;
+  type: 'VISIT_ENTERED' | 'VISIT_EXITED' | 'VISIT_DENIED' | 'WALKIN_REQUESTED' | 'WALKIN_APPROVED' | 'WALKIN_REJECTED' | 'WALKIN_CANCELLED' | 'WALKIN_EXITED';
+}
 /** The signed-in person's own profile (Mi perfil). */
 export interface Profile { fullName: string; email: string; globalRole: Role; preferences: { alertEntries: boolean; alertExits: boolean; quietHours: { start: string; end: string } | null; timezone: string } }
 export interface GateProperty { id: string; street: string; houseNumber: string; cluster: { name: string } }

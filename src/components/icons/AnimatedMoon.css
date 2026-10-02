@@ -1,0 +1,13 @@
+.animated-moon { display: inline-block; flex: none; overflow: visible; vertical-align: -2px; }
+.animated-moon .moon { transform-box: fill-box; transform-origin: center; }
+
+/* Its Hover motion: rotate 0 → -15 → 0° while scaling 1 → 1.1 → 1 (0.5s). */
+@media (hover: hover) {
+  .icon-hover:hover .animated-moon .moon { animation: moon-tilt .5s ease-in-out; }
+}
+.animated-moon.playing .moon { animation: moon-tilt .5s ease-in-out; }
+@keyframes moon-tilt { 0%, 100% { transform: rotate(0) scale(1); } 50% { transform: rotate(-15deg) scale(1.1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-moon .moon { animation: none !important; }
+}

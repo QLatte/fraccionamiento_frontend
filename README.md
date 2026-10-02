@@ -41,6 +41,10 @@ Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde est
 
 Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace del pase y la ubicación en Google Maps en el texto (el enlace de Maps está en `src/config.ts`). La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
 
+## Actividad
+
+**Actividad** (`/actividad`, `src/pages/Activity.tsx`), en el menú lateral y en la barra inferior de los residentes, muestra lo que pasa en la caseta con las visitas de la vivienda seleccionada en los últimos 30 días, agrupado por día: entradas y salidas con pase (con quién invitó), intentos rechazados con el motivo, y visitas sin pase (solicitud, quién autorizó o rechazó y si fue desde la app o por teléfono, salida o si se retiró). Filtros: Todo, Entradas, Salidas, Sin pase y Rechazos. Se actualiza cada 20 s. Un contador en el menú indica las novedades desde la última vez que se abrió en ese teléfono (`src/activity.ts`, guardado en el navegador). Al tocar un aviso push se abre esta sección.
+
 ## Mi perfil
 
 Al tocar el nombre en la barra lateral (por ejemplo, «Administrador de prueba · Mi perfil») se abre `/perfil` (`src/pages/Profile.tsx`), disponible en cualquier perfil:

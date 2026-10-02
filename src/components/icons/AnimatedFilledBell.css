@@ -1,0 +1,17 @@
+.animated-filled-bell { display: block; flex: none; overflow: visible; }
+.animated-filled-bell .bell { transform-box: view-box; transform-origin: 12px 2.4px; }
+.animated-filled-bell .below-circle { transform-box: view-box; transform-origin: 12px 19px; }
+
+/* Its Hover motion: bell swings 0 → -8 → 6 → -4 → 2 → 0°, clapper follows 50ms later. */
+@media (hover: hover) {
+  .icon-hover:hover .animated-filled-bell .bell { animation: filled-bell-swing .6s ease-in-out; }
+  .icon-hover:hover .animated-filled-bell .below-circle { animation: filled-bell-clapper .6s ease-in-out .05s; }
+}
+.animated-filled-bell.ringing .bell { animation: filled-bell-swing .6s ease-in-out; }
+.animated-filled-bell.ringing .below-circle { animation: filled-bell-clapper .6s ease-in-out .05s; }
+@keyframes filled-bell-swing { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 80% { transform: rotate(2deg); } }
+@keyframes filled-bell-clapper { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(20deg); } 40% { transform: rotate(-18deg); } 60% { transform: rotate(12deg); } 80% { transform: rotate(-6deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-filled-bell .bell, .animated-filled-bell .below-circle { animation: none !important; }
+}
