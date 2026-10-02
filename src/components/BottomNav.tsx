@@ -14,9 +14,11 @@ type Props = {
   menuOpen: boolean;
   onNavigate: (path: string) => void;
   onMore: (trigger: HTMLButtonElement) => void;
+  /** Unread security alerts, shown as a dot on Dispositivos. */
+  deviceAlerts?: number;
 };
 
-export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
+export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAlerts = 0 }: Props) {
   const items = role === 'SUPERADMIN' ? [
     { path: '/plataforma', label: 'Plataforma', Icon: AnimatedHome },
     { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
@@ -56,7 +58,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
           type="button"
           className={`mobile-nav-item${activeIndex === index ? ' active' : ''}`}
           aria-current={destination === path ? 'page' : undefined}
-          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Dispositivos de caseta' : destination === '/admin/estado' ? 'Estado del sistema' : label}
+          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Dispositivos de caseta' : destination === '/admin/estado' ? 'Estado del sistema' : destination === '/dispositivos' && deviceAlerts ? `${label}: ${deviceAlerts} avisos de seguridad` : label}
           aria-expanded={destination === null ? menuOpen : undefined}
           aria-controls={destination === null ? 'main-navigation' : undefined}
           aria-haspopup={destination === null ? 'dialog' : undefined}
@@ -67,7 +69,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore }: Props) {
             } else onNavigate(destination);
           }}
         >
-          <span className="mobile-nav-icon" aria-hidden="true"><Icon size={25} strokeWidth={activeIndex === index ? 2.2 : 1.7}/></span>
+          <span className="mobile-nav-icon" aria-hidden="true"><Icon size={25} strokeWidth={activeIndex === index ? 2.2 : 1.7}/>{destination === '/dispositivos' && deviceAlerts > 0 && <i className="mobile-nav-alert"/>}</span>
           <span className="mobile-nav-label">{label}</span>
         </button>
       ))}

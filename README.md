@@ -46,7 +46,7 @@ Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Com
 Al tocar el nombre en la barra lateral (por ejemplo, «Administrador de prueba · Mi perfil») se abre `/perfil` (`src/pages/Profile.tsx`), disponible en cualquier perfil:
 
 - **Datos personales:** editar el nombre. Es el que ve la caseta al escanear y el que aparece en «Invitó …»; cada cambio queda en la auditoría.
-- **Avisos:** activar los avisos en este teléfono, elegir entradas y salidas, y **No molestar** (horario en que se silencian entradas y salidas, en la zona horaria del teléfono). Las solicitudes de visitas sin pase siempre llegan. Aplica en todos los teléfonos de la persona. En Inicio, el panel de avisos solo aparece mientras estén apagados.
+- **Avisos:** activar los avisos en este teléfono, elegir entradas y salidas, y **No molestar** (horario en que se silencian entradas y salidas, en la zona horaria del teléfono). Las solicitudes de visitas sin pase siempre llegan. Aplica en todos los teléfonos de la persona. Los avisos de este teléfono se encienden con un interruptor tipo *liquid glass* (`src/components/LiquidToggle.tsx`, `role="switch"`); es el único lugar donde se activan.
 - **Mi cuenta:** correo (solo lectura; lo cambia administración porque es la identidad de acceso), viviendas con su rol, acceso a Mis dispositivos y Cerrar sesión.
 
 ## Visitas sin pase
@@ -55,7 +55,7 @@ En el escáner, **Visita sin pase** (`src/pages/GateWalkIn.tsx`) guía al vigila
 
 ## Avisos de visitas
 
-En Inicio, el panel **Avisos de visitas** activa las notificaciones push en ese teléfono para la vivienda seleccionada (`src/push.ts` y `src/components/VisitAlerts.tsx`). Todos los integrantes de la vivienda con avisos activados reciben un aviso al validarse la entrada en caseta y otro al registrarse la salida: quien creó el pase ve «Tu visita llegó/salió» y los demás «Llegó/Salió una visita … · Invitó *nombre*». El aviso de salida reemplaza al de entrada. El service worker (`scripts/build-sw.mjs`) muestra el aviso y abre Mis pases al tocarlo. Al cerrar sesión se desactivan en ese dispositivo. En iPhone solo funcionan con Zentry instalada en la pantalla de inicio (iOS 16.4+); el panel lo explica. El servidor necesita las claves VAPID (ver el README del backend). El service worker solo se registra en producción, así que en `npm run dev` el panel no aparece.
+En **Mi perfil → Avisos**, el interruptor **Avisos en este teléfono** activa las notificaciones push en ese teléfono para la vivienda seleccionada (`src/push.ts` y `src/components/VisitAlerts.tsx`). Todos los integrantes de la vivienda con avisos activados reciben un aviso al validarse la entrada en caseta y otro al registrarse la salida: quien creó el pase ve «Tu visita llegó/salió» y los demás «Llegó/Salió una visita … · Invitó *nombre*». El aviso de salida reemplaza al de entrada. El service worker (`scripts/build-sw.mjs`) muestra el aviso y abre Mis pases al tocarlo. Al cerrar sesión se desactivan en ese dispositivo. En iPhone solo funcionan con Zentry instalada en la pantalla de inicio (iOS 16.4+); el panel lo explica. El servidor necesita las claves VAPID (ver el README del backend). El service worker solo se registra en producción, así que en `npm run dev` el panel no aparece.
 
 ## Caseta compartida
 

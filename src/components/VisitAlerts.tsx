@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Bell, BellOff, BellRing, Smartphone } from 'lucide-react';
-import { Button, ErrorBox } from './ui';
+import { ErrorBox } from './ui';
+import { LiquidToggle } from './LiquidToggle';
 import { errorText } from '../api';
 import { disablePush, enablePush, pushRegistration, pushSubscribed, pushSupport } from '../push';
 
-/**
- * Lets a resident turn on push alerts for when their visitors enter and leave.
- * On Inicio (`compact`) it only invites people to turn alerts on; Mi perfil shows the full control.
- */
-export function VisitAlerts({ propertyId, compact = false }: { propertyId: string; compact?: boolean }) {
+/** Lets a resident turn push alerts on this phone on or off (shown in Mi perfil → Avisos). */
+export function VisitAlerts({ propertyId }: { propertyId: string }) {
   const support = pushSupport();
   const [ready, setReady] = useState(false);
   const [on, setOn] = useState(false);
@@ -36,7 +34,7 @@ export function VisitAlerts({ propertyId, compact = false }: { propertyId: strin
     finally { setBusy(false); }
   }
 
-  if (support === 'unsupported' || (support === 'ok' && !ready) || (compact && on)) return null;
+  if (support === 'unsupported' || (support === 'ok' && !ready)) return null;
   const Icon = support === 'install' ? Smartphone : denied ? BellOff : on ? BellRing : Bell;
   const text = support === 'install'
     ? 'En iPhone, primero instala Zentry: toca Compartir en Safari y elige «Agregar a inicio». Luego ábrela desde tu pantalla de inicio.'
@@ -45,7 +43,7 @@ export function VisitAlerts({ propertyId, compact = false }: { propertyId: strin
     : 'Recibe un aviso en este teléfono cuando una visita de tu vivienda entre y cuando salga del fraccionamiento.';
   return <section className={'panel visit-alerts' + (on ? ' on' : '')} aria-label="Avisos de visitas">
     <span className="visit-alerts-icon"><Icon size={22}/></span>
-    <div><h2>{on ? 'Avisos activados' : 'Avisos de visitas'}</h2><p>{text}</p><ErrorBox message={error}/></div>
-    {support === 'ok' && !denied && <Button className={on ? 'secondary' : ''} busy={busy} onClick={() => void toggle()}>{on ? 'Desactivar' : 'Activar avisos'}</Button>}
+    <div><h2>Avisos en este teléfono</h2><p>{text}</p><ErrorBox message={error}/></div>
+    {support === 'ok' && !denied && <LiquidToggle checked={on} busy={busy} label="Avisos en este teléfono" onChange={() => void toggle()}/>}
   </section>;
 }

@@ -48,8 +48,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .button.danger-outline { background: #fff; color: var(--danger); border-color: #d8aeb2; }
 .button.danger-outline:hover:not(:disabled) { background: #fff0f0; border-color: var(--danger); }
 .button.small-button { min-height: 44px; padding: 10px 13px; font-size: 13px; }
-.icon-button, .notification-button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; padding: 10px; background: transparent; border: 0; border-radius: 10px; }
-.icon-button:hover, .notification-button:hover { background: var(--soft); }
+.icon-button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; padding: 10px; background: transparent; border: 0; border-radius: 10px; }
+.icon-button:hover { background: var(--soft); }
 .danger-text { color: var(--danger); }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-size: 29px; font-weight: 700; letter-spacing: -1px; }
 .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px 12px 4px 4px; background: var(--brand); color: #fff; }
@@ -159,8 +159,10 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .property-select select { appearance: none; max-width: 360px; min-height: 32px; padding: 4px 0; border: 0; border-radius: 3px; background: transparent; font-size: 15px; font-weight: 650; cursor: pointer; text-overflow: ellipsis; }
 .topbar-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
 .online-label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; white-space: nowrap; }
-.notification-button { position: relative; }
-.notification-button i { position: absolute; right: 9px; top: 9px; width: 7px; height: 7px; border-radius: 50%; background: #b1711b; border: 1px solid #fff; }
+/* Unread security alerts: a dot on Dispositivos (sidebar and mobile bar) instead of a top-bar bell. */
+.nav-alert { width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: #b1711b; box-shadow: 0 0 0 2px #fff; flex-shrink: 0; }
+.mobile-nav-icon { position: relative; }
+.mobile-nav-alert { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #b1711b; box-shadow: 0 0 0 2px #fff; }
 .app-main main { max-width: 1440px; margin: 0 auto; padding: 36px clamp(24px, 3vw, 48px) 24px; }
 .app-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 24px; margin-top: 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .app-footer > span:last-child { display: flex; align-items: center; gap: 7px; }
