@@ -11,7 +11,7 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
   const current = sections.find(section => section.path === path)?.path ?? adminSections[0].path;
 
   return <>
-    <PageHeader title="Administración" text="Crea invitaciones, autoriza equipos y consulta el estado del sistema."/>
+    <PageHeader title="Administración" text="Renueva accesos cuando alguien cambia de teléfono, autoriza equipos de caseta y consulta el estado del sistema."/>
     <nav className="admin-tabs admin-section-nav" aria-label="Secciones de administración">
       {sections.map(({ path: destination, label, Icon }) =>
         <button

@@ -5,7 +5,6 @@ import { Button, ErrorBox, Brand } from './ui';
 import { errorText, api } from '../api';
 import { extractToken, useOnline } from '../hooks';
 import { passFileName, renderPassCard, validityLines, type PassPlace, type PassSummary } from './passCard';
-import { COMMUNITY_MAPS_URL } from '../config';
 export function SharePass({ url, name, pass, place }: { url: string; name?: string; pass?: PassSummary; place?: PassPlace }) {
   const canvas = useRef<HTMLCanvasElement>(null); const [error, setError] = useState(''); const [copied, setCopied] = useState(false); const [ready, setReady] = useState(false);
   // With pass details, the shared/downloaded file is a full card image (guest, QR, validity,
@@ -22,7 +21,7 @@ export function SharePass({ url, name, pass, place }: { url: string; name?: stri
       .catch(() => { if (current) setCardFailed(true); /* Sharing falls back to the link. */ });
     return () => { current = false; };
   }, [url, pass, place]);
-  const message = `${pass ? `Pase de visita para ${pass.guestName}. ` : ''}Presenta este QR al llegar a la caseta.\nCómo llegar: ${COMMUNITY_MAPS_URL}`;
+  const message = `${pass ? `Pase de visita para ${pass.guestName}. ` : ''}Presenta este QR al llegar a la caseta.${place?.mapsUrl ? `\nCómo llegar: ${place.mapsUrl}` : ''}`;
   async function copy() { try { await navigator.clipboard.writeText(url); setCopied(true); } catch { setError('No se pudo copiar automáticamente. Selecciona y copia el enlace que aparece abajo.'); } }
   async function share() {
     setError('');

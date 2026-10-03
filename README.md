@@ -39,7 +39,20 @@ Compila la API desde `../sica-qr-backend` con `npm run build` y la PWA desde est
 
 ## Compartir un pase
 
-Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace del pase y la ubicación en Google Maps en el texto (el enlace de Maps está en `src/config.ts`). La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
+Al crear un pase (o desde su detalle, mientras la app conserve el enlace), **Compartir pase** envía una imagen PNG con el nombre del visitante, el QR, la vigencia en la zona horaria del pase (fecha y horario, o días, horario y periodo si es recurrente) y la ubicación (calle, número y fraccionamiento), con el enlace del pase y la ubicación en Google Maps del fraccionamiento en el texto (se configura en Plataforma; si un fraccionamiento no tiene enlace, se omite). La imagen se genera en el navegador (`src/components/passCard.ts`) al abrir la ventana, porque Safari solo permite compartir justo después del toque. Donde el navegador no comparte archivos, se comparte el enlace. **Descargar imagen** guarda la misma tarjeta. La vista pública del visitante (`/p/…`) no conoce esos datos y sigue mostrando solo el QR.
+
+## Plataforma (superadmin)
+
+`/plataforma` (`src/pages/Platform.tsx`, `PlatformCommunity.tsx`, `PlatformImport.tsx`) lista los fraccionamientos con privadas, lotes, casas, residentes y **extra** (residentes por encima de los 2 incluidos por casa, que se cobran aparte). Desde **Nuevo fraccionamiento** se crea uno con su enlace de Google Maps. Al abrir uno:
+
+- **Nombre y ubicación:** el enlace de Maps se envía con cada pase compartido.
+- **Administrador:** uno por fraccionamiento, elegido entre los propietarios; asignar otro reemplaza al anterior.
+- **Importar residentes desde Excel:** elige el `.xlsx` (o `.csv`) que manda el fraccionamiento (`src/spreadsheet.ts` lo lee en el navegador con `read-excel-file`) y revisa la vista previa: totales, casas con cobro extra, errores que impiden importar y avisos. **Importar** da de alta casas y personas y, si se marca, envía las invitaciones por correo (vencen en 72 horas). **Descargar plantilla** baja un CSV con el formato sugerido.
+- **Viviendas y residentes:** por privada o lote, cada casa con sus teléfonos permitidos (editable) y cada persona con el estado de su acceso (activo, invitación enviada, no se envió, vencida, sin invitar), con **Reenviar** o **Enviar invitaciones pendientes**. Si un fraccionamiento tiene varias privadas que hoy aparecen por separado, **Mover a** las junta.
+
+## Renovar accesos (administración)
+
+El administrador del fraccionamiento ya no da de alta residentes: en **Administración → Renovar accesos** busca a la persona, elige la vivienda y entrega la invitación **por correo** (a su correo registrado, 72 horas) o **en persona** (enlace de 15 minutos para abrir en su teléfono ahí mismo). La nueva llave reemplaza las anteriores de esa persona en esa vivienda.
 
 ## Actividad
 

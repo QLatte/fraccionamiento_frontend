@@ -2,7 +2,8 @@ import QRCode from 'qrcode';
 import type { Pass } from '../types';
 
 export type PassSummary = Pick<Pass, 'guestName' | 'passType' | 'validFrom' | 'validUntil' | 'recurrenceRule' | 'windowSeconds' | 'timezone'>;
-export type PassPlace = { address: string; community: string };
+// mapsUrl is the fraccionamiento's Google Maps link, set from Plataforma.
+export type PassPlace = { address: string; community: string; mapsUrl?: string | null };
 
 const weekdayNames: Record<string, string> = { MO: 'Lun', TU: 'Mar', WE: 'Mié', TH: 'Jue', FR: 'Vie', SA: 'Sáb', SU: 'Dom' };
 const typeNames: Record<Pass['passType'], string> = { SINGLE_USE: 'Una visita', TEMPORARY: 'Por un periodo', RECURRING: 'Visita recurrente' };

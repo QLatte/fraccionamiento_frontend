@@ -21,11 +21,11 @@ type Props = {
 export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAlerts = 0 }: Props) {
   const items = role === 'SUPERADMIN' ? [
     { path: '/plataforma', label: 'Plataforma', Icon: AnimatedHome },
-    { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
+    { path: '/admin/invitaciones', label: 'Accesos', Icon: AnimatedUserPlus },
     { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
     { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
   ] : (role === 'ADMIN') ? [
-    { path: '/admin/invitaciones', label: 'Invitaciones', Icon: AnimatedUserPlus },
+    { path: '/admin/invitaciones', label: 'Accesos', Icon: AnimatedUserPlus },
     { path: '/admin/dispositivos', label: 'Dispositivos', Icon: AnimatedPhoneVolume },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ] : [

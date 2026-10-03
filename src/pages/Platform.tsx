@@ -1,25 +1,45 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import { Plus } from 'lucide-react';
 import { api, errorText } from '../api';
 import { useQuery } from '../hooks';
-import { Button, ErrorBox, Loading, PageHeader } from '../components/ui';
-type Person = { id: string; fullName: string; email: string; globalRole?: string };
-type Community = { id: string; name: string; type: string; activeProperties: number; activeResidents: number; admins: number };
-type Detail = { id: string; name: string; admins: { user: Person; createdAt: string }[]; properties: { id: string; street: string; houseNumber: string; status: string; memberships: { membershipRole: string; user: Person }[] }[] };
+import { Button, ErrorBox, Info, Loading, Modal, PageHeader } from '../components/ui';
+import { PlatformCommunity } from './PlatformCommunity';
+import type { Usage } from './platformTypes';
+
 export function Platform() {
-  const communities = useQuery<{ data: Community[] }>('/platform/usage');
+  const usage = useQuery<Usage>('/platform/usage');
   const [selected, setSelected] = useState('');
-  const detail = useQuery<Detail>(selected ? `/platform/clusters/${selected}` : null);
-  const [person, setPerson] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [message, setMessage] = useState('');
-  const owners = [...new Map((detail.data?.properties ?? []).filter(p => p.status === 'ACTIVE').flatMap(p => p.memberships.filter(m => m.membershipRole === 'RESIDENT_OWNER' && ['RESIDENT', 'ADMIN'].includes(m.user.globalRole ?? '')).map(m => [m.user.id, m.user] as const))).values()].filter(u => !detail.data?.admins.some(a => a.user.id === u.id));
-  async function change(userId: string, remove = false) {
-    setBusy(true); setError(''); setMessage('');
-    try { await api(remove ? `/platform/cluster-admins/${userId}/${selected}` : '/platform/cluster-admins', { method: remove ? 'DELETE' : 'POST', ...(remove ? {} : { body: { userId, clusterId: selected } }) }); setPerson(''); setMessage(remove ? 'Administración revocada. Su acceso residente se conserva.' : 'Administrador asignado. Ya puede cambiar al perfil Administración.'); detail.refresh(); communities.refresh(); }
-    catch (e) { setError(errorText(e)); } finally { setBusy(false); }
-  }
-  return <><PageHeader title="Plataforma" text="Control global de fraccionamientos, viviendas, residentes y administradores."/>
-    <ErrorBox message={communities.error} retry={communities.refresh}/>{communities.loading ? <Loading/> : <section className="panel platform-panel"><h2>Fraccionamientos</h2><p>Los conteos incluyen viviendas activas y residentes únicos por fraccionamiento. Un propietario administrador también cuenta como residente.</p><div className="platform-table"><table><thead><tr><th>Fraccionamiento</th><th>Casas activas</th><th>Residentes</th><th>Administradores</th><th/></tr></thead><tbody>{communities.data?.data.map(c => <tr key={c.id}><td data-label="Fraccionamiento">{c.name}</td><td data-label="Casas activas">{c.activeProperties}</td><td data-label="Residentes">{c.activeResidents}</td><td data-label="Administradores">{c.admins}</td><td><Button className="secondary" onClick={() => { setSelected(c.id); setPerson(''); setMessage(''); setError(''); }}>Administrar</Button></td></tr>)}</tbody></table></div>{!communities.data?.data.length && <p>No hay fraccionamientos registrados.</p>}</section>}
-    <ErrorBox message={detail.error} retry={detail.refresh}/>{selected && detail.loading ? <Loading/> : detail.data && <section className="panel platform-panel" key={selected}><h2>{detail.data.name}</h2><h3>Administradores asignados</h3>{!detail.data.admins.length && <p>Sin administradores asignados.</p>}{detail.data.admins.map(a => <div className="platform-person" key={a.user.id}><span><strong>{a.user.fullName}</strong><br/>{a.user.email}</span><Button className="secondary" disabled={busy} onClick={() => { if (window.confirm(`¿Revocar la administración de ${a.user.fullName}? Su perfil de residente se conservará.`)) void change(a.user.id, true); }}>Revocar administración</Button></div>)}
-    <form onSubmit={e => { e.preventDefault(); void change(person); }}><label>Asignar propietario como administrador<select value={person} onChange={e => setPerson(e.target.value)} required disabled={busy}><option value="">Selecciona una persona</option>{owners.map(u => <option key={u.id} value={u.id}>{u.fullName} · {u.email}</option>)}</select></label><Button disabled={!person || busy} type="submit">Asignar administrador</Button></form><ErrorBox message={error}/>{message && <p role="status">{message}</p>}
-    <h3>Viviendas y residentes</h3><div className="platform-table"><table><thead><tr><th>Vivienda</th><th>Estado</th><th>Personas asociadas</th></tr></thead><tbody>{detail.data.properties.map(p => <tr key={p.id}><td data-label="Vivienda">{p.street} {p.houseNumber}</td><td data-label="Estado">{p.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}</td><td data-label="Personas asociadas">{p.memberships.map(m => <div key={m.user.id}>{m.user.fullName} · {m.user.email} · {m.membershipRole === 'RESIDENT_OWNER' ? 'Propietario' : 'Familiar'}</div>)}</td></tr>)}</tbody></table></div></section>}
+  const [creating, setCreating] = useState(false);
+  const communities = usage.data?.data ?? [];
+  return <><PageHeader title="Plataforma" text="Fraccionamientos, altas de residentes desde Excel, invitaciones por correo y cobro." action={<Button onClick={() => setCreating(true)}><Plus size={18}/> Nuevo fraccionamiento</Button>}/>
+    {usage.data && !usage.data.emailEnabled && <Info>El envío de correos no está configurado. Agrega RESEND_API_KEY y EMAIL_FROM en el API (Render) para mandar las invitaciones; mientras tanto puedes importar y entregar invitaciones en persona.</Info>}
+    <ErrorBox message={usage.error} retry={usage.refresh}/>
+    {usage.loading && !usage.data ? <Loading/> : <section className="panel platform-panel"><h2>Fraccionamientos</h2><p>Casas activas y residentes únicos. «Extra» son los residentes por encima de los 2 incluidos por casa, que se cobran aparte.</p>
+      <div className="platform-table"><table><thead><tr><th>Fraccionamiento</th><th>Privadas y lotes</th><th>Casas</th><th>Residentes</th><th>Extra</th><th>Administrador</th><th/></tr></thead>
+        <tbody>{communities.map(c => <tr key={c.id} className={selected === c.id ? 'selected' : ''}>
+          <td data-label="Fraccionamiento"><strong>{c.name}</strong></td>
+          <td data-label="Privadas y lotes">{[c.privadas && `${c.privadas} ${c.privadas === 1 ? 'privada' : 'privadas'}`, c.lotes && `${c.lotes} ${c.lotes === 1 ? 'lote' : 'lotes'}`].filter(Boolean).join(' · ') || '—'}</td>
+          <td data-label="Casas">{c.activeProperties}</td>
+          <td data-label="Residentes">{c.activeResidents}</td>
+          <td data-label="Extra">{c.extraResidents ? <span className="badge expired"><span/>+{c.extraResidents}</span> : '0'}</td>
+          <td data-label="Administrador">{c.admins ? 'Asignado' : 'Sin asignar'}</td>
+          <td><Button className="secondary" onClick={() => setSelected(c.id)}>Administrar</Button></td>
+        </tr>)}</tbody></table></div>
+      {!communities.length && <p>No hay fraccionamientos registrados. Crea uno e importa su Excel.</p>}</section>}
+    {selected && <PlatformCommunity key={selected} id={selected} communities={communities} emailEnabled={!!usage.data?.emailEnabled} onChanged={usage.refresh}/>}
+    {creating && <CreateCommunity onClose={() => setCreating(false)} onCreated={id => { setCreating(false); setSelected(id); usage.refresh(); }}/>}
   </>;
+}
+
+function CreateCommunity({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const [name, setName] = useState(''); const [mapsUrl, setMapsUrl] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setBusy(true); setError('');
+    try { const created = await api<{ id: string }>('/platform/communities', { method: 'POST', body: { name: name.trim(), mapsUrl: mapsUrl.trim() || null } }); onCreated(created.id); }
+    catch (err) { setError(errorText(err)); } finally { setBusy(false); }
+  }
+  return <Modal title="Nuevo fraccionamiento" onClose={() => { if (!busy) onClose(); }}><form onSubmit={submit}><fieldset disabled={busy}>
+    <label>Nombre<input required minLength={2} maxLength={120} value={name} onChange={e => setName(e.target.value)} placeholder="Por ejemplo: Fraccionamiento Las Palmas"/></label>
+    <label>Ubicación en Google Maps <span className="optional">(opcional)</span><input type="url" inputMode="url" maxLength={500} value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="https://maps.app.goo.gl/…"/><small>Se envía con cada pase compartido para que la visita llegue.</small></label>
+  </fieldset><ErrorBox message={error}/><div className="modal-actions"><Button className="secondary" onClick={onClose} disabled={busy}>Cancelar</Button><Button type="submit" busy={busy}>Crear fraccionamiento</Button></div></form></Modal>;
 }

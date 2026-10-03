@@ -722,3 +722,59 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .platform-table td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; color: #526975; }
   .platform-person { flex-wrap: wrap; overflow-wrap: anywhere; }
 }
+
+/* Plataforma: fraccionamientos, import and residents */
+.platform-table tr.selected td { background: #f7fafb; }
+.platform-panel h3 { margin-top: 32px; }
+.platform-community h2 { font-size: 24px; }
+.platform-settings label span { display: inline-flex; align-items: center; gap: 6px; }
+.platform-settings > p { flex-basis: 100%; margin: 0; }
+.platform-section-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-top: 32px; }
+.platform-section-heading h3 { margin: 0 0 4px; }
+.platform-section-heading p { margin: 0; }
+.platform-import { margin-top: 8px; }
+.platform-import > .button { margin-top: 16px; }
+.platform-import > p.small { display: flex; align-items: center; gap: 6px; }
+.import-preview { margin-top: 20px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfd; }
+.import-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.import-stats div { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; min-width: 0; }
+.import-stats strong { display: block; font-size: 24px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.import-stats small { color: var(--muted); }
+.import-stats .extra { border-color: #e6d3a3; background: #fbf7ec; }
+.import-preview .error-box ul, .import-warnings ul { margin: 8px 0 0; padding-left: 18px; }
+.import-warnings { margin: 12px 0; font-size: 14px; color: var(--muted); }
+.import-warnings summary { cursor: pointer; color: #7e601c; font-weight: 600; }
+.import-table { max-height: 420px; overflow: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.import-table thead th { position: sticky; top: 0; background: #f7fafb; }
+.import-preview .checkbox-label { margin: 16px 0; }
+.platform-cluster { margin-top: 20px; }
+.platform-cluster-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.platform-cluster-heading h4 { margin: 0; font-size: 16px; }
+.platform-cluster-heading h4 span { font-weight: 400; font-size: 14px; }
+.platform-move { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.platform-move select { width: auto; min-height: 40px; padding: 6px 10px; font-size: 14px; }
+.platform-resident { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; }
+.platform-resident + .platform-resident { border-top: 1px dashed var(--line); }
+.platform-resident > div { min-width: 0; }
+.platform-resident small { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.platform-resident small .badge { margin-top: 4px; }
+.platform-panel form.device-limit { flex-wrap: nowrap; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 14px; white-space: nowrap; }
+.device-limit input { width: 64px; min-height: 40px; padding: 6px 8px; text-align: center; }
+.device-limit small { white-space: normal; }
+.badge.pending { background: var(--soft); color: var(--muted); }
+.success-text { color: #286648; }
+.channel-choice { display: grid; gap: 10px; margin: 0 0 20px; padding: 0; border: 0; min-width: 0; }
+.channel-choice legend { padding: 0; margin-bottom: 10px; font-weight: 600; font-size: 15px; }
+.channel-option { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; font-weight: 400; }
+.channel-option.selected { border-color: #a8c2ce; background: var(--soft); }
+.channel-option.disabled { opacity: .6; cursor: not-allowed; }
+.channel-option input { width: auto; min-height: 0; margin-top: 3px; accent-color: var(--brand); }
+.channel-option > svg { flex-shrink: 0; margin-top: 2px; color: var(--brand); }
+.channel-option strong, .channel-option small { display: block; }
+.channel-option small { margin-top: 2px; color: var(--muted); font-size: 13px; }
+@media (max-width: 900px) { .import-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .import-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .import-preview { padding: 14px; }
+  .platform-resident { flex-wrap: wrap; }
+}

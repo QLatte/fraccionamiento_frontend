@@ -33,7 +33,7 @@ export function Passes({ home, navigate }: { home: boolean; navigate: (path: str
   const { identity, property, links, rememberPass, forgetPass } = useAuth(); const id = property!.id; const [filter, setFilter] = useState<Status | ''>(() => { const value = new URLSearchParams(location.search).get('estado'); return value && ['ACTIVE', 'USED', 'EXPIRED', 'REVOKED'].includes(value) ? value as Status : ''; }); const [search, setSearch] = useState(''); const [extra, setExtra] = useState<Pass[]>([]); const [cursor, setCursor] = useState<string | null>(null); const [moreBusy, setMoreBusy] = useState(false); const [moreError, setMoreError] = useState('');
   const canCreate = identity?.session.profile === 'RESIDENT';
   // Location printed on the shared pass image. Memoized so the image is not redrawn on every refresh.
-  const place = useMemo<PassPlace | undefined>(() => property ? { address: `${property.street} ${property.houseNumber}`, community: property.cluster.name } : undefined, [property]);
+  const place = useMemo<PassPlace | undefined>(() => property ? { address: `${property.street} ${property.houseNumber}`, community: property.cluster.community?.name ?? property.cluster.name, mapsUrl: property.cluster.community?.mapsUrl } : undefined, [property]);
   const listScope = useRef(''); listScope.current = `${id}:${filter}:${home}`;
   const query = useQuery<Page<Pass>>(`/passes?propertyId=${id}&limit=${home ? 5 : 20}${filter ? `&status=${filter}` : ''}`);
   const summary = useQuery<Record<Status, number>>(`/passes/summary?propertyId=${id}`, 30000);

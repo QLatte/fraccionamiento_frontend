@@ -35,10 +35,12 @@ await new Promise<void>((done, reject) => { const timer = setTimeout(() => rejec
 const { enrollment } = await import('../../sica-qr-backend/src/auth/webauthn.js');
 const { createPass } = await import('../../sica-qr-backend/src/services/passes.js');
 const { randomToken, tokenHash } = await import('../../sica-qr-backend/src/lib/crypto.js');
-const cluster = await db.cluster.create({ data: { name: 'Los Encinos', type: 'PRIVADA' } });
+const community = await db.community.create({ data: { name: 'Fraccionamiento Los Encinos', mapsUrl: 'https://maps.app.goo.gl/fyQ3FS5TWkBhq1k99' } });
+const cluster = await db.cluster.create({ data: { name: 'Los Encinos', type: 'PRIVADA', communityId: community.id } });
 const property = await db.property.create({ data: { street: 'Calle de los Olivos', houseNumber: '24', clusterId: cluster.id } });
 const otherHome = await db.property.create({ data: { street: 'Paseo del Roble', houseNumber: '08', clusterId: cluster.id } });
 const user = await db.user.create({ data: { fullName: 'Lucía Méndez', email: 'lucia@e2e.test', globalRole: 'ADMIN', memberships: { create: [{ propertyId: property.id, membershipRole: 'RESIDENT_OWNER' }, { propertyId: otherHome.id, membershipRole: 'RESIDENT_OWNER' }] } } });
+await db.communityAdmin.create({ data: { userId: user.id, communityId: community.id } });
 const resident = await db.user.create({ data: { fullName: 'Ana Torres', email: 'ana@e2e.test', memberships: { create: { propertyId: property.id, membershipRole: 'FAMILY_MEMBER' } } } });
 const gate = await db.gate.create({ data: { label: 'Acceso principal', clusters: { connect: { id: cluster.id } } } });
 const deviceToken = randomToken(); await db.gateDevice.create({ data: { gateId: gate.id, label: 'Tableta principal', tokenHash: tokenHash(deviceToken) } });
