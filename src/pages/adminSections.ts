@@ -5,6 +5,6 @@ import AnimatedRefresh from '../components/icons/AnimatedRefresh';
 // Kept apart from Admin.tsx so routing can read it without loading the admin pages.
 export const adminSections = [
   { path: '/admin/invitaciones', label: 'Renovar accesos', Icon: AnimatedUserPlus },
-  { path: '/admin/dispositivos', label: 'Dispositivos de caseta', Icon: AnimatedPhoneVolume },
+  { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
   { path: '/admin/estado', label: 'Estado del sistema', Icon: AnimatedRefresh },
 ] as const;

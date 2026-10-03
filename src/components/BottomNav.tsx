@@ -26,7 +26,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
     { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
   ] : (role === 'ADMIN') ? [
     { path: '/admin/invitaciones', label: 'Accesos', Icon: AnimatedUserPlus },
-    { path: '/admin/dispositivos', label: 'Dispositivos', Icon: AnimatedPhoneVolume },
+    { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ] : [
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
@@ -58,7 +58,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
           type="button"
           className={`mobile-nav-item${activeIndex === index ? ' active' : ''}`}
           aria-current={destination === path ? 'page' : undefined}
-          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Dispositivos de caseta' : destination === '/admin/estado' ? 'Estado del sistema' : destination === '/dispositivos' && deviceAlerts ? `${label}: ${deviceAlerts} avisos de seguridad` : label}
+          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Casetas' : destination === '/admin/estado' ? 'Estado del sistema' : destination === '/dispositivos' && deviceAlerts ? `${label}: ${deviceAlerts} avisos de seguridad` : label}
           aria-expanded={destination === null ? menuOpen : undefined}
           aria-controls={destination === null ? 'main-navigation' : undefined}
           aria-haspopup={destination === null ? 'dialog' : undefined}

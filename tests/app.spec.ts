@@ -50,7 +50,7 @@ test('complete real WebAuthn, resident, gate, admin and offline PWA journeys', a
   await page.getByRole('button', { name: 'Crear invitación', exact: true }).click();
   await expect(page.getByText('Invitación creada', { exact: true })).toBeVisible();
   const residentInvite = await page.getByLabel('Enlace de activación').inputValue();
-  await page.getByRole('button', { name: 'Dispositivos de caseta', exact: true }).click();
+  await page.getByRole('button', { name: 'Casetas', exact: true }).click();
   await page.getByRole('button', { name: 'Agregar equipo' }).click();
   await page.getByLabel('Nombre del equipo').fill('Tableta de visitas');
   await page.getByRole('combobox', { name: 'Caseta', exact: true }).selectOption(fixture.gateId);
