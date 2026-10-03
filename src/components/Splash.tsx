@@ -7,7 +7,7 @@ const listeners = new Set<() => void>();
 export function markAppReady() { if (appReady) return; appReady = true; listeners.forEach(listener => listener()); }
 
 const sessionKey = 'zentry:splash-shown';
-const INTRO_MS = 2500;   // house appears → door opens → QR floats out toward the camera → name lights up
+const INTRO_MS = 2600;   // house appears → roof opens → QR rises out toward the camera → name lights up
 const EXIT_MS = 750;     // the dark backdrop drains and uncovers the app
 const MAX_WAIT_MS = 6000;
 
@@ -37,7 +37,8 @@ function QrMark() {
 /**
  * Minimal isometric house (2.5D, flat shading). Front-bottom corner at (100,165);
  * right wall runs along (0.866,-0.5)·70, left wall along (-0.866,-0.5)·60, walls 55 high,
- * gable roof with its ridge parallel to the right wall. The door sits on the right wall.
+ * gable roof with its ridge parallel to the right wall. The roof is two slopes hinged on
+ * their eaves: they swing open (Splash.css) and light pours out of the house.
  */
 function IsoHouse() {
   return <svg className="splash-house" viewBox="0 0 200 200" aria-hidden="true">
@@ -45,30 +46,39 @@ function IsoHouse() {
       <linearGradient id="splash-left" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2b7d91"/><stop offset="1" stopColor="#1d5a6c"/></linearGradient>
       <linearGradient id="splash-right" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a4c5c"/><stop offset="1" stopColor="#123c4a"/></linearGradient>
       <linearGradient id="splash-roof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#0f3140"/><stop offset="1" stopColor="#0b2632"/></linearGradient>
-      <radialGradient id="splash-glow"><stop offset="0" stopColor="#bffcf3"/><stop offset=".55" stopColor="#5fe3d0"/><stop offset="1" stopColor="#5fe3d0" stopOpacity="0"/></radialGradient>
+      <radialGradient id="splash-inside-glow" cx=".5" cy=".55" r=".6"><stop offset="0" stopColor="#e6fffb"/><stop offset=".5" stopColor="#5fe3d0"/><stop offset="1" stopColor="#1d6f7f"/></radialGradient>
+      <linearGradient id="splash-beam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#bffcf3" stopOpacity=".95"/><stop offset=".45" stopColor="#5fe3d0" stopOpacity=".35"/><stop offset="1" stopColor="#5fe3d0" stopOpacity="0"/></linearGradient>
     </defs>
     <ellipse className="splash-house-shadow" cx="104" cy="168" rx="70" ry="18"/>
+    {/* Top of the walls: the lit inside, hidden under the roof until it opens. */}
+    <path className="splash-inside" fill="url(#splash-inside-glow)" d="M100 110 L160.6 75 L108.6 45 L48 80 Z"/>
     {/* Left wall with the gable end (faces the viewer's left). */}
     <path fill="url(#splash-left)" d="M100 165 L48 135 L48 80 L74 65 L100 110 Z"/>
     {/* Right wall (faces the viewer's right). */}
     <path fill="url(#splash-right)" d="M100 165 L160.6 130 L160.6 75 L100 110 Z"/>
-    {/* Front roof slope with a warm eave line. */}
-    <path fill="url(#splash-roof)" d="M96 113 L164 74 L136 26 L71 63 Z"/>
-    <path className="splash-eave" d="M96 113 L164 74"/>
-    <path className="splash-ridge" d="M71 63 L136 26"/>
-    {/* Window on the gable wall. */}
     <path className="splash-window" d="M66 112 L80 120 L80 104 L66 96 Z"/>
-    {/* Doorway: light spills out as the door swings open. */}
-    <path className="splash-doorway" d="M123 151.7 L137.6 143.3 L137.6 107.3 L123 115.7 Z"/>
-    <ellipse className="splash-door-glow" cx="131" cy="130" rx="26" ry="30" fill="url(#splash-glow)"/>
     <path className="splash-door" d="M123 151.7 L137.6 143.3 L137.6 107.3 L123 115.7 Z"/>
+    {/* Back slope, drawn upright; it starts folded flat (invisible) and lifts open. */}
+    <path className="splash-roof-back splash-roof-lit" d="M44 83 L112 44 L112 1.6 L44 40.6 Z"/>
+    <path className="splash-beam" fill="url(#splash-beam)" d="M52 82 L100 108 L158 76 L150 -46 L60 -46 Z"/>
+    {/* Front slope with its warm eave line; its underside lights up as it tips toward us. */}
+    <g className="splash-roof-front">
+      <path fill="url(#splash-roof)" d="M96 113 L164 74 L138 29 L70 68 Z"/>
+      <path className="splash-roof-glow" d="M96 113 L164 74 L138 29 L70 68 Z"/>
+      <path className="splash-eave" d="M96 113 L164 74"/>
+      <path className="splash-ridge" d="M70 68 L138 29"/>
+    </g>
+    <circle className="splash-spark" cx="88" cy="70" r="1.6"/>
+    <circle className="splash-spark" cx="118" cy="62" r="1.2"/>
+    <circle className="splash-spark" cx="104" cy="76" r="1.8"/>
+    <circle className="splash-spark" cx="128" cy="70" r="1.1"/>
   </svg>;
 }
 
 /**
  * Opening animation, replacing the loading spinner on app launch: a minimal
- * isometric house opens its door, a holographic QR floats out toward the camera
- * while the house blurs into the background, then the name lights up below.
+ * isometric house opens its roof, light pours out and a holographic QR rises from
+ * inside toward the camera while the house sinks back, then the name lights up below.
  */
 export function Splash({ onDone }: { onDone: () => void }) {
   const [leaving, setLeaving] = useState(false);
