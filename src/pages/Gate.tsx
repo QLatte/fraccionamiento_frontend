@@ -1,59 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
-import jsQR from 'jsqr';
-import { Camera, Check, ClipboardPaste, DoorOpen, History, ScanLine, UserPlus, ShieldCheck, Users, XCircle, RotateCw } from 'lucide-react';
-import { Button, Empty, ErrorBox, Info, Loading, PageHeader } from '../components/ui';
+import { ClipboardPaste, DoorOpen, History, ScanLine, UserPlus, ShieldCheck, Users, RotateCw } from 'lucide-react';
+import { Button, Empty, ErrorBox, Loading, PageHeader } from '../components/ui';
 import { dateText, extractToken, useMutation, useOnline } from '../hooks';
 import { api, ApiError, codeText, errorText } from '../api';
 import type { GateLog, GateStation, ScanResult } from '../types';
-import AnimatedQr from '../components/icons/AnimatedQr';
 import { GateWalkIn } from './GateWalkIn';
+import { ManualDialog, ResultDialog, ScanStage } from './GateScanner';
 import AnimatedArrowRightDashed from '../components/icons/AnimatedArrowRightDashed';
 import AnimatedArrowLeftDashed from '../components/icons/AnimatedArrowLeftDashed';
 
 const stationModeKey = 'zentry:gate-station';
-
-function CameraReader({ onRead }: { onRead: (raw: string) => void }) {
-  const video = useRef<HTMLVideoElement>(null);
-  const [error, setError] = useState('');
-  const callback = useRef(onRead);
-  callback.current = onRead;
-
-  useEffect(() => {
-    let canceled = false;
-    let stream: MediaStream | undefined;
-    let frame = 0;
-    let last = 0;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    function tick(at: number) {
-      if (canceled) return;
-      const el = video.current;
-      if (at - last > 200 && el && el.readyState >= 2 && ctx && document.visibilityState === 'visible') {
-        last = at;
-        canvas.width = Math.min(el.videoWidth, 640);
-        canvas.height = Math.round(el.videoHeight * canvas.width / el.videoWidth);
-        ctx.drawImage(el, 0, 0, canvas.width, canvas.height);
-        const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' });
-        if (code) { callback.current(code.data); return; }
-      }
-      frame = requestAnimationFrame(tick);
-    }
-    if (!navigator.mediaDevices?.getUserMedia) setError('Este navegador no puede abrir la cámara. Usa un enlace o abre Zentry con HTTPS.');
-    else navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false })
-      .then(async source => {
-        if (canceled) { source.getTracks().forEach(track => track.stop()); return; }
-        stream = source;
-        video.current!.srcObject = source;
-        await video.current!.play();
-        if (!canceled) frame = requestAnimationFrame(tick);
-      })
-      .catch(() => { if (!canceled) setError('No se pudo abrir la cámara. Permite el acceso o pega el enlace del pase.'); });
-    return () => { canceled = true; cancelAnimationFrame(frame); stream?.getTracks().forEach(track => track.stop()); };
-  }, []);
-
-  return <><div className="camera-view"><video ref={video} muted playsInline aria-label="Cámara para escanear pases"/><div className="camera-guide"><i/><i/><i/><i/></div><span>Coloca el QR dentro del recuadro</span></div><ErrorBox message={error}/></>;
-}
+// The scanner stays on across reloads once a guard turns it on.
+const cameraKey = 'zentry:gate-camera';
+// After a result closes, the same QR is ignored this long: the visitor may still be holding it up.
+const SAME_QR_COOLDOWN_MS = 4000;
 
 type GateView = 'scan' | 'log';
 const gateViewKey = 'zentry:gate-view';
@@ -154,13 +114,14 @@ export function Gate() {
       return typeof legacy.device === 'string' && /^[A-Za-z0-9_-]{43}$/.test(legacy.device) ? legacy.device : '';
     } catch { return ''; }
   });
-  const [camera, setCamera] = useState(false);
-  const [manual, setManual] = useState('');
+  const [cameraOn, setCameraOn] = useState(() => { try { return localStorage.getItem(cameraKey) === '1'; } catch { return false; } });
+  const [cameraError, setCameraError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [manual, setManual] = useState(false);
   const [direction, setDirection] = useState<'ENTRY' | 'EXIT'>('ENTRY');
   const directionName = direction === 'ENTRY' ? 'entrada' : 'salida';
   const [result, setResult] = useState<ScanResult | null>(null);
   const [attempt, setAttempt] = useState<{ token: string; direction: 'ENTRY' | 'EXIT' } | null>(null);
-  const [error, setError] = useState('');
   const [logVersion, setLogVersion] = useState(0);
   const [view, setView] = useState<GateView>(() => {
     try { return localStorage.getItem(gateViewKey) === 'log' ? 'log' : 'scan'; } catch { return 'scan'; }
@@ -172,6 +133,10 @@ export function Gate() {
   const [walkIn, setWalkIn] = useState(false);
   const exit = useMutation();
   const [exiting, setExiting] = useState<string | null>(null);
+  const scanning = useRef(false);
+  const cooldown = useRef<{ raw: string; until: number } | null>(null);
+  const audio = useRef<AudioContext | null>(null);
+  const showing = !!result || (!!attempt && !!scan.error && !scan.busy);
 
   async function exitWalkIn(id: string) {
     setExiting(id);
@@ -181,17 +146,23 @@ export function Gate() {
 
   function openView(next: GateView) {
     setView(next);
-    if (next === 'log') setCamera(false);
     try { localStorage.setItem(gateViewKey, next); } catch { /* The scanner is the default view. */ }
   }
-  const scanning = useRef(false);
-  const resultPanel = useRef<HTMLElement>(null);
-  const audio = useRef<AudioContext | null>(null);
 
-  // Browsers only allow audio after a tap, so the context is opened from the scan buttons.
+  function switchCamera(on: boolean) {
+    setCameraOn(on); setCameraError('');
+    try { localStorage.setItem(cameraKey, on ? '1' : '0'); } catch { /* The guard turns it on again after a reload. */ }
+  }
+
+  // Browsers only allow audio after a tap; the first touch anywhere on the station unlocks it.
   function unlockAudio() {
     try { audio.current ??= new AudioContext(); void audio.current.resume(); } catch { /* Sound is optional. */ }
   }
+  useEffect(() => {
+    const unlock = () => unlockAudio();
+    document.addEventListener('pointerdown', unlock, { once: true });
+    return () => document.removeEventListener('pointerdown', unlock);
+  }, []);
   function signal(granted: boolean) {
     try { navigator.vibrate?.(granted ? 90 : [140, 90, 140]); } catch { /* Vibration is optional. */ }
     const ctx = audio.current;
@@ -204,6 +175,12 @@ export function Gate() {
       tone.start(at); tone.stop(at + 0.16);
     });
   }
+
+  useEffect(() => {
+    if (!notice) return;
+    const id = window.setTimeout(() => setNotice(''), 2600);
+    return () => window.clearTimeout(id);
+  }, [notice]);
 
   const refreshStation = useCallback(async () => {
     try {
@@ -230,14 +207,6 @@ export function Gate() {
     return () => { window.clearInterval(interval); document.removeEventListener('visibilitychange', refresh); window.removeEventListener('online', refresh); };
   }, [refreshStation]);
 
-  useEffect(() => { if (!station || !online) setCamera(false); }, [station, online]);
-  useEffect(() => {
-    if ((result || scan.error) && window.matchMedia('(max-width: 1200px)').matches) {
-      resultPanel.current?.focus({ preventScroll: true });
-      resultPanel.current?.scrollIntoView({ behavior: 'auto', block: 'nearest' });
-    }
-  }, [result, scan.error]);
-
   async function activate(event: FormEvent) {
     event.preventDefault();
     setStationError('');
@@ -256,13 +225,21 @@ export function Gate() {
 
   async function read(raw: string, retry = false) {
     if (scanning.current || !station || !online) return;
-    setError('');
+    if (!retry && (showing || walkIn)) return;
+    // A QR that is still in view after its result closed is ignored until it leaves the camera.
+    if (!retry && cooldown.current?.raw === raw && Date.now() < cooldown.current.until) { cooldown.current.until = Math.max(cooldown.current.until, Date.now() + SAME_QR_COOLDOWN_MS); return; }
     let token: string;
     try { token = extractToken(raw); }
-    catch (cause) { setCamera(false); setError(errorText(cause)); return; }
+    catch (cause) {
+      // Any QR in view is read continuously: report a foreign code once, not every frame.
+      cooldown.current = { raw, until: Date.now() + SAME_QR_COOLDOWN_MS };
+      setNotice(errorText(cause)); signal(false); return;
+    }
     scanning.current = true;
-    setCamera(false);
+    setManual(false); setNotice('');
     const action = retry && attempt ? attempt : { token, direction };
+    // While its result is on screen, the same QR is never read again.
+    cooldown.current = { raw, until: Number.POSITIVE_INFINITY };
     setAttempt(action);
     setResult(null);
     let value = await scan.run<ScanResult>('/gate/scan', 'POST', action, { public: true, station: true });
@@ -275,10 +252,16 @@ export function Gate() {
     scanning.current = false;
   }
 
-  function reset() { setResult(null); setAttempt(null); setManual(''); setError(''); scan.clear(); }
+  // Choosing a movement is a deliberate new reading, even for the QR still in front of the camera.
+  function changeDirection(next: 'ENTRY' | 'EXIT') { setDirection(next); cooldown.current = null; }
+
+  function next() {
+    if (cooldown.current) cooldown.current = { raw: cooldown.current.raw, until: Date.now() + SAME_QR_COOLDOWN_MS };
+    setResult(null); setAttempt(null); scan.clear();
+  }
 
   return <div className={'gate-station' + (station ? ' has-nav' : '')}>
-    <PageHeader title={station && view === 'log' ? 'Bitácora' : 'Caseta'} text={station && view === 'log' ? 'Consulta quién sigue dentro y las lecturas recientes de este equipo.' : 'Escanea un pase y registra claramente si la visita entra o sale.'}/>
+    {(!station || view === 'log') && <PageHeader title={station ? 'Bitácora' : 'Caseta'} text={station ? 'Consulta quién sigue dentro y las lecturas recientes de este equipo.' : 'Vincula este equipo para escanear los pases de las visitas.'}/>}
     {checking && !station ? <Loading/> : !station ? <section className="panel setup-panel">
       <div className="setup-symbol"><DoorOpen size={31}/></div>
       <h2>Vincula este equipo una sola vez</h2>
@@ -289,50 +272,38 @@ export function Gate() {
         <Button className="full" type="submit" busy={pair.busy || confirming} disabled={!online}><ShieldCheck size={18}/> Vincular equipo</Button>
       </form>
     </section> : <>
-      <div className="gate-session">
+      <div className="gate-session compact">
         <div><span className={'connection-dot ' + (online ? '' : 'offline')}/><strong>{station.gate.label}</strong><span>{station.label} · {online ? 'Equipo autorizado' : 'Sin conexión'}</span></div>
-        <Button className="secondary small-button" onClick={() => void refreshStation()} disabled={!online}><RotateCw size={15}/> Comprobar conexión</Button>
+        <button type="button" className="icon-button" onClick={() => void refreshStation()} disabled={!online} aria-label="Comprobar conexión" title="Comprobar conexión"><RotateCw size={17}/></button>
       </div>
       <ErrorBox message={stationError}/>
       <GateNav view={view} onChange={openView} inside={shiftLog.log?.inside.length}/>
       {walkIn && <GateWalkIn online={online} onClose={() => setWalkIn(false)} onFinished={granted => { if (granted !== null) signal(granted); setLogVersion(v => v + 1); }}/>}
+      {manual && <ManualDialog directionName={directionName} busy={scan.busy} online={online} onClose={() => setManual(false)} onSubmit={raw => void read(raw)}/>}
+      {showing && attempt && <ResultDialog key={attempt.token + attempt.direction} result={result} error={scan.error} direction={attempt.direction} retrying={scan.busy} online={online} onNext={next} onRetry={() => void read(attempt.token, true)}/>}
       <div id="gate-view" role="tabpanel" aria-labelledby={view === 'scan' ? 'gate-tab-scan' : 'gate-tab-log'}>
-      {view === 'log' ? <><ShiftLog {...shiftLog} online={online} exiting={exiting} onExit={exitWalkIn}/><ErrorBox message={exit.error}/></> : <>
-      <div className="gate-layout">
-        <section className="panel scanner-panel">
-          <div className="panel-heading"><div><h2>¿Qué movimiento vas a registrar?</h2><p>Selecciona una opción antes de leer el QR.</p></div><ScanLine/></div>
-          <nav className={`direction-nav ${direction === 'ENTRY' ? 'entry-active' : 'exit-active'}`} aria-label="Movimiento del visitante">
-            <span className="direction-nav-fill direction-nav-fill-left" aria-hidden="true"/>
-            <svg className="direction-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
-            </svg>
-            <span className="direction-nav-fill direction-nav-fill-right" aria-hidden="true"/>
-            <button type="button" disabled={scan.busy || !!attempt} className={direction === 'ENTRY' ? 'selected' : ''} aria-pressed={direction === 'ENTRY'} onClick={() => setDirection('ENTRY')}>
-              <span className="direction-nav-icon"><AnimatedArrowRightDashed size={21}/></span><span className="direction-nav-label"><strong>Entrada</strong><small>La visita llega</small></span>
-            </button>
-            <button type="button" disabled={scan.busy || !!attempt} className={direction === 'EXIT' ? 'selected' : ''} aria-pressed={direction === 'EXIT'} onClick={() => setDirection('EXIT')}>
-              <span className="direction-nav-icon"><AnimatedArrowLeftDashed size={21}/></span><span className="direction-nav-label"><strong>Salida</strong><small>La visita se retira</small></span>
-            </button>
-          </nav>
-          {camera && online ? <CameraReader onRead={raw => void read(raw)}/> : <div className="scanner-placeholder">
-            <div className="scan-frame"><AnimatedQr size={56} strokeWidth={1.3}/></div>
-            <h3>{scan.busy ? `Validando ${directionName}…` : attempt ? 'Lectura completada' : `Listo para registrar ${directionName}`}</h3>
-            <p>{online ? `Lee el QR del visitante para registrar su ${directionName}.` : 'Recupera la conexión para continuar.'}</p>
-            <Button disabled={!online || scan.busy || !!attempt} onClick={() => { unlockAudio(); setCamera(true); }}><Camera size={18}/> Escanear {directionName}</Button>
-          </div>}
-          {camera && <Button className="secondary full" onClick={() => setCamera(false)}>Cerrar cámara</Button>}
-          <div className="manual-entry"><span>También puedes pegar el enlace</span><form onSubmit={event => { event.preventDefault(); unlockAudio(); void read(manual); }}><input aria-label="Enlace o token del pase" placeholder="https://…/p/…" value={manual} onChange={event => setManual(event.target.value)} disabled={!!attempt || scan.busy}/><Button type="submit" className="secondary" disabled={!manual || !!attempt || !online} busy={scan.busy}><ClipboardPaste size={17}/> Validar {directionName}</Button></form></div>
-          <div className="walkin-entry"><div><strong>¿Llegó sin pase?</strong><span>Pide autorización a la vivienda desde aquí.</span></div><Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setCamera(false); setWalkIn(true); }}><UserPlus size={17}/> Visita sin pase</Button></div>
-          <ErrorBox message={error}/>
-        </section>
-        <aside ref={resultPanel} tabIndex={-1} aria-label="Resultado de la lectura" className="panel scan-result" aria-live="polite" aria-atomic="true">
-          {result ? <><div className="result-symbol granted"><Check size={34}/></div><h2>{attempt?.direction === 'ENTRY' ? 'Entrada autorizada' : 'Salida registrada'}</h2><p>Confirma los datos del visitante.</p><dl className="details"><div><dt>Visitante</dt><dd>{result.guestName}</dd></div><div><dt>Vehículo</dt><dd>{result.guestVehicle || 'Peatonal'}</dd></div><div><dt>Destino</dt><dd>{result.property.street} {result.property.houseNumber}</dd></div><div><dt>Residente</dt><dd>{result.residentName}</dd></div><div><dt>Movimiento</dt><dd>{attempt?.direction === 'ENTRY' ? 'Entrada' : 'Salida'}</dd></div></dl><Button className="full" onClick={reset}>Siguiente visita</Button><p className="small muted">Esta pantalla no acciona una barrera automáticamente.</p></> :
-            scan.error ? <><div className="result-symbol denied"><XCircle size={34}/></div><h2>{attempt?.direction === 'EXIT' ? 'No se registró la salida' : 'No autorices el acceso'}</h2><ErrorBox message={scan.error}/><div className="stack"><Button className="secondary" disabled={!online} busy={scan.busy} onClick={() => attempt && void read(attempt.token, true)}>Reintentar esta lectura</Button><Button onClick={reset}>Leer otro pase</Button></div></> :
-            <Empty icon={<ShieldCheck/>} title={scan.busy ? 'Comprobando acceso' : 'El resultado aparecerá aquí'} text="La caseta revisa la vigencia, la vivienda y el estado del pase antes de autorizar."/>}
-        </aside>
-      </div>
-      <Info>Sin conexión no se autorizan accesos. Si una respuesta se pierde, reintenta la misma lectura para evitar duplicarla.</Info>
-      </>}
+      {view === 'log' ? <><ShiftLog {...shiftLog} online={online} exiting={exiting} onExit={exitWalkIn}/><ErrorBox message={exit.error}/></> : <div className="scan-screen">
+        <nav className={`direction-nav ${direction === 'ENTRY' ? 'entry-active' : 'exit-active'}`} aria-label="Movimiento del visitante">
+          <span className="direction-nav-fill direction-nav-fill-left" aria-hidden="true"/>
+          <svg className="direction-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
+          </svg>
+          <span className="direction-nav-fill direction-nav-fill-right" aria-hidden="true"/>
+          <button type="button" disabled={scan.busy} className={direction === 'ENTRY' ? 'selected' : ''} aria-pressed={direction === 'ENTRY'} onClick={() => changeDirection('ENTRY')}>
+            <span className="direction-nav-icon"><AnimatedArrowRightDashed size={21}/></span><span className="direction-nav-label"><strong>Entrada</strong><small>La visita llega</small></span>
+          </button>
+          <button type="button" disabled={scan.busy} className={direction === 'EXIT' ? 'selected' : ''} aria-pressed={direction === 'EXIT'} onClick={() => changeDirection('EXIT')}>
+            <span className="direction-nav-icon"><AnimatedArrowLeftDashed size={21}/></span><span className="direction-nav-label"><strong>Salida</strong><small>La visita se retira</small></span>
+          </button>
+        </nav>
+        <ScanStage cameraOn={cameraOn} online={online} busy={scan.busy} paused={showing || manual || walkIn} directionName={directionName} notice={notice} cameraError={cameraError}
+          onStart={() => { unlockAudio(); switchCamera(true); }} onStop={() => switchCamera(false)} onRead={raw => void read(raw)} onCameraError={setCameraError}/>
+        <div className="scan-actions">
+          <Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setManual(true); }}><ClipboardPaste size={17}/> Pegar enlace</Button>
+          <Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setWalkIn(true); }}><UserPlus size={17}/> Visita sin pase</Button>
+        </div>
+        <p className="scan-hint">Sin conexión no se autorizan accesos. Si una respuesta se pierde, reintenta la misma lectura para no duplicarla.</p>
+      </div>}
       </div>
     </>}
   </div>;

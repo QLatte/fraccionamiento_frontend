@@ -39,8 +39,9 @@ test('complete real WebAuthn, resident, gate, admin and offline PWA journeys', a
   await page.getByRole('button', { name: 'Abrir cámara', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Acceso autorizado' })).toBeVisible();
   await page.getByRole('button', { name: 'Siguiente visita' }).click();
+  await page.getByRole('button', { name: 'Pegar enlace' }).click();
   await page.getByLabel('Enlace o token del pase').fill(fixture.scanUrl);
-  await page.getByRole('button', { name: 'Validar', exact: true }).click();
+  await page.getByRole('button', { name: 'Validar entrada', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'No autorices el acceso' })).toBeVisible();
   await expect(page.getByText('Este pase ya fue utilizado.')).toBeVisible();
   await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('button', { name: 'Administración' }).click();
