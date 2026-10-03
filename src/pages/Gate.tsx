@@ -274,7 +274,6 @@ export function Gate() {
     </section> : <>
       <div className="gate-session compact">
         <div><span className={'connection-dot ' + (online ? '' : 'offline')}/><strong>{station.gate.label}</strong><span>{station.label} · {online ? 'Equipo autorizado' : 'Sin conexión'}</span></div>
-        <button type="button" className="icon-button" onClick={() => void refreshStation()} disabled={!online} aria-label="Comprobar conexión" title="Comprobar conexión"><RotateCw size={17}/></button>
       </div>
       <ErrorBox message={stationError}/>
       <GateNav view={view} onChange={openView} inside={shiftLog.log?.inside.length}/>
@@ -302,7 +301,6 @@ export function Gate() {
           <Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setManual(true); }}><ClipboardPaste size={17}/> Pegar enlace</Button>
           <Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setWalkIn(true); }}><UserPlus size={17}/> Visita sin pase</Button>
         </div>
-        <p className="scan-hint">Sin conexión no se autorizan accesos. Si una respuesta se pierde, reintenta la misma lectura para no duplicarla.</p>
       </div>}
       </div>
     </>}

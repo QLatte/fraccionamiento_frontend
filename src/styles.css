@@ -780,17 +780,16 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 }
 
 /* Caseta: one-screen scanner. The camera stays on; results open in a dialog. */
-.gate-session.compact { flex-wrap: nowrap; gap: 10px; padding: 10px 10px 10px 16px; margin-bottom: 16px; }
+.gate-session.compact { flex-wrap: nowrap; gap: 10px; padding: 14px 16px; margin-bottom: 16px; }
 .gate-session.compact > div { flex-wrap: nowrap; min-width: 0; gap: 8px; }
 .gate-session.compact > div > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gate-session.compact .icon-button { color: var(--brand); }
 .gate-session.compact .icon-button:hover:not(:disabled) { background: #ffffff99; }
-.scan-screen { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "direction" "stage" "actions" "hint"; gap: 14px; max-width: 760px; margin: 0 auto; }
+.scan-screen { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "direction" "stage" "actions"; gap: 14px; max-width: 760px; margin: 0 auto; }
 /* The selected arrow rises 27px above the bar: leave room for it. */
 .scan-screen .direction-nav { grid-area: direction; margin: 26px 0 0; }
 .scan-actions { grid-area: actions; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .scan-actions .button { width: 100%; min-width: 0; padding-inline: 10px; }
-.scan-hint { grid-area: hint; margin: 0; font-size: 13px; line-height: 1.5; }
 
 .scan-stage { grid-area: stage; position: relative; display: grid; place-items: center; width: 100%; height: clamp(300px, calc(100dvh - 420px), 620px); overflow: hidden; isolation: isolate; border-radius: 22px; background: radial-gradient(120% 90% at 50% 0%, #1d5568 0%, var(--brand) 58%, #0d2e39 100%); color: #fff; box-shadow: inset 0 0 0 1px #ffffff14, 0 18px 40px -24px #123c4a99; }
 .scan-stage video { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 320ms ease; }
@@ -844,7 +843,7 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 @keyframes scan-countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 @media (min-width: 1000px) {
-  .scan-screen { max-width: 1180px; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); grid-template-areas: "stage direction" "stage actions" "stage hint" "stage none"; grid-template-rows: auto auto auto 1fr; column-gap: 24px; }
+  .scan-screen { max-width: 1180px; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); grid-template-areas: "stage direction" "stage actions" "stage none"; grid-template-rows: auto auto 1fr; column-gap: 24px; }
   .scan-stage { height: clamp(420px, calc(100dvh - 300px), 680px); }
   .scan-actions { grid-template-columns: 1fr; }
   .scan-actions .button { min-height: 56px; justify-content: flex-start; padding-inline: 18px; }
@@ -853,7 +852,6 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   /* Everything fits above the floating Escanear/Bitácora bar without scrolling. */
   .scan-stage { border-radius: 18px; height: clamp(260px, calc(100dvh - 466px), 560px); }
   .scan-screen { gap: 12px; }
-  .scan-hint { display: none; }
   .gate-session.compact { padding-block: 6px; margin-bottom: 12px; }
   .gate-session.compact strong { white-space: nowrap; }
   .gate-session.compact > div:first-child > span:last-child { flex-basis: auto; margin-left: 0; }
