@@ -1,10 +1,48 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { MapPin, Send } from 'lucide-react';
 import { api, errorText } from '../api';
 import { dateText, useQuery } from '../hooks';
 import { Button, ErrorBox, Loading } from '../components/ui';
 import { PlatformImport } from './PlatformImport';
-import { accessLabel, needsInvite, type CommunityDetail, type CommunitySummary, type Home, type Member } from './platformTypes';
+import { accessLabel, needsInvite, type CommunityDetail, type CommunitySummary, type Home, type InvitationJob, type Member } from './platformTypes';
+
+// Invitations are emailed in the background; this follows the job and refreshes the list when it ends.
+function useInvitationJob(communityId: string, onFinished: () => void) {
+  const [job, setJob] = useState<InvitationJob | null>(null);
+  // 'open': check once when the page opens; 'sent': a send was just started from here.
+  const [tracking, setTracking] = useState<'open' | 'sent' | null>('open');
+  const track = useCallback(() => setTracking('sent'), []);
+  useEffect(() => {
+    if (!tracking) return;
+    let alive = true; let timer = 0; let wasRunning = tracking === 'sent';
+    const poll = async () => {
+      try {
+        const next = await api<InvitationJob>(`/platform/communities/${communityId}/invitations/status`);
+        if (!alive) return;
+        setJob(next);
+        if (next.running) { wasRunning = true; timer = window.setTimeout(poll, 1500); return; }
+        setTracking(null);
+        // Statuses only change when a send was in progress; the first check on open reloads nothing.
+        if (wasRunning) onFinished();
+      } catch { if (alive) timer = window.setTimeout(poll, 4000); }
+    };
+    void poll();
+    return () => { alive = false; window.clearTimeout(timer); };
+  }, [tracking, communityId, onFinished]);
+  return { job, track };
+}
+
+function InvitationProgress({ job }: { job: InvitationJob }) {
+  const done = job.sent + job.failed;
+  if (!job.total || (!job.running && !job.finishedAt)) return null;
+  return <div className={'invite-progress' + (job.running ? '' : job.failed ? ' failed' : ' done')} role="status">
+    <div className="invite-progress-text">{job.running
+      ? <><Send size={16}/> Enviando invitaciones: {done} de {job.total}…</>
+      : job.failed ? <>Se enviaron {job.sent} de {job.total}; {job.failed} no se pudieron enviar. {job.errors.join(' ')}</>
+      : <>{job.sent === 1 ? 'Invitación enviada.' : `Se enviaron las ${job.sent} invitaciones.`}</>}</div>
+    {job.running && <span className="invite-progress-bar"><i style={{ transform: `scaleX(${job.total ? done / job.total : 0})` }}/></span>}
+  </div>;
+}
 
 // Platform accounts may hold a placeholder home to log in; they are not billed residents.
 const residentsOf = (home: Home) => home.memberships.filter(m => m.user.globalRole !== 'SUPERADMIN').length;
@@ -14,7 +52,8 @@ type Props = { id: string; communities: CommunitySummary[]; emailEnabled: boolea
 export function PlatformCommunity({ id, communities, emailEnabled, onChanged }: Props) {
   const detail = useQuery<CommunityDetail>(`/platform/communities/${id}`);
   const [busy, setBusy] = useState(''); const [error, setError] = useState(''); const [message, setMessage] = useState('');
-  const refresh = () => { detail.refresh(); onChanged(); };
+  const refresh = useCallback(() => { detail.refresh(); onChanged(); }, [detail.refresh, onChanged]);
+  const invitations = useInvitationJob(id, refresh);
   // One action at a time; `key` names it so only its button shows progress.
   async function act(key: string, run: () => Promise<string>) {
     setBusy(key); setError(''); setMessage('');
@@ -28,10 +67,11 @@ export function PlatformCommunity({ id, communities, emailEnabled, onChanged }: 
   const admin = community.admins[0];
   const owners = [...new Map(homes.filter(p => p.status === 'ACTIVE').flatMap(p => p.memberships.filter(m => m.membershipRole === 'RESIDENT_OWNER' && ['RESIDENT', 'ADMIN'].includes(m.user.globalRole ?? '')).map(m => [m.user.id, m.user] as const))).values()].filter(u => u.id !== admin?.user.id);
 
+  const sending = !!invitations.job?.running;
   const invite = (targets?: { userId: string; propertyId: string }[]) => act(targets ? `invite:${targets[0].userId}:${targets[0].propertyId}` : 'invite-all', async () => {
-    const result = await api<{ sent: number; failed: number; errors: string[] }>(`/platform/communities/${id}/invitations`, { method: 'POST', body: targets ? { targets } : {} });
-    if (result.failed) throw new Error(`Se enviaron ${result.sent} y fallaron ${result.failed}. ${result.errors.join(' ')}`);
-    return result.sent === 1 ? 'Invitación enviada.' : `Se enviaron ${result.sent} invitaciones.`;
+    await api<InvitationJob>(`/platform/communities/${id}/invitations`, { method: 'POST', body: targets ? { targets } : {} });
+    invitations.track();
+    return '';
   });
 
   return <section className="panel platform-panel platform-community" aria-label={community.name}>
@@ -44,10 +84,11 @@ export function PlatformCommunity({ id, communities, emailEnabled, onChanged }: 
     <AssignAdmin owners={owners} replacing={!!admin} busy={busy === 'admin'} disabled={!!busy} onAssign={userId => act('admin', async () => { await api('/platform/community-admins', { method: 'POST', body: { userId, communityId: id } }); return admin ? 'Administrador reemplazado.' : 'Administrador asignado. Ya puede cambiar al perfil Administración.'; })}/>
     <ErrorBox message={error}/>{message && <p role="status" className="success-text">{message}</p>}
 
-    <PlatformImport communityId={id} emailEnabled={emailEnabled} onImported={refresh}/>
+    <PlatformImport communityId={id} emailEnabled={emailEnabled} onImported={queued => { refresh(); if (queued) invitations.track(); }}/>
 
     <div className="platform-section-heading"><h3>Viviendas y residentes</h3>
-      {!!pending.length && <Button busy={busy === 'invite-all'} disabled={!emailEnabled || !!busy} onClick={() => void invite()}><Send size={17}/> Enviar invitaciones pendientes ({pending.length})</Button>}</div>
+      {!!pending.length && <Button busy={busy === 'invite-all' || sending} disabled={!emailEnabled || !!busy || sending} onClick={() => void invite()}><Send size={17}/> Enviar invitaciones pendientes ({pending.length})</Button>}</div>
+    {invitations.job && <InvitationProgress job={invitations.job}/>}
     {!community.clusters.length && <p>Aún no hay privadas ni lotes. Importa el Excel del fraccionamiento.</p>}
     {community.clusters.map(section => <div className="platform-cluster" key={section.id}>
       <div className="platform-cluster-heading"><h4>{section.name} <span className="muted">· {section.type === 'LOTE' ? 'Lote' : 'Privada'} · {section.properties.length} {section.properties.length === 1 ? 'casa' : 'casas'}</span></h4>
@@ -57,7 +98,7 @@ export function PlatformCommunity({ id, communities, emailEnabled, onChanged }: 
         {section.properties.map(home => <tr key={home.id}>
           <td data-label="Casa"><strong>{home.houseNumber}</strong>{home.status !== 'ACTIVE' && <small className="muted"> · inactiva</small>}{residentsOf(home) > 2 && <><br/><span className="badge expired"><span/>+{residentsOf(home) - 2} extra</span></>}</td>
           <td data-label="Teléfonos"><DeviceLimit home={home} onSaved={refresh}/></td>
-          <td data-label="Residentes">{!home.memberships.length && <span className="muted">Sin residentes</span>}{home.memberships.map(m => <Resident key={m.user.id} member={m} busy={busy === `invite:${m.user.id}:${home.id}`} disabled={!emailEnabled || !!busy} onInvite={() => void invite([{ userId: m.user.id, propertyId: home.id }])}/>)}</td>
+          <td data-label="Residentes">{!home.memberships.length && <span className="muted">Sin residentes</span>}{home.memberships.map(m => <Resident key={m.user.id} member={m} busy={busy === `invite:${m.user.id}:${home.id}`} disabled={!emailEnabled || !!busy || sending} onInvite={() => void invite([{ userId: m.user.id, propertyId: home.id }])}/>)}</td>
         </tr>)}
       </tbody></table></div>
     </div>)}

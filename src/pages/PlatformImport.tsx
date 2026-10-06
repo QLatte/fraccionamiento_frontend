@@ -7,7 +7,7 @@ import type { ImportResult, Preview } from './platformTypes';
 
 // Superadmins load the residents spreadsheet each fraccionamiento sends. The API
 // detects the layout and shows a preview; nothing is written until "Importar".
-export function PlatformImport({ communityId, emailEnabled, onImported }: { communityId: string; emailEnabled: boolean; onImported: () => void }) {
+export function PlatformImport({ communityId, emailEnabled, onImported }: { communityId: string; emailEnabled: boolean; onImported: (queued: number) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState(''); const [sheets, setSheets] = useState<Sheet[] | null>(null); const [preview, setPreview] = useState<Preview | null>(null);
   const [sendInvites, setSendInvites] = useState(emailEnabled); const [busy, setBusy] = useState(''); const [error, setError] = useState(''); const [result, setResult] = useState<ImportResult | null>(null);
@@ -25,8 +25,8 @@ export function PlatformImport({ communityId, emailEnabled, onImported }: { comm
     if (!sheets) return;
     setBusy('import'); setError('');
     try {
-      setResult(await api<ImportResult>(`/platform/communities/${communityId}/import`, { method: 'POST', body: { sheets, sendInvites: sendInvites && emailEnabled } }));
-      setPreview(null); setSheets(null); onImported();
+      const imported = await api<ImportResult>(`/platform/communities/${communityId}/import`, { method: 'POST', body: { sheets, sendInvites: sendInvites && emailEnabled } });
+      setResult(imported); setPreview(null); setSheets(null); onImported(imported.queued);
     } catch (e) { setError(errorText(e)); } finally { setBusy(''); }
   }
   function template() {
@@ -45,7 +45,7 @@ export function PlatformImport({ communityId, emailEnabled, onImported }: { comm
     <Button busy={busy === 'read'} disabled={!!busy} onClick={() => input.current?.click()}><Upload size={17}/> {file && !result ? 'Elegir otro archivo' : 'Elegir archivo .xlsx o .csv'}</Button>
     {file && busy !== 'read' && !result && <p className="small"><FileSpreadsheet size={15}/> {file}</p>}
     <ErrorBox message={error}/>
-    {result && <Success>Importado: {result.counts.newHouses} casas nuevas, {result.counts.newPeople} personas nuevas{result.counts.newSections ? `, ${result.counts.newSections} privadas o lotes nuevos` : ''}. {result.sent ? `Se enviaron ${result.sent} invitaciones por correo.` : result.pending ? `${result.pending} personas aún no tienen invitación.` : ''}{result.failed ? ` ${result.failed} correos no se pudieron enviar; reintenta desde la lista.` : ''}</Success>}
+    {result && <Success>Importado: {result.counts.newHouses} casas nuevas, {result.counts.newPeople} personas nuevas{result.counts.newSections ? `, ${result.counts.newSections} privadas o lotes nuevos` : ''}. {result.queued ? `Enviando ${result.queued} invitaciones por correo; el avance aparece abajo.` : result.pending ? `${result.pending} personas aún no tienen invitación.` : ''}</Success>}
     {preview && s && <div className="import-preview">
       <div className="import-stats">
         <div><strong>{s.privadas}</strong><small>{s.privadas === 1 ? 'privada' : 'privadas'}</small></div>

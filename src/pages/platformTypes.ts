@@ -13,7 +13,9 @@ export type Preview = {
   sections: { name: string; type: 'PRIVADA' | 'LOTE'; clusterId: string | null; houses: { number: string; label: string; propertyId: string | null; deviceLimit: number; extra: number; residents: { fullName: string; email: string; existingUser: boolean; member: boolean }[] }[] }[];
   issues: Issue[]; counts: Counts; summary: Summary; canImport: boolean;
 };
-export type ImportResult = { counts: Counts; summary: Summary; pending: number; sent: number; failed: number };
+export type ImportResult = { counts: Counts; summary: Summary; pending: number; queued: number };
+/** Background email sending for one fraccionamiento (see /invitations/status). */
+export type InvitationJob = { total: number; sent: number; failed: number; errors: string[]; running: boolean; startedAt: string | null; finishedAt: string | null };
 
 /** Whether this person still needs an (email) invitation. */
 export const needsInvite = (status: AccessStatus) => status === 'PENDING' || status === 'EXPIRED' || status === 'FAILED';

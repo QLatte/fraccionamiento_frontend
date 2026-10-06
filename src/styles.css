@@ -864,3 +864,11 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .scan-line, .scan-dot, .scan-dialog-symbol, .scan-toast { animation: none; }
   .scan-stage video { transition: none; }
 }
+
+/* Background invitation sending */
+.invite-progress { margin: 14px 0 4px; padding: 12px 14px; border: 1px solid #d2e2e9; border-radius: 12px; background: #edf4f7; color: #355967; font-size: 14px; }
+.invite-progress.done { border-color: #c6e3d3; background: #e7f3ed; color: #286648; }
+.invite-progress.failed { border-color: #ecdcb1; background: #fbf7ec; color: #7e601c; }
+.invite-progress-text { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.invite-progress-bar { display: block; height: 4px; margin-top: 10px; overflow: hidden; border-radius: 4px; background: #d2e2e9; }
+.invite-progress-bar i { display: block; height: 100%; background: var(--brand); transform-origin: left; transition: transform 400ms cubic-bezier(.32, .72, 0, 1); }
