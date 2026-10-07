@@ -912,3 +912,22 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 /* Press feedback: every button sinks slightly while held. */
 .button, .icon-button { transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease); }
 .button:active:not(:disabled), .icon-button:active:not(:disabled) { transform: scale(.97); transition-duration: 90ms; }
+
+/* Superadmin: which fraccionamiento the admin screens are showing (one at a time). */
+.admin-community { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 18px; padding: 12px 16px; border: 1px solid #b9d4de; border-radius: 14px; background: #e8f2f6; color: var(--brand); }
+.admin-community label { display: flex; align-items: center; gap: 10px; margin: 0; font-weight: 600; }
+.admin-community select { width: auto; min-width: 240px; min-height: 42px; }
+.admin-community span { color: var(--muted); font-size: 13px; }
+.shared-gates { margin-bottom: 20px; }
+.shared-gates ul { margin: 8px 0 0; padding-left: 18px; }
+.platform-merge { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 8px; }
+.gate-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.platform-gates { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.platform-gates li { display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: #f7fafb; }
+.platform-gates span { color: var(--muted); font-size: 13px; }
+@media (max-width: 640px) {
+  /* Casetas on phones: the actions get their own row under the name. */
+  .gates-admin .device-row:has(.gate-actions) { flex-wrap: wrap; }
+  .gates-admin .gate-actions { flex-basis: 100%; justify-content: flex-start; padding-left: 58px; }
+  .gates-admin .gate-actions .button { white-space: nowrap; }
+}

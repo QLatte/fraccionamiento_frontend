@@ -15,13 +15,14 @@ export function Platform() {
     {usage.data && !usage.data.emailEnabled && <Info>El envío de correos no está configurado. Agrega RESEND_API_KEY y EMAIL_FROM en el API (Render) para mandar las invitaciones; mientras tanto puedes importar y entregar invitaciones en persona.</Info>}
     <ErrorBox message={usage.error} retry={usage.refresh}/>
     {usage.loading && !usage.data ? <Loading/> : <section className="panel platform-panel"><h2>Fraccionamientos</h2><p>Casas activas y residentes únicos. «Extra» son los residentes por encima de los 2 incluidos por casa, que se cobran aparte.</p>
-      <div className="platform-table"><table><thead><tr><th>Fraccionamiento</th><th>Privadas y lotes</th><th>Casas</th><th>Residentes</th><th>Extra</th><th>Administrador</th><th/></tr></thead>
+      <div className="platform-table"><table><thead><tr><th>Fraccionamiento</th><th>Privadas y lotes</th><th>Casas</th><th>Residentes</th><th>Extra</th><th>Casetas</th><th>Administrador</th><th/></tr></thead>
         <tbody>{communities.map(c => <tr key={c.id} className={selected === c.id ? 'selected' : ''}>
           <td data-label="Fraccionamiento"><strong>{c.name}</strong></td>
           <td data-label="Privadas y lotes">{[c.privadas && `${c.privadas} ${c.privadas === 1 ? 'privada' : 'privadas'}`, c.lotes && `${c.lotes} ${c.lotes === 1 ? 'lote' : 'lotes'}`].filter(Boolean).join(' · ') || '—'}</td>
           <td data-label="Casas">{c.activeProperties}</td>
           <td data-label="Residentes">{c.activeResidents}</td>
           <td data-label="Extra">{c.extraResidents ? <span className="badge expired"><span/>+{c.extraResidents}</span> : '0'}</td>
+          <td data-label="Casetas">{c.gates}</td>
           <td data-label="Administrador">{c.admins ? 'Asignado' : 'Sin asignar'}</td>
           <td><Button className="secondary" onClick={() => setSelected(c.id)}>Administrar</Button></td>
         </tr>)}</tbody></table></div>

@@ -42,7 +42,7 @@ const otherHome = await db.property.create({ data: { street: 'Paseo del Roble', 
 const user = await db.user.create({ data: { fullName: 'Lucía Méndez', email: 'lucia@e2e.test', globalRole: 'ADMIN', memberships: { create: [{ propertyId: property.id, membershipRole: 'RESIDENT_OWNER' }, { propertyId: otherHome.id, membershipRole: 'RESIDENT_OWNER' }] } } });
 await db.communityAdmin.create({ data: { userId: user.id, communityId: community.id } });
 const resident = await db.user.create({ data: { fullName: 'Ana Torres', email: 'ana@e2e.test', memberships: { create: { propertyId: property.id, membershipRole: 'FAMILY_MEMBER' } } } });
-const gate = await db.gate.create({ data: { label: 'Acceso principal', clusters: { connect: { id: cluster.id } } } });
+const gate = await db.gate.create({ data: { label: 'Acceso principal', communityId: community.id } });
 const deviceToken = randomToken(); await db.gateDevice.create({ data: { gateId: gate.id, label: 'Tableta principal', tokenHash: tokenHash(deviceToken) } });
 const grant = await db.$transaction(tx => enrollment(tx, user.id, property.id, 'REGISTER', user.id));
 let scanUrl = '';

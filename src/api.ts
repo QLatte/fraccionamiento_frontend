@@ -1,5 +1,13 @@
 let token: string | null = null;
 export function setToken(value: string | null) { token = value; }
+// The fraccionamiento a superadmin is administering. Admin requests always name exactly one;
+// a community admin's requests are fixed to theirs by the API.
+let adminCommunity: string | null = null;
+export function setAdminCommunity(value: string | null) { adminCommunity = value; }
+function scoped(path: string) {
+  if (!adminCommunity || !(path.startsWith('/admin/') || path.startsWith('/gate/gates')) || path.includes('communityId=')) return path;
+  return path + (path.includes('?') ? '&' : '?') + 'communityId=' + encodeURIComponent(adminCommunity);
+}
 const base = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/$/, '');
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -25,7 +33,7 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   options.signal?.addEventListener('abort', abort, { once: true });
   if (options.signal?.aborted) controller.abort();
   try {
-    const response = await fetch((options.station ? '/api/v1' : base) + path, { method: options.method ?? 'GET', cache: 'no-store', credentials: options.station ? 'include' : 'omit', signal: controller.signal,
+    const response = await fetch((options.station ? '/api/v1' : base) + scoped(path), { method: options.method ?? 'GET', cache: 'no-store', credentials: options.station ? 'include' : 'omit', signal: controller.signal,
       headers: { ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(auth ? { Authorization: `Bearer ${auth}` } : {}), ...(options.key ? { 'Idempotency-Key': options.key } : {}) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });

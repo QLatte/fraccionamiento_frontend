@@ -9,7 +9,7 @@ export interface SessionResult { accessToken: string; expiresAt: string }
 export interface CreatedPass { id: string; shareUrl: string; encryptedToken: string; status: Status }
 export interface Device { id: string; deviceLabel: string | null; createdAt: string; lastUsedAt: string | null; userId: string }
 export interface Notification { id: string; eventType: string; createdAt: string }
-export interface Gate { id: string; label: string; clusters: { id: string; name: string }[] }
+export interface Gate { id: string; label: string }
 export interface GateDevice { id: string; gateId: string; label: string; active: boolean; pairedAt: string | null; createdAt: string; gate: { label: string } }
 export interface GateStation { id: string; label: string; gate: { id: string; label: string } }
 export interface AdminUser { id: string; fullName: string; email: string; globalRole: Role }
