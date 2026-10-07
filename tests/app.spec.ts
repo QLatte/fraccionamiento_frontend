@@ -45,6 +45,7 @@ test('complete real WebAuthn, resident, gate, admin and offline PWA journeys', a
   await expect(page.getByRole('heading', { name: 'No autorices el acceso' })).toBeVisible();
   await expect(page.getByText('Este pase ya fue utilizado.')).toBeVisible();
   await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('button', { name: 'Administración' }).click();
+  await page.getByRole('button', { name: 'Renovar accesos', exact: true }).click();
   await page.getByRole('button', { name: /Ana Torres ana@e2e.test/ }).click();
   await page.getByRole('combobox', { name: 'Vivienda', exact: true }).selectOption(fixture.propertyId);
   await page.getByLabel('Verifiqué la identidad').check();

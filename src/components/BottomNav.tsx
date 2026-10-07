@@ -6,6 +6,7 @@ import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAli
 import AnimatedUserPlus from './icons/AnimatedUserPlus';
 import AnimatedPhoneVolume from './icons/AnimatedPhoneVolume';
 import AnimatedRefresh from './icons/AnimatedRefresh';
+import AnimatedHistoryCircle from './icons/AnimatedHistoryCircle';
 import './BottomNav.css';
 
 type Props = {
@@ -25,6 +26,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
     { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
     { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
   ] : (role === 'ADMIN') ? [
+    { path: '/admin/movimientos', label: 'Movimientos', Icon: AnimatedHistoryCircle },
     { path: '/admin/invitaciones', label: 'Accesos', Icon: AnimatedUserPlus },
     { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
