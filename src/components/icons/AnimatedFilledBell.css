@@ -4,11 +4,11 @@
 
 /* Its Hover motion: bell swings 0 → -8 → 6 → -4 → 2 → 0°, clapper follows 50ms later. */
 @media (hover: hover) {
-  .icon-hover:hover .animated-filled-bell .bell { animation: filled-bell-swing .6s ease-in-out; }
-  .icon-hover:hover .animated-filled-bell .below-circle { animation: filled-bell-clapper .6s ease-in-out .05s; }
+  .icon-hover:hover .animated-filled-bell .bell { animation: filled-bell-swing .6s var(--motion-wiggle); }
+  .icon-hover:hover .animated-filled-bell .below-circle { animation: filled-bell-clapper .6s var(--motion-wiggle) .05s; }
 }
-.animated-filled-bell.ringing .bell { animation: filled-bell-swing .6s ease-in-out; }
-.animated-filled-bell.ringing .below-circle { animation: filled-bell-clapper .6s ease-in-out .05s; }
+.animated-filled-bell.ringing .bell { animation: filled-bell-swing .6s var(--motion-wiggle); }
+.animated-filled-bell.ringing .below-circle { animation: filled-bell-clapper .6s var(--motion-wiggle) .05s; }
 @keyframes filled-bell-swing { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 80% { transform: rotate(2deg); } }
 @keyframes filled-bell-clapper { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(20deg); } 40% { transform: rotate(-18deg); } 60% { transform: rotate(12deg); } 80% { transform: rotate(-6deg); } }
 

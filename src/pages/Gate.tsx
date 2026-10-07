@@ -117,6 +117,7 @@ export function Gate() {
   const [cameraOn, setCameraOn] = useState(() => { try { return localStorage.getItem(cameraKey) === '1'; } catch { return false; } });
   const [cameraError, setCameraError] = useState('');
   const [notice, setNotice] = useState('');
+  const [noticeLeaving, setNoticeLeaving] = useState(false);
   const [manual, setManual] = useState(false);
   const [direction, setDirection] = useState<'ENTRY' | 'EXIT'>('ENTRY');
   const directionName = direction === 'ENTRY' ? 'entrada' : 'salida';
@@ -177,9 +178,12 @@ export function Gate() {
   }
 
   useEffect(() => {
+    setNoticeLeaving(false);
     if (!notice) return;
+    // The notice slides away before it is removed.
+    const leave = window.setTimeout(() => setNoticeLeaving(true), 2400);
     const id = window.setTimeout(() => setNotice(''), 2600);
-    return () => window.clearTimeout(id);
+    return () => { window.clearTimeout(leave); window.clearTimeout(id); };
   }, [notice]);
 
   const refreshStation = useCallback(async () => {
@@ -283,11 +287,15 @@ export function Gate() {
       <div id="gate-view" role="tabpanel" aria-labelledby={view === 'scan' ? 'gate-tab-scan' : 'gate-tab-log'}>
       {view === 'log' ? <><ShiftLog {...shiftLog} online={online} exiting={exiting} onExit={exitWalkIn}/><ErrorBox message={exit.error}/></> : <div className="scan-screen">
         <nav className={`direction-nav ${direction === 'ENTRY' ? 'entry-active' : 'exit-active'}`} aria-label="Movimiento del visitante">
-          <span className="direction-nav-fill direction-nav-fill-left" aria-hidden="true"/>
-          <svg className="direction-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
-          </svg>
-          <span className="direction-nav-fill direction-nav-fill-right" aria-hidden="true"/>
+          <span className="direction-nav-surface" aria-hidden="true">
+            <span className="direction-nav-fill direction-nav-fill-left"/>
+            <span className="direction-nav-notch-track">
+              <svg className="direction-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none">
+                <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
+              </svg>
+            </span>
+            <span className="direction-nav-fill direction-nav-fill-right"/>
+          </span>
           <button type="button" disabled={scan.busy} className={direction === 'ENTRY' ? 'selected' : ''} aria-pressed={direction === 'ENTRY'} onClick={() => changeDirection('ENTRY')}>
             <span className="direction-nav-icon"><AnimatedArrowRightDashed size={21}/></span><span className="direction-nav-label"><strong>Entrada</strong><small>La visita llega</small></span>
           </button>
@@ -295,7 +303,7 @@ export function Gate() {
             <span className="direction-nav-icon"><AnimatedArrowLeftDashed size={21}/></span><span className="direction-nav-label"><strong>Salida</strong><small>La visita se retira</small></span>
           </button>
         </nav>
-        <ScanStage cameraOn={cameraOn} online={online} busy={scan.busy} paused={showing || manual || walkIn} directionName={directionName} notice={notice} cameraError={cameraError}
+        <ScanStage cameraOn={cameraOn} online={online} busy={scan.busy} paused={showing || manual || walkIn} directionName={directionName} notice={notice} noticeLeaving={noticeLeaving} cameraError={cameraError}
           onStart={() => { unlockAudio(); switchCamera(true); }} onStop={() => switchCamera(false)} onRead={raw => void read(raw)} onCameraError={setCameraError}/>
         <div className="scan-actions">
           <Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setManual(true); }}><ClipboardPaste size={17}/> Pegar enlace</Button>

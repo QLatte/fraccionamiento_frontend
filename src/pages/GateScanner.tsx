@@ -4,6 +4,7 @@ import jsQR from 'jsqr';
 import { Camera, CameraOff, Check, ClipboardPaste, LoaderCircle, Pause, WifiOff, XCircle } from 'lucide-react';
 import { Button, ErrorBox } from '../components/ui';
 import { lockPageScroll } from '../components/lockPageScroll';
+import { fadeOutCopy } from '../components/modalExit';
 import type { ScanResult } from '../types';
 
 /**
@@ -54,12 +55,12 @@ export function CameraReader({ onRead, paused, onError }: { onRead: (raw: string
 }
 
 type StageProps = {
-  cameraOn: boolean; online: boolean; busy: boolean; paused: boolean; directionName: string; notice: string; cameraError: string;
+  cameraOn: boolean; online: boolean; busy: boolean; paused: boolean; directionName: string; notice: string; noticeLeaving: boolean; cameraError: string;
   onStart: () => void; onStop: () => void; onRead: (raw: string) => void; onCameraError: (message: string) => void;
 };
 
 /** The camera area: start button when off, live view with a scan guide when on. */
-export function ScanStage({ cameraOn, online, busy, paused, directionName, notice, cameraError, onStart, onStop, onRead, onCameraError }: StageProps) {
+export function ScanStage({ cameraOn, online, busy, paused, directionName, notice, noticeLeaving, cameraError, onStart, onStop, onRead, onCameraError }: StageProps) {
   const live = cameraOn && online && !cameraError;
   return <div className={'scan-stage' + (live ? ' on' : '') + (busy ? ' busy' : '')}>
     {live && <CameraReader onRead={onRead} paused={paused || busy} onError={onCameraError}/>}
@@ -72,7 +73,7 @@ export function ScanStage({ cameraOn, online, busy, paused, directionName, notic
         : cameraError ? <><CameraOff size={30}/><h3>No se pudo abrir la cámara</h3><p>{cameraError}</p><Button onClick={onStart}><Camera size={18}/> Reintentar</Button></>
         : <><span className="scan-idle-icon"><Camera size={30}/></span><h3>Activa el escáner</h3><p>La cámara se queda encendida: solo acerca cada QR al recuadro.</p><Button onClick={onStart}><Camera size={18}/> Activar escáner</Button></>}
     </div>}
-    {notice && <div className="scan-toast" role="alert">{notice}</div>}
+    {notice && <div className={'scan-toast' + (noticeLeaving ? ' leaving' : '')} role="alert">{notice}</div>}
   </div>;
 }
 
@@ -82,7 +83,7 @@ function Sheet({ label, tone, onClose, children }: { label: string; tone: string
     const el = ref.current!;
     const unlock = lockPageScroll();
     try { el.showModal(); } catch (error) { unlock(); throw error; }
-    return () => { el.close(); unlock(); };
+    return () => { fadeOutCopy(el); el.close(); unlock(); };
   }, []);
   return createPortal(<dialog ref={ref} className={`modal scan-dialog ${tone}`} aria-label={label} onCancel={e => { e.preventDefault(); onClose(); }}>{children}</dialog>, document.body);
 }

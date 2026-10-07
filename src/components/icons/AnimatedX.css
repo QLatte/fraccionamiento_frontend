@@ -8,17 +8,17 @@
 }
 
 @media (hover: hover) {
-  .animated-x-button:hover:not([data-closing='true']) .x-line-1 { animation: x-hover-first .48s ease-out both; }
-  .animated-x-button:hover:not([data-closing='true']) .x-line-2 { animation: x-hover-second .48s ease-out both; }
+  .animated-x-button:hover:not([data-closing='true']) .x-line-1 { animation: x-hover-first var(--motion-slow) var(--motion-ease) both; }
+  .animated-x-button:hover:not([data-closing='true']) .x-line-2 { animation: x-hover-second var(--motion-slow) var(--motion-ease) both; }
 }
 
 .animated-x-button:focus-visible:not([data-closing='true']) .x-line-1,
-.animated-x-button[data-pressed='true']:not([data-closing='true']) .x-line-1 { animation: x-hover-first .48s ease-out both; }
+.animated-x-button[data-pressed='true']:not([data-closing='true']) .x-line-1 { animation: x-hover-first var(--motion-slow) var(--motion-ease) both; }
 .animated-x-button:focus-visible:not([data-closing='true']) .x-line-2,
-.animated-x-button[data-pressed='true']:not([data-closing='true']) .x-line-2 { animation: x-hover-second .48s ease-out both; }
+.animated-x-button[data-pressed='true']:not([data-closing='true']) .x-line-2 { animation: x-hover-second var(--motion-slow) var(--motion-ease) both; }
 
-.animated-x-button[data-closing='true'] .x-line-1 { animation: x-close-first .42s ease-in-out both; }
-.animated-x-button[data-closing='true'] .x-line-2 { animation: x-close-second .42s ease-in-out both; }
+.animated-x-button[data-closing='true'] .x-line-1 { animation: x-close-first var(--motion-slow) var(--motion-wiggle) both; }
+.animated-x-button[data-closing='true'] .x-line-2 { animation: x-close-second var(--motion-slow) var(--motion-wiggle) both; }
 
 @keyframes x-hover-first {
   0% { transform: rotate(0) scale(1); stroke-dashoffset: 0; }

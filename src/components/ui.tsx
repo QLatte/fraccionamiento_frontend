@@ -4,6 +4,7 @@ import { AlertCircle, ArrowRight, Check, LoaderCircle } from 'lucide-react';
 import type { Status } from '../types';
 import { statusLabel } from '../hooks';
 import { lockPageScroll } from './lockPageScroll';
+import { fadeOutCopy } from './modalExit';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedX from './icons/AnimatedX';
 export function Brand({ light = false, onHome, href = '/' }: { light?: boolean; onHome?: () => void; href?: string }) { return <a className={`brand ${light ? 'light' : ''}`} href={href} onClick={onHome ? e => { e.preventDefault(); onHome(); } : undefined}><span className="brand-mark"><AnimatedQr size={25}/></span><span>Zentry<span className="brand-dot">.</span></span></a>; }
@@ -19,11 +20,11 @@ export function Modal({ title, children, onClose }: { title: string; children: R
     // Lock before showModal moves focus, so closing restores the original position.
     const unlock = lockPageScroll();
     try { el.showModal(); } catch (error) { unlock(); throw error; }
-    return () => { el.close(); unlock(); };
+    return () => { fadeOutCopy(el); el.close(); unlock(); };
   }, []);
   return createPortal(
     <dialog ref={ref} className="modal" aria-label={title} onCancel={e => { e.preventDefault(); onClose(); }}>
-      <div className="modal-top"><h2>{title}</h2><AnimatedX size={20} onClose={onClose}/></div>
+      <div className="modal-top"><h2>{title}</h2><AnimatedX size={20} onClose={onClose} delay={140}/></div>
       <div className="modal-content">{children}</div>
     </dialog>,
     document.body,

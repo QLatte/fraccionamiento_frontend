@@ -29,6 +29,17 @@ Los estilos base están escritos a mano en `src/styles.css`. Tailwind CSS v4 est
 
 Al abrir la app, en lugar del indicador «Cargando información…», se reproduce una animación de marca en 2.5D sobre fondo oscuro (`src/components/Splash.tsx` y `Splash.css`): una casa minimalista en perspectiva isométrica (SVG) aparece, su techo se abre en dos hojas que giran sobre sus aleros y deja salir un haz de luz con chispas, de adentro sube un QR holográfico que se acerca a la cámara girando levemente hasta el centro mientras la casa se hunde al fondo, y «Zentry.» aparece debajo con un barrido de luz dentro de las letras; después el fondo baja como ola y descubre la primera pantalla, que ya se cargó debajo. El QR de la animación es decorativo (no se puede escanear). El giro de cada hoja del techo es una rotación isométrica real calculada de antemano y guardada como cuadros de `transform` (sin deformar el SVG), para que se vea fluido también en teléfonos. Dura unos 2.6 s; si la app aún no está lista se queda en el logo hasta que lo esté (máximo 6 s). La app avisa que está lista con `<AppReady/>` dentro del `Suspense` principal. Se muestra una vez por sesión del navegador (cada vez que se abre la PWA), nunca en el enlace público del QR (`/p/…`), y con «reducir movimiento» activado solo aparece el logo y se desvanece. Solo anima `transform` y `opacity`.
 
+## Movimiento
+
+Todas las animaciones siguen una sola identidad («premium sobrio»), definida como variables en `src/styles.css` (`:root`): `--motion-ease` (frenado suave, para casi todo), `--motion-exit` (salidas, que aceleran y duran menos), `--motion-spring` (rebote, solo en selectores —barra inferior, Entrada/Salida, barra de caseta, interruptor— y en el éxito de la caseta) y `--motion-wiggle` (iconos que oscilan), con tres duraciones: `--motion-fast` 150 ms (presionar, hover, color), `--motion-standard` 280 ms (avisos, iconos) y `--motion-slow` 420 ms (modales, menú, selectores). Para cambiar el ritmo de la app basta con ajustar esas variables.
+
+- **Modales:** entran subiendo y aclarando el fondo (en teléfono suben desde abajo). Al cerrarse —por la X, Escape, un botón o cualquier lógica— una copia inerte se desvanece 220 ms (`src/components/modalExit.ts`), así ninguna pantalla tiene que esperar la animación.
+- **Caseta:** el resultado aceptado entra con un rebote leve; el rechazo entra firme y su símbolo se sacude. El aviso de QR inválido entra y sale deslizándose.
+- **Botones:** se hunden un poco mientras se presionan.
+- **Barra inferior y Entrada/Salida:** la muesca se mueve solo con `transform` (sin recalcular el layout), para que no haya tirones en tabletas o teléfonos modestos.
+- **Menú lateral en teléfono:** abre frenando (340 ms) y cierra acelerando (240 ms).
+- Con «reducir movimiento» activado no hay animaciones.
+
 ## Carga por partes
 
 Cada pantalla principal se descarga solo cuando se usa (`React.lazy` en `src/App.tsx`): el escáner de caseta (con jsQR), el QR compartido (con qrcode), el login WebAuthn, los pases, los dispositivos, la administración y la plataforma. React va en su propio archivo, que casi no cambia y queda en caché entre despliegues. Para enrutar sin cargar la administración, la lista de secciones vive en `src/pages/adminSections.ts`. Si tras un despliegue una pestaña abierta pide una parte que ya no existe, la app se recarga una vez para tomar la versión nueva. El service worker guarda todas las partes de `dist`, así que la PWA sigue abriendo sin conexión.

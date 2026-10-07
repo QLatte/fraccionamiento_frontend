@@ -6,10 +6,12 @@ type Props = {
   label?: string;
   className?: string;
   size?: number;
+  /** ms the X animates before closing; inside a dialog the dialog's own exit covers the rest. */
+  delay?: number;
 };
 
 /** Close control based on the two independently moving strokes of Its Hover's X icon. */
-export default function AnimatedX({ onClose, label = 'Cerrar', className = '', size = 24 }: Props) {
+export default function AnimatedX({ onClose, label = 'Cerrar', className = '', size = 24, delay = 430 }: Props) {
   const button = useRef<HTMLButtonElement>(null);
   const timeout = useRef<number | undefined>(undefined);
   const closing = useRef(false);
@@ -29,7 +31,7 @@ export default function AnimatedX({ onClose, label = 'Cerrar', className = '', s
       button.current?.removeAttribute('data-closing');
       button.current?.removeAttribute('data-pressed');
       onClose();
-    }, 430);
+    }, delay);
   };
 
   return <button

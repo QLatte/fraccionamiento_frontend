@@ -47,9 +47,11 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
     <nav className="mobile-nav" aria-label="Navegación móvil" style={style} inert={menuOpen}>
       <div className="mobile-nav-surface" aria-hidden="true">
         <span className="mobile-nav-fill mobile-nav-fill-left"/>
-        <svg className="mobile-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none" focusable="false">
-          <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
-        </svg>
+        <span className="mobile-nav-notch-track">
+          <svg className="mobile-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none" focusable="false">
+            <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
+          </svg>
+        </span>
         <span className="mobile-nav-fill mobile-nav-fill-right"/>
       </div>
       {items.map(({ path: destination, label, Icon }, index) => (

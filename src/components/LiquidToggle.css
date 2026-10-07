@@ -22,7 +22,7 @@
   position: absolute; inset: 0; border-radius: inherit;
   background: linear-gradient(135deg, #2a8a8f 0%, #123c4a 100%);
   transform-origin: left center; transform: scaleX(.2); opacity: 0;
-  transition: transform .45s cubic-bezier(.32, .72, 0, 1), opacity .3s cubic-bezier(.32, .72, 0, 1);
+  transition: transform var(--motion-slow) var(--motion-ease), opacity var(--motion-standard) var(--motion-ease);
 }
 .liquid-toggle.on .liquid-toggle-fill { transform: scaleX(1); opacity: 1; }
 
@@ -30,7 +30,7 @@
   position: absolute; top: var(--toggle-pad); left: var(--toggle-pad);
   width: var(--toggle-thumb); height: var(--toggle-thumb);
   transform: translateX(0);
-  transition: transform .5s cubic-bezier(.34, 1.56, .64, 1);
+  transition: transform var(--motion-slow) var(--motion-spring);
 }
 .liquid-toggle.on .liquid-toggle-thumb { transform: translateX(var(--toggle-travel)); }
 
@@ -47,8 +47,8 @@
 .liquid-toggle.on .liquid-toggle-drop { box-shadow: 0 2px 6px #0b2a3559, 0 8px 18px -6px #071a2299, inset 0 1px 1px #ffffff, inset 0 -2px 3px #123c4a26, inset 0 0 0 .5px #ffffff, 0 0 12px #5fe3d055; }
 
 /* Squash and stretch while traveling; it stretches toward the direction of travel. */
-.liquid-toggle.moving .liquid-toggle-drop { animation: liquid-stretch .5s cubic-bezier(.32, .72, 0, 1); }
-.liquid-toggle:active:not(:disabled) .liquid-toggle-drop { transform: scale(1.12, .9); transition: transform .15s ease-out; }
+.liquid-toggle.moving .liquid-toggle-drop { animation: liquid-stretch var(--motion-slow) var(--motion-ease); }
+.liquid-toggle:active:not(:disabled) .liquid-toggle-drop { transform: scale(1.12, .9); transition: transform var(--motion-fast) var(--motion-ease); }
 @keyframes liquid-stretch {
   0% { transform: scale(1, 1); }
   30% { transform: scale(1.3, .86); }
@@ -57,7 +57,7 @@
 }
 
 /* While saving, the drop breathes. */
-.liquid-toggle.busy .liquid-toggle-drop { animation: liquid-breathe 1s ease-in-out infinite alternate; }
+.liquid-toggle.busy .liquid-toggle-drop { animation: liquid-breathe 1s var(--motion-wiggle) infinite alternate; }
 @keyframes liquid-breathe { to { transform: scale(.88); opacity: .85; } }
 
 @media (prefers-reduced-motion: reduce) {

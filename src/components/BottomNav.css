@@ -6,7 +6,7 @@
     --nav-height: 84px;
     --nav-notch-width: clamp(88px, 24vw, 112px);
     --nav-circle-size: 62px;
-    --nav-spring: cubic-bezier(.34, 1.56, .64, 1);
+    --nav-spring: var(--motion-spring);
     position: fixed;
     left: max(16px, env(safe-area-inset-left));
     right: max(16px, env(safe-area-inset-right));
@@ -31,33 +31,36 @@
     filter: drop-shadow(0 10px 18px rgb(18 60 74 / .16));
   }
 
+  /* Only transforms move (no width/left), so the notch glides without relayout on every frame.
+     The pieces are full width and the surface clips them; percentages in translateX are of
+     that full width, the same base as --nav-center. */
   .mobile-nav-fill {
     position: absolute;
     top: 0;
     bottom: 0;
+    left: 0;
+    width: 100%;
     background: #fff;
+    transition: transform var(--motion-slow) var(--nav-spring);
   }
 
-  .mobile-nav-fill-left {
-    left: 0;
-    width: calc(var(--nav-center) - var(--nav-notch-width) / 2 + .5px);
-    transition: width 420ms var(--nav-spring);
+  .mobile-nav-fill-left { transform: translateX(calc(var(--nav-center) - var(--nav-notch-width) / 2 + 1.5px - 100%)); }
+  .mobile-nav-fill-right { transform: translateX(calc(var(--nav-center) + var(--nav-notch-width) / 2 - 1.5px)); }
+
+  .mobile-nav-notch-track {
+    position: absolute;
+    inset: 0;
+    transform: translateX(var(--nav-center));
+    transition: transform var(--motion-slow) var(--nav-spring);
   }
 
   .mobile-nav-notch {
     position: absolute;
     top: 0;
-    left: calc(var(--nav-center) - var(--nav-notch-width) / 2);
+    left: calc(var(--nav-notch-width) / -2);
     width: var(--nav-notch-width);
     height: 100%;
     display: block;
-    transition: left 420ms var(--nav-spring);
-  }
-
-  .mobile-nav-fill-right {
-    left: calc(var(--nav-center) + var(--nav-notch-width) / 2 - .5px);
-    right: 0;
-    transition: left 420ms var(--nav-spring);
   }
 
   .mobile-nav-item {
@@ -84,7 +87,7 @@
     border-radius: 50%;
     background: transparent;
     transform: translateY(0);
-    transition: transform 420ms var(--nav-spring), background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+    transition: transform var(--motion-slow) var(--nav-spring), background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease);
   }
 
   .mobile-nav-item.active .mobile-nav-icon {
@@ -101,7 +104,7 @@
     font-size: 12px;
     line-height: 18px;
     white-space: nowrap;
-    transition: transform 420ms var(--nav-spring), color 180ms ease;
+    transition: transform var(--motion-slow) var(--nav-spring), color var(--motion-fast) var(--motion-ease);
   }
 
   .mobile-nav-item.active .mobile-nav-label {
@@ -124,5 +127,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobile-nav-fill, .mobile-nav-notch, .mobile-nav-icon, .mobile-nav-label { transition: none; }
+  .mobile-nav-fill, .mobile-nav-notch-track, .mobile-nav-icon, .mobile-nav-label { transition: none; }
 }
