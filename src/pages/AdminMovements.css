@@ -122,3 +122,4 @@
   .log-table td[data-label="Tipo"] { color: var(--muted); font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) { .bar, .top-bar i { transition: none; } }
+.kpi .trend { display: inline-flex; align-items: center; gap: 5px; }

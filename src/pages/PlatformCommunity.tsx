@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { MapPin, Send } from 'lucide-react';
+import { MapPin } from 'lucide-react';
+import { AnimatedSend } from '../components/icons/AnimatedIcons';
 import { api, errorText } from '../api';
 import { dateText, useQuery } from '../hooks';
 import { Button, ErrorBox, Loading } from '../components/ui';
@@ -37,7 +38,7 @@ function InvitationProgress({ job }: { job: InvitationJob }) {
   if (!job.total || (!job.running && !job.finishedAt)) return null;
   return <div className={'invite-progress' + (job.running ? '' : job.failed ? ' failed' : ' done')} role="status">
     <div className="invite-progress-text">{job.running
-      ? <><Send size={16}/> Enviando invitaciones: {done} de {job.total}…</>
+      ? <><AnimatedSend size={16} autoplay every={1800}/> Enviando invitaciones: {done} de {job.total}…</>
       : job.failed ? <>Se enviaron {job.sent} de {job.total}; {job.failed} no se pudieron enviar. {job.errors.join(' ')}</>
       : <>{job.sent === 1 ? 'Invitación enviada.' : `Se enviaron las ${job.sent} invitaciones.`}</>}</div>
     {job.running && <span className="invite-progress-bar"><i style={{ transform: `scaleX(${job.total ? done / job.total : 0})` }}/></span>}
@@ -92,7 +93,7 @@ export function PlatformCommunity({ id, communities, emailEnabled, onChanged }: 
     <PlatformImport communityId={id} emailEnabled={emailEnabled} onImported={queued => { refresh(); if (queued) invitations.track(); }}/>
 
     <div className="platform-section-heading"><h3>Viviendas y residentes</h3>
-      {!!pending.length && <Button busy={busy === 'invite-all' || sending} disabled={!emailEnabled || !!busy || sending} onClick={() => void invite()}><Send size={17}/> Enviar invitaciones pendientes ({pending.length})</Button>}</div>
+      {!!pending.length && <Button busy={busy === 'invite-all' || sending} disabled={!emailEnabled || !!busy || sending} onClick={() => void invite()}><AnimatedSend size={17}/> Enviar invitaciones pendientes ({pending.length})</Button>}</div>
     {invitations.job && <InvitationProgress job={invitations.job}/>}
     {!community.clusters.length && <p>Aún no hay privadas ni lotes. Importa el Excel del fraccionamiento.</p>}
     {community.clusters.map(section => <div className="platform-cluster" key={section.id}>

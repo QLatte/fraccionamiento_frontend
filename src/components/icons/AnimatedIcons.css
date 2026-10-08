@@ -1,0 +1,8 @@
+.animated-icon { display: block; flex: none; pointer-events: none; overflow: visible; }
+.animated-icon g, .animated-icon .trail { transform-box: view-box; transform-origin: 12px 12px; }
+/* Strokes that are drawn in: one dash as long as the whole path (pathLength="1"). */
+.animated-icon .draw, .animated-icon .ridge { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.animated-icon .from-hidden { stroke-dashoffset: 1; }
+.animated-icon .trail { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .animated-icon .from-hidden { stroke-dashoffset: 0; } }
+.animated-fingerprint .ridge-base { opacity: .4; }

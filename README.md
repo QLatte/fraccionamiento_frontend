@@ -38,6 +38,7 @@ Todas las animaciones siguen una sola identidad («premium sobrio»), definida c
 - **Botones:** se hunden un poco mientras se presionan.
 - **Barra inferior y Entrada/Salida:** la muesca se mueve solo con `transform` (sin recalcular el layout), para que no haya tirones en tabletas o teléfonos modestos.
 - **Menú lateral en teléfono:** abre frenando (340 ms) y cierra acelerando (240 ms).
+- **Iconos animados** (`src/components/icons/AnimatedIcons.tsx`): huella del login, palomita de los resultados aceptados, reloj de arena de las visitas sin pase, avión de papel de «Compartir pase» y de las invitaciones, y flechas de tendencia en Movimientos. Son los de [lucide-animated](https://lucide-animated.com) (MIT) portados a la API de animaciones del navegador, sin la librería Motion, con el mismo motor que los demás (`iconMotion.ts`): se animan al pasar el cursor, tocar o enfocar su botón, o solos cuando aparecen.
 - Con «reducir movimiento» activado no hay animaciones.
 
 ## Carga por partes

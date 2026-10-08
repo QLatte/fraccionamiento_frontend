@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Check, Hourglass, PhoneCall, Search, UserX, XCircle } from 'lucide-react';
+import { Check, PhoneCall, Search, UserX, XCircle } from 'lucide-react';
+import { AnimatedCheck, AnimatedHourglass } from '../components/icons/AnimatedIcons';
 import { Button, ErrorBox, Info, Loading, Modal } from '../components/ui';
 import { api, errorText } from '../api';
 import { useMutation } from '../hooks';
@@ -96,14 +97,14 @@ function WalkInWait({ view, online, onChange, onClose }: { view: WalkInView; onl
 
   const who = `${view.guestName} · ${reasonLabel[view.reason]}`;
   const home = view.property ? `${view.property.street} ${view.property.houseNumber}` : '';
-  if (view.status === 'APPROVED') return <div className="walkin-result"><div className="result-symbol granted"><Check size={34}/></div><h2>Entrada autorizada</h2><p>{who} → {home}</p><p className="small">Autorizó: <strong>{view.authorizedBy}</strong> {view.method === 'APP' ? '(desde la app)' : '(por teléfono)'}</p><Button className="full" onClick={onClose}>Listo</Button><p className="small muted">Registra su salida desde la Bitácora cuando se retire.</p></div>;
+  if (view.status === 'APPROVED') return <div className="walkin-result"><div className="result-symbol granted"><AnimatedCheck size={34}/></div><h2>Entrada autorizada</h2><p>{who} → {home}</p><p className="small">Autorizó: <strong>{view.authorizedBy}</strong> {view.method === 'APP' ? '(desde la app)' : '(por teléfono)'}</p><Button className="full" onClick={onClose}>Listo</Button><p className="small muted">Registra su salida desde la Bitácora cuando se retire.</p></div>;
   if (view.status === 'REJECTED') return <div className="walkin-result"><div className="result-symbol denied"><XCircle size={34}/></div><h2>No autorices el acceso</h2><p>{who} → {home}</p>{view.authorizedBy && <p className="small">Rechazó: <strong>{view.authorizedBy}</strong> {view.method === 'APP' ? '(desde la app)' : '(por teléfono)'}</p>}<Button className="full" onClick={onClose}>Listo</Button></div>;
   if (view.status === 'CANCELLED') return <div className="walkin-result"><div className="result-symbol denied"><UserX size={34}/></div><h2>Solicitud cancelada</h2><Button className="full" onClick={onClose}>Listo</Button></div>;
 
   const left = countdown(view.expiresAt, now);
   return <div className="walkin-wait">
     <div className="walkin-visitor"><strong>{who}</strong><span>{home}</span></div>
-    {!view.canCall ? <div className="walkin-countdown" role="status"><Hourglass size={26}/><div><strong>{left ?? '0:00'}</strong><span>Esperando respuesta de la vivienda en la app · {view.notified === 1 ? '1 dispositivo avisado' : `${view.notified} dispositivos avisados`}</span></div></div>
+    {!view.canCall ? <div className="walkin-countdown" role="status"><AnimatedHourglass size={26} autoplay={400} every={2600}/><div><strong>{left ?? '0:00'}</strong><span>Esperando respuesta de la vivienda en la app · {view.notified === 1 ? '1 dispositivo avisado' : `${view.notified} dispositivos avisados`}</span></div></div>
       : <div className="walkin-call"><div className="walkin-call-head"><PhoneCall size={22}/><div><strong>{view.notified === 0 ? 'Esta vivienda no tiene avisos activados' : 'Nadie respondió en la app'}</strong><span>Llama a la vivienda y registra quién autorizó.</span></div></div>
         <label>Nombre de quien contestó<input value={caller} onChange={e => setCaller(e.target.value)} maxLength={80} placeholder="Ej. María López"/></label>
         <div className="walkin-call-actions"><Button disabled={caller.trim().length < 2 || !online} busy={phone.busy} onClick={() => void record(true)}><Check size={17}/> Autorizó la entrada</Button><Button className="danger-outline" disabled={caller.trim().length < 2 || !online} busy={phone.busy} onClick={() => void record(false)}><XCircle size={17}/> No autorizó</Button></div>

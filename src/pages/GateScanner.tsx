@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import jsQR from 'jsqr';
-import { Camera, CameraOff, Check, ClipboardPaste, LoaderCircle, Pause, WifiOff, XCircle } from 'lucide-react';
+import { Camera, CameraOff, ClipboardPaste, LoaderCircle, Pause, WifiOff, XCircle } from 'lucide-react';
 import { Button, ErrorBox } from '../components/ui';
 import { lockPageScroll } from '../components/lockPageScroll';
+import { AnimatedCheck } from '../components/icons/AnimatedIcons';
 import { fadeOutCopy } from '../components/modalExit';
 import type { ScanResult } from '../types';
 
@@ -107,7 +108,7 @@ export function ResultDialog({ result, error, direction, retrying, online, onNex
   return <Sheet label={title} tone={granted ? 'granted' : 'denied'} onClose={onNext}>
     <div className="scan-dialog-body" onPointerDown={() => setHolding(true)}>
       <div className="scan-dialog-hero" aria-live="assertive">
-        <span className="scan-dialog-symbol">{granted ? <Check size={38} strokeWidth={2.6}/> : <XCircle size={38}/>}</span>
+        <span className="scan-dialog-symbol">{granted ? <AnimatedCheck size={38} strokeWidth={2.6}/> : <XCircle size={38}/>}</span>
         <h2>{title}</h2>
         {granted && <p className="scan-dialog-guest">{result.guestName}</p>}
       </div>

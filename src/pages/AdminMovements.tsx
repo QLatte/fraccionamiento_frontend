@@ -3,6 +3,7 @@ import { ArrowDownLeft, ArrowUpRight, Download, Search, ShieldAlert, Users } fro
 import { api, errorText } from '../api';
 import { dateText, useQuery } from '../hooks';
 import { Button, Empty, ErrorBox, Loading } from '../components/ui';
+import { AnimatedTrend } from '../components/icons/AnimatedIcons';
 import './AdminMovements.css';
 
 // Movements panel for the fraccionamiento's admin: how many visitors came in and went out,
@@ -42,10 +43,12 @@ function stay(since: string) {
   const minutes = Math.max(1, Math.round((Date.now() - new Date(since).getTime()) / 60_000));
   return minutes < 60 ? `${minutes} min` : minutes < 24 * 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60 ? `${minutes % 60} min` : ''}`.trim() : `${Math.floor(minutes / 1440)} d ${Math.floor((minutes % 1440) / 60)} h`;
 }
-function change(now: number, before: number) {
-  if (!before) return now ? 'Sin datos del periodo anterior' : '';
+/** Change against the previous period, with an animated trend arrow. */
+function Change({ now, before, period }: { now: number; before: number; period: Period }) {
+  if (!before) return <>{now ? 'Sin datos del periodo anterior' : ''}</>;
   const pct = Math.round((now - before) / before * 100);
-  return pct === 0 ? 'Igual' : `${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}%`;
+  if (pct === 0) return <>Igual {COMPARE[period]}</>;
+  return <span className="trend"><AnimatedTrend direction={pct > 0 ? 'up' : 'down'} size={15}/>{Math.abs(pct)}% {pct > 0 ? 'más' : 'menos'} {COMPARE[period]}</span>;
 }
 
 /** Every bucket of the range, including empty ones; server buckets are local wall-clock times in UTC fields. */
@@ -125,8 +128,8 @@ export function AdminMovements() {
 
     {!s ? (summary.loading ? <Loading/> : null) : <>
       <section className="movements-kpis" aria-label="Resumen">
-        <button type="button" className="kpi" onClick={() => pickKind('entries')}><span className="kpi-label"><i className="dot entries"/>Entradas</span><strong>{number(s.totals.entries)}</strong><small className={s.totals.entries >= s.totals.previous.entries ? 'up' : ''}>{change(s.totals.entries, s.totals.previous.entries)}{s.totals.previous.entries ? ` ${COMPARE[period]}` : ''}</small></button>
-        <button type="button" className="kpi" onClick={() => pickKind('exits')}><span className="kpi-label"><i className="dot exits"/>Salidas</span><strong>{number(s.totals.exits)}</strong><small>{change(s.totals.exits, s.totals.previous.exits)}{s.totals.previous.exits ? ` ${COMPARE[period]}` : ''}</small></button>
+        <button type="button" className="kpi" onClick={() => pickKind('entries')}><span className="kpi-label"><i className="dot entries"/>Entradas</span><strong>{number(s.totals.entries)}</strong><small className={s.totals.entries >= s.totals.previous.entries ? 'up' : ''}><Change now={s.totals.entries} before={s.totals.previous.entries} period={period}/></small></button>
+        <button type="button" className="kpi" onClick={() => pickKind('exits')}><span className="kpi-label"><i className="dot exits"/>Salidas</span><strong>{number(s.totals.exits)}</strong><small><Change now={s.totals.exits} before={s.totals.previous.exits} period={period}/></small></button>
         <a className="kpi kpi-inside" href="#movements-inside"><span className="kpi-label"><i className="dot live"/>Dentro ahora</span><strong>{number(s.totals.inside)}</strong><small>{s.totals.longStays ? `${s.totals.longStays} ${s.totals.longStays === 1 ? 'lleva' : 'llevan'} más de 12 horas` : 'Visitas con entrada sin salida'}</small></a>
         <button type="button" className="kpi" onClick={() => pickKind('denied')}><span className="kpi-label"><i className="dot denied"/>Rechazos</span><strong>{number(s.totals.denied)}</strong><small>{s.rejects[0] ? `${s.rejects[0].count} · ${REJECT[s.rejects[0].reason] ?? s.rejects[0].reason}` : 'Sin rechazos'}</small></button>
       </section>
