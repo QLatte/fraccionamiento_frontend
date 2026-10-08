@@ -80,6 +80,8 @@ El administrador del fraccionamiento ya no da de alta residentes: en **Administr
 
 Son dos pantallas con trabajos distintos. **Inicio** (`/`, `src/pages/Home.tsx`, estilos en `HomeOverview.css`) responde «¿qué está pasando hoy en mi casa?»: una frase con el resumen del día, **Ahora en casa** (visitas con entrada y sin salida, con indicador en vivo), **Crear pase** como acción principal, **Pueden llegar hoy** (pases vigentes hoy que aún no entran; los recurrentes solo en sus días; si el pase se creó en este teléfono, abre su QR) y **Lo que pasó hoy** (los movimientos del día, hasta 6, con enlace a Actividad). Se actualiza cada 20 s. Las visitas sin pase esperando respuesta siguen apareciendo arriba en todas las pantallas. **Mis pases** (`/pases`, `src/pages/Passes.tsx`) es para administrar: contadores por estado, filtros, búsqueda, listado completo y cancelación.
 
+Un pase dura como máximo 7 días: el formulario no deja elegir una fecha final más lejana y lo explica debajo de las fechas (el API también lo rechaza).
+
 Al crear un pase se puede agregar un **comentario para la caseta** (opcional, hasta 200 caracteres; por ejemplo «viene a instalar el internet»). Aparece en la confirmación y en el detalle del pase, y en la caseta sale resaltado al leer el QR; con comentario, el resultado no se cierra solo hasta que el guardia toca «Siguiente visita». No se imprime en la imagen del pase ni lo ve el visitante.
 
 ## Actividad
