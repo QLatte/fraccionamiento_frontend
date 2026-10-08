@@ -22,7 +22,7 @@ const matches: Record<Filter, (item: ActivityItem) => boolean> = {
 };
 
 /** How each event reads in the feed: tone, icon, title and detail line. */
-function describe(item: ActivityItem): { tone: string; icon: ReactNode; title: string; detail: string } {
+export function describe(item: ActivityItem): { tone: string; icon: ReactNode; title: string; detail: string } {
   const who = item.guestName ?? 'Una visita';
   const at = item.gate ? `por ${item.gate}` : '';
   const how = item.method === 'APP' ? 'desde la app' : item.method === 'PHONE' ? 'por teléfono' : '';
