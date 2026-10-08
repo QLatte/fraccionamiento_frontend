@@ -850,6 +850,12 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .scan-dialog-details dt { color: var(--muted); font-size: 14px; }
 .scan-dialog-details dd { margin: 0; color: var(--ink); font-size: 17px; font-weight: 650; text-align: right; overflow-wrap: anywhere; }
 .scan-dialog-error { padding: 8px 24px 0; }
+/* Resident's note: amber so the guard notices it, readable at arm's length. */
+.scan-dialog-note { display: flex; gap: 12px; margin: 14px 24px 0; padding: 14px 16px; border-radius: 14px; background: #fbefd3; color: #5c410b; }
+.scan-dialog-note > svg { flex: none; margin-top: 2px; }
+.scan-dialog-note strong { display: block; font-size: 13px; font-weight: 650; }
+.scan-dialog-note p { margin: 3px 0 0; color: #3d2b06; font-size: 17px; line-height: 1.45; overflow-wrap: anywhere; }
+textarea.pass-notes { min-height: 72px; resize: vertical; }
 .scan-dialog-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; padding: 20px 24px 22px; }
 .scan-dialog-actions .button { width: 100%; min-height: 54px; font-size: 16px; }
 .scan-dialog.granted .scan-dialog-actions .button:not(.secondary) { background: var(--tone); border-color: var(--tone); }

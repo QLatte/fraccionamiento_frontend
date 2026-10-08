@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import jsQR from 'jsqr';
-import { Camera, CameraOff, ClipboardPaste, LoaderCircle, Pause, WifiOff, XCircle } from 'lucide-react';
+import { Camera, CameraOff, ClipboardPaste, LoaderCircle, MessageSquareText, Pause, WifiOff, XCircle } from 'lucide-react';
 import { Button, ErrorBox } from '../components/ui';
 import { lockPageScroll } from '../components/lockPageScroll';
 import { AnimatedCheck } from '../components/icons/AnimatedIcons';
@@ -96,7 +96,8 @@ export function ResultDialog({ result, error, direction, retrying, online, onNex
   result: ScanResult | null; error: string; direction: 'ENTRY' | 'EXIT'; retrying: boolean; online: boolean; onNext: () => void; onRetry: () => void;
 }) {
   const granted = !!result;
-  const [holding, setHolding] = useState(!granted || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // A resident's note has to be read, so the result then stays open until the guard moves on.
+  const [holding, setHolding] = useState(!granted || !!result?.notes || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const next = useRef(onNext);
   next.current = onNext;
   useEffect(() => {
@@ -112,11 +113,13 @@ export function ResultDialog({ result, error, direction, retrying, online, onNex
         <h2>{title}</h2>
         {granted && <p className="scan-dialog-guest">{result.guestName}</p>}
       </div>
-      {granted ? <dl className="scan-dialog-details">
+      {granted && <dl className="scan-dialog-details">
         <div><dt>Destino</dt><dd>{result.property.street} {result.property.houseNumber}</dd></div>
         <div><dt>Vehículo</dt><dd>{result.guestVehicle || 'Peatonal'}</dd></div>
         <div><dt>Invitó</dt><dd>{result.residentName}</dd></div>
-      </dl> : <div className="scan-dialog-error"><ErrorBox message={error}/></div>}
+      </dl>}
+      {granted && result.notes && <div className="scan-dialog-note"><MessageSquareText size={20}/><div><strong>Comentario de {result.residentName.split(' ')[0]}</strong><p>{result.notes}</p></div></div>}
+      {!granted && <div className="scan-dialog-error"><ErrorBox message={error}/></div>}
       <div className="scan-dialog-actions">
         {!granted && <Button className="secondary" disabled={!online} busy={retrying} onClick={onRetry}>Reintentar lectura</Button>}
         <Button autoFocus onClick={onNext}>{granted ? 'Siguiente visita' : 'Leer otro pase'}</Button>

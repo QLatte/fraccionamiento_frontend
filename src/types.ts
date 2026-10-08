@@ -3,7 +3,7 @@ export type Status = 'ACTIVE' | 'USED' | 'REVOKED' | 'EXPIRED';
 export type PassType = 'SINGLE_USE' | 'TEMPORARY' | 'RECURRING';
 export interface Identity { user: { id: string; email: string; fullName: string; globalRole: Role }; session: { propertyId: string; gateId: string | null; gateDeviceId: string | null; expiresAt: string; profile: Role }; contexts?: { resident: { propertyId: string }[]; admin: { communityId: string; community?: { name: string } }[]; superadmin: boolean } }
 export interface Property { id: string; street: string; houseNumber: string; status: string; membershipRole?: 'RESIDENT_OWNER' | 'FAMILY_MEMBER'; cluster: { id: string; name: string; type: string; community?: { id: string; name: string; mapsUrl: string | null } } }
-export interface Pass { id: string; propertyId: string; createdById: string; guestName: string; guestVehicle: string | null; passType: PassType; status: Status; validFrom: string; validUntil: string; createdAt: string; timezone: string; windowSeconds: number; recurrenceRule: string | null }
+export interface Pass { id: string; propertyId: string; createdById: string; guestName: string; guestVehicle: string | null; notes: string | null; passType: PassType; status: Status; validFrom: string; validUntil: string; createdAt: string; timezone: string; windowSeconds: number; recurrenceRule: string | null }
 export interface Page<T> { data: T[]; nextCursor?: string | null }
 export interface SessionResult { accessToken: string; expiresAt: string }
 export interface CreatedPass { id: string; shareUrl: string; encryptedToken: string; status: Status }
@@ -34,4 +34,4 @@ export interface ActivityItem {
 /** The signed-in person's own profile (Mi perfil). */
 export interface Profile { fullName: string; email: string; globalRole: Role; preferences: { alertEntries: boolean; alertExits: boolean; quietHours: { start: string; end: string } | null; timezone: string } }
 export interface GateProperty { id: string; street: string; houseNumber: string; cluster: { name: string } }
-export interface ScanResult { result: 'GRANTED'; guestName: string; guestVehicle: string | null; property: { street: string; houseNumber: string }; residentName: string; validationSource: string }
+export interface ScanResult { result: 'GRANTED'; guestName: string; guestVehicle: string | null; notes?: string | null; property: { street: string; houseNumber: string }; residentName: string; validationSource: string }
