@@ -159,17 +159,29 @@ function Merge({ community, others, onMerged }: { community: CommunityDetail; ot
   </form>;
 }
 
+// Mexico's zones. The day of the movements panel and the times in alerts and emails follow it.
+const ZONES = [
+  ['America/Mexico_City', 'Centro (CDMX, Guadalajara, Monterrey)'],
+  ['America/Cancun', 'Sureste (Quintana Roo)'],
+  ['America/Mazatlan', 'Pacífico (Sinaloa, Nayarit, BCS)'],
+  ['America/Hermosillo', 'Sonora'],
+  ['America/Tijuana', 'Noroeste (Baja California)'],
+  ['America/Ciudad_Juarez', 'Ciudad Juárez'],
+  ['America/Matamoros', 'Frontera noreste (Matamoros, Nuevo Laredo)'],
+] as const;
+
 function Settings({ community, onSaved }: { community: CommunityDetail; onSaved: () => void }) {
-  const [name, setName] = useState(community.name); const [mapsUrl, setMapsUrl] = useState(community.mapsUrl ?? ''); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [saved, setSaved] = useState(false);
-  const changed = name.trim() !== community.name || mapsUrl.trim() !== (community.mapsUrl ?? '');
+  const [name, setName] = useState(community.name); const [mapsUrl, setMapsUrl] = useState(community.mapsUrl ?? ''); const [timezone, setTimezone] = useState(community.timezone); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [saved, setSaved] = useState(false);
+  const changed = name.trim() !== community.name || mapsUrl.trim() !== (community.mapsUrl ?? '') || timezone !== community.timezone;
   async function save(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError(''); setSaved(false);
-    try { await api(`/platform/communities/${community.id}`, { method: 'PATCH', body: { name: name.trim(), mapsUrl: mapsUrl.trim() || null } }); setSaved(true); onSaved(); }
+    try { await api(`/platform/communities/${community.id}`, { method: 'PATCH', body: { name: name.trim(), mapsUrl: mapsUrl.trim() || null, timezone } }); setSaved(true); onSaved(); }
     catch (err) { setError(errorText(err)); } finally { setBusy(false); }
   }
   return <form className="platform-settings" onSubmit={save}>
     <label>Nombre<input required minLength={2} maxLength={120} value={name} onChange={e => { setName(e.target.value); setSaved(false); }}/></label>
     <label><span><MapPin size={15}/> Ubicación en Google Maps</span><input type="url" inputMode="url" maxLength={500} value={mapsUrl} onChange={e => { setMapsUrl(e.target.value); setSaved(false); }} placeholder="https://maps.app.goo.gl/…"/></label>
+    <label>Zona horaria<select value={timezone} onChange={e => { setTimezone(e.target.value); setSaved(false); }}>{ZONES.some(([zone]) => zone === community.timezone) ? null : <option value={community.timezone}>{community.timezone}</option>}{ZONES.map(([zone, label]) => <option key={zone} value={zone}>{label}</option>)}</select></label>
     <Button type="submit" className="secondary" busy={busy} disabled={!changed}>Guardar</Button>
     {saved && !changed && <p role="status" className="small">Guardado. Los pases nuevos usan esta ubicación.</p>}<ErrorBox message={error}/>
   </form>;
