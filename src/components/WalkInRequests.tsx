@@ -42,6 +42,7 @@ export function WalkInRequests({ propertyId }: { propertyId: string }) {
     setAnswering(null);
     if (result) setDone({ id: request.id, text: approve ? `Permitiste la entrada de ${request.guestName}.` : `Rechazaste la entrada de ${request.guestName}.` });
     else if (decide.code() === 'WALK_IN_ALREADY_DECIDED') setDone({ id: request.id, text: 'Otra persona de tu vivienda o la caseta ya respondió esta solicitud.' });
+    else if (decide.code() === 'WALK_IN_EXPIRED') setDone({ id: request.id, text: `La solicitud de ${request.guestName} venció. Si sigue en la caseta, el guardia te llamará.` });
     void load();
   }
 
@@ -63,6 +64,6 @@ export function WalkInRequests({ propertyId }: { propertyId: string }) {
         </div>
       </section>;
     })}
-    {decide.error && decide.code() !== 'WALK_IN_ALREADY_DECIDED' && <ErrorBox message={decide.error}/>}
+    {decide.error && !['WALK_IN_ALREADY_DECIDED', 'WALK_IN_EXPIRED'].includes(decide.code()) && <ErrorBox message={decide.error}/>}
   </div>;
 }
