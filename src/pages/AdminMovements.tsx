@@ -22,7 +22,8 @@ type Summary = {
   rejects: { reason: string; count: number }[];
 };
 type LogRow = { id: string; at: string; move: 'ENTRY' | 'EXIT' | 'DENIED'; guestName: string | null; kind: 'PASS' | 'WALKIN'; motive: string | null; denial: string | null; home: string | null; by: string | null; gate: string | null; vehicle: string | null };
-type LogPage = { data: LogRow[]; total: number; nextOffset: number | null };
+/** `truncated`: the period has more readings than the log reads; it only covers back to `since`. */
+type LogPage = { data: LogRow[]; total: number; nextOffset: number | null; truncated?: boolean; since?: string | null };
 
 const PERIODS: { id: Period; label: string }[] = [{ id: 'today', label: 'Hoy' }, { id: '7d', label: '7 días' }, { id: '30d', label: '30 días' }, { id: 'custom', label: 'Personalizado' }];
 const KINDS: { id: LogKind; label: string }[] = [{ id: 'all', label: 'Todo' }, { id: 'entries', label: 'Entradas' }, { id: 'exits', label: 'Salidas' }, { id: 'walkins', label: 'Sin pase' }, { id: 'denied', label: 'Rechazos' }];
@@ -175,7 +176,8 @@ export function AdminMovements() {
             <td data-label="Caseta">{r.gate ?? '—'}</td>
           </tr>)}</tbody>
         </table></div>
-        <div className="log-footer"><span>Mostrando {number(rows.length)} de {number(log.data?.total ?? rows.length)} movimientos</span>{next !== null && <Button className="secondary" busy={moreBusy} onClick={() => void loadMore()}>Ver más</Button>}</div>
+        {log.data?.truncated && log.data.since && <p className="small muted" role="status">El periodo tiene demasiados movimientos: el registro llega solo hasta el {dateText(log.data.since)}. Elige un periodo más corto para ver o descargar los anteriores. Los totales de arriba sí cuentan todo el periodo.</p>}
+        <div className="log-footer"><span>Mostrando {number(rows.length)} de {number(log.data?.total ?? rows.length)}{log.data?.truncated ? ' más recientes' : ''} movimientos</span>{next !== null && <Button className="secondary" busy={moreBusy} onClick={() => void loadMore()}>Ver más</Button>}</div>
       </>}
     </section>
 
