@@ -115,7 +115,7 @@ function Resident({ member, busy, disabled, onInvite }: { member: Member; busy: 
   const { status, expiresAt, invitedAt, error } = member.access;
   const label = accessLabel[status];
   const platformAccount = member.user.globalRole === 'SUPERADMIN';
-  return <div className="platform-resident"><div><strong>{member.user.fullName}</strong><small>{member.user.email}</small>
+  return <div className="platform-resident"><div><strong>{member.user.fullName}</strong><small>{member.user.email}{!platformAccount && member.membershipRole === 'FAMILY_MEMBER' && ' · Familiar'}</small>
     {!platformAccount && <small><span className={`badge ${label.tone}`}><span/>{label.text}</span>{status === 'SENT' && expiresAt && <> · vence {dateText(expiresAt)}</>}{status === 'EXPIRED' && invitedAt && <> · enviada {dateText(invitedAt)}</>}</small>}
     {error && <small className="danger-text">{error}</small>}</div>
     {!platformAccount && status !== 'ACTIVE' && <Button className="secondary small-button" busy={busy} disabled={disabled} onClick={onInvite}>{status === 'PENDING' ? 'Enviar invitación' : 'Reenviar'}</Button>}

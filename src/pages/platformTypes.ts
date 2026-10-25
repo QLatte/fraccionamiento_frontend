@@ -10,7 +10,7 @@ export type Issue = { level: 'error' | 'warning'; sheet: string; row: number; me
 export type Summary = { privadas: number; lotes: number; houses: number; residents: number; extraResidents: number; extraHouses: number };
 export type Counts = { newSections: number; newHouses: number; newPeople: number; newMemberships: number; limitIncreases: number };
 export type Preview = {
-  sections: { name: string; type: 'PRIVADA' | 'LOTE'; clusterId: string | null; houses: { number: string; label: string; propertyId: string | null; deviceLimit: number; extra: number; residents: { fullName: string; email: string; existingUser: boolean; member: boolean }[] }[] }[];
+  sections: { name: string; type: 'PRIVADA' | 'LOTE'; clusterId: string | null; houses: { number: string; label: string; propertyId: string | null; deviceLimit: number; extra: number; residents: { fullName: string; email: string; existingUser: boolean; member: boolean; role: 'RESIDENT_OWNER' | 'FAMILY_MEMBER' }[] }[] }[];
   issues: Issue[]; counts: Counts; summary: Summary; canImport: boolean;
 };
 export type ImportResult = { counts: Counts; summary: Summary; pending: number; queued: number };

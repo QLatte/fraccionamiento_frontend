@@ -59,7 +59,7 @@ export function PlatformImport({ communityId, emailEnabled, onImported }: { comm
       <div className="platform-table import-table"><table><thead><tr><th>Vivienda</th><th>Residentes</th><th>Teléfonos</th></tr></thead><tbody>
         {preview.sections.flatMap(section => section.houses.map(house => <tr key={house.label}>
           <td data-label="Vivienda"><strong>{house.label}</strong>{!house.propertyId && <><br/><span className="badge used"><span/>Nueva</span></>}</td>
-          <td data-label="Residentes">{house.residents.map(r => <div key={r.email}>{r.fullName} · <span className="muted">{r.email}</span>{!r.member && <span className="muted"> · alta nueva</span>}</div>)}{house.extra > 0 && <span className="badge expired"><span/>+{house.extra} extra</span>}</td>
+          <td data-label="Residentes">{house.residents.map(r => <div key={r.email}>{r.fullName} · <span className="muted">{r.email}</span>{r.role === 'FAMILY_MEMBER' && <span className="muted"> · familiar</span>}{!r.member && <span className="muted"> · alta nueva</span>}</div>)}{house.extra > 0 && <span className="badge expired"><span/>+{house.extra} extra</span>}</td>
           <td data-label="Teléfonos">{house.deviceLimit}</td>
         </tr>))}
       </tbody></table></div>

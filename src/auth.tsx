@@ -13,7 +13,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function accept(session: SessionResult) {
     setToken(session.accessToken);
     try { const [me, homes] = await Promise.all([api<Identity>('/auth/me'), api<Page<Property>>('/properties')]); setIdentity(me); setProperties(homes.data); setSelected(me.session.propertyId); setExpired(false);
-      try { localStorage.setItem('sica:login', JSON.stringify({ email: me.user.email, propertyId: me.session.propertyId })); } catch { /* storage optional */ }
+      // Login no longer needs the email and home code that older versions remembered here.
+      try { localStorage.removeItem('sica:login'); } catch { /* storage optional */ }
     } catch (e) { clear(); throw e; }
   }
   async function logout() {
