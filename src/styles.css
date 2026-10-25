@@ -353,7 +353,9 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .walkin-done span { flex: 1; }
 .walkin-card { padding: 20px 22px; border: 2px solid #e6b85c; border-radius: 18px; background: #fffaf0; box-shadow: 0 10px 30px #7a571214; }
 .walkin-card-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.walkin-card-head > div { flex: 1; min-width: 0; }
+.walkin-card-head > div { flex: 1 1 160px; min-width: 0; }
+/* On phones the countdown gets its own row so the visitor's name keeps the width. */
+@media (max-width: 480px) { .walkin-card-timer { order: 3; } .walkin-card-head > div { flex-basis: calc(100% - 58px); } }
 .walkin-card-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #e6b85c; color: #5c4210; }
 .walkin-card-label { font-size: 13px; font-weight: 600; color: #7a5712; }
 .walkin-card h2 { font-size: 21px; margin: 2px 0 0; overflow-wrap: anywhere; }
