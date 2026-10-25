@@ -12,7 +12,7 @@ import { CreatePass } from './Passes';
 import { describe } from './Activity';
 import './HomeOverview.css';
 
-type Expected = { id: string; guestName: string; guestVehicle: string | null; passType: PassType; validFrom: string; validUntil: string };
+type Expected = { id: string; guestName: string; guestVehicle: string | null; passType: PassType; validFrom: string; validUntil: string; canShare?: boolean };
 type Today = { inside: { id: string; kind: 'pass' | 'walkin'; guestName: string; since: string }[]; expected: Expected[] };
 
 const midnight = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); };
@@ -46,7 +46,7 @@ function Skeleton({ rows }: { rows: number }) {
 
 /** Inicio: what is happening at home today. Managing every pass lives in Mis pases. */
 export function Home({ navigate }: { navigate: (path: string) => void }) {
-  const { identity, property, links, rememberPass } = useAuth();
+  const { identity, property, links, rememberPass, passLink } = useAuth();
   const id = property!.id;
   const canCreate = identity?.session.profile === 'RESIDENT';
   const [dayStart, setDayStart] = useState(midnight);
@@ -64,9 +64,13 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
   const expected = today.data?.expected ?? [];
   const ready = !!today.data && !!feed.data;
   const refresh = () => { today.refresh(); feed.refresh(); };
-  // The QR link is only known on the device that created the pass (and recurring cards need their rule).
-  const shareable = (p: Expected) => !!links[p.id] && p.passType !== 'RECURRING';
-  const openExpected = (p: Expected) => shareable(p) ? setShared({ value: links[p.id], title: `Pase de ${p.guestName}`, pass: { ...p, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, recurrenceRule: null, windowSeconds: 300 } }) : navigate('/pases');
+  // Passes created before the QR could be recovered only have it on the device that made them (and recurring cards need their rule).
+  const shareable = (p: Expected) => (!!links[p.id] || !!p.canShare) && p.passType !== 'RECURRING';
+  async function openExpected(p: Expected) {
+    if (!shareable(p)) return navigate('/pases');
+    try { setShared({ value: await passLink(p.id, id), title: `Pase de ${p.guestName}`, pass: { ...p, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, recurrenceRule: null, windowSeconds: 300 } }); }
+    catch { navigate('/pases'); }
+  }
 
   return <div className="home">
     <header className="home-head">
@@ -109,7 +113,7 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
         {!today.data ? (today.error ? null : <Skeleton rows={3}/>) : !expected.length
           ? <div className="home-quiet"><AnimatedQr size={22}/><p>No hay pases vigentes para hoy.{canCreate && <> <button className="home-inline" onClick={() => setCreate(true)}>Crear uno</button></>}</p></div>
           : <ul className="home-list">{expected.map((p, i) => <li key={p.id} style={{ '--i': i } as CSSProperties}>
-              <button className="home-row action" onClick={() => openExpected(p)} aria-label={`${p.guestName}. ${windowText(p, dayStart)}. ${shareable(p) ? 'Ver QR' : 'Abrir en Mis pases'}`}>
+              <button className="home-row action" onClick={() => void openExpected(p)} aria-label={`${p.guestName}. ${windowText(p, dayStart)}. ${shareable(p) ? 'Ver QR' : 'Abrir en Mis pases'}`}>
                 <span className={`home-avatar avatar-${p.guestName.length % 4}`}>{initials(p.guestName)}</span>
                 <span><strong>{p.guestName}</strong><small>{p.guestVehicle ? <><Car size={12}/> {p.guestVehicle}</> : typeLabel[p.passType]}</small></span>
                 <span className="home-when">{windowText(p, dayStart)}</span>
