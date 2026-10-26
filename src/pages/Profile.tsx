@@ -69,8 +69,8 @@ function AlertsCard({ profile, propertyId, onSaved }: { profile: ProfileData; pr
   const [quietOn, setQuietOn] = useState(!!profile.preferences.quietHours);
   const [moonPlays, setMoonPlays] = useState(0); // the moon tilts each time No molestar is turned on
   const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [saved, setSaved] = useState(false);
-  const desired = { alertEntries: prefs.alertEntries, alertExits: prefs.alertExits, quietHours: quietOn ? quiet : null };
-  const original = { alertEntries: profile.preferences.alertEntries, alertExits: profile.preferences.alertExits, quietHours: profile.preferences.quietHours };
+  const desired = { alertEntries: prefs.alertEntries, alertExpired: prefs.alertExpired, quietHours: quietOn ? quiet : null };
+  const original = { alertEntries: profile.preferences.alertEntries, alertExpired: profile.preferences.alertExpired, quietHours: profile.preferences.quietHours };
   const changed = JSON.stringify(desired) !== JSON.stringify(original);
   const invalid = quietOn && quiet.start === quiet.end;
 
@@ -85,15 +85,15 @@ function AlertsCard({ profile, propertyId, onSaved }: { profile: ProfileData; pr
   }
 
   return <section className="panel profile-card">
-    <div className="profile-card-head"><span className="profile-icon icon-hover"><AnimatedFilledBell size={20}/></span><div><h2>Avisos</h2><p>Qué te avisamos cuando llegan visitas a tu vivienda.</p></div></div>
+    <div className="profile-card-head"><span className="profile-icon icon-hover"><AnimatedFilledBell size={20}/></span><div><h2>Avisos</h2><p>Qué te avisamos sobre las visitas y los pases de tu vivienda.</p></div></div>
     {propertyId && <VisitAlerts propertyId={propertyId}/>}
     <div className="profile-toggles">
       <label className="checkbox-label"><input type="checkbox" checked={prefs.alertEntries} onChange={e => { setPrefs(p => ({ ...p, alertEntries: e.target.checked })); setSaved(false); }}/><span><strong>Entradas de visitas</strong><small>Cuando una visita entra al fraccionamiento.</small></span></label>
-      <label className="checkbox-label"><input type="checkbox" checked={prefs.alertExits} onChange={e => { setPrefs(p => ({ ...p, alertExits: e.target.checked })); setSaved(false); }}/><span><strong>Salidas de visitas</strong><small>Cuando una visita se retira.</small></span></label>
+      <label className="checkbox-label"><input type="checkbox" checked={prefs.alertExpired} onChange={e => { setPrefs(p => ({ ...p, alertExpired: e.target.checked })); setSaved(false); }}/><span><strong>Pases vencidos</strong><small>Cuando vence un pase que creaste; te dice si la visita no llegó.</small></span></label>
       <label className="checkbox-label"><input type="checkbox" checked readOnly disabled/><span><strong>Solicitudes de visitas sin pase</strong><small>Siempre activas: necesitan tu respuesta para que la visita pueda entrar.</small></span></label>
     </div>
     <div className={'profile-quiet' + (quietOn ? ' on' : '')}>
-      <label className="checkbox-label icon-hover"><input type="checkbox" checked={quietOn} onChange={e => { setQuietOn(e.target.checked); setSaved(false); if (e.target.checked) setMoonPlays(n => n + 1); }}/><span><strong><AnimatedMoon size={16} play={moonPlays}/> No molestar</strong><small>Silencia las entradas y salidas en este horario. Las solicitudes de visitas sin pase sí te llegan.</small></span></label>
+      <label className="checkbox-label icon-hover"><input type="checkbox" checked={quietOn} onChange={e => { setQuietOn(e.target.checked); setSaved(false); if (e.target.checked) setMoonPlays(n => n + 1); }}/><span><strong><AnimatedMoon size={16} play={moonPlays}/> No molestar</strong><small>Silencia los avisos de entrada y de pases vencidos en este horario. Las solicitudes de visitas sin pase sí te llegan.</small></span></label>
       {quietOn && <div className="field-grid"><label>Desde<input className="scheme-light-dark" type="time" value={quiet.start} onChange={e => { setQuiet(q => ({ ...q, start: e.target.value })); setSaved(false); }} required/></label><label>Hasta<input className="scheme-light-dark" type="time" value={quiet.end} onChange={e => { setQuiet(q => ({ ...q, end: e.target.value })); setSaved(false); }} required/></label></div>}
       {invalid && <p className="small danger-text">El inicio y el fin deben ser distintos.</p>}
     </div>

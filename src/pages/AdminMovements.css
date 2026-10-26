@@ -1,4 +1,4 @@
-/* Movimientos (Administración): filters, four totals, flow chart, who is inside, log, summaries. */
+/* Movimientos (Administración): filters, four totals, flow chart, entries of today, log, summaries. */
 .movements { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .movements h2 { margin: 0; font-size: 20px; }
 .movements .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }

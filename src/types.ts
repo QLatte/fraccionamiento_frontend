@@ -18,7 +18,8 @@ export interface Health { pending: number; failed: number; averagePropagationMs:
 export interface GateGuest { guestName: string; guestVehicle: string | null; property: { street: string; houseNumber: string } }
 export interface GateLog {
   recent: ({ id: string; kind?: 'pass' | 'walkin'; walkInId?: string; timestamp: string; direction: 'ENTRY' | 'EXIT'; result: string; authorizedBy?: string | null } & Partial<GateGuest>)[];
-  inside: ({ id: string; kind?: 'pass' | 'walkin'; since: string; authorizedBy?: string | null } & GateGuest)[];
+  /** Entries of today across the fraccionamiento's casetas, newest first (the gate records entries only). */
+  today: ({ id: string; kind?: 'pass' | 'walkin'; at: string; authorizedBy?: string | null } & GateGuest)[];
 }
 export type WalkInReason = 'VISIT' | 'DELIVERY' | 'SERVICE' | 'OTHER';
 export type IdDocumentType = 'INE' | 'LICENSE' | 'PASSPORT' | 'OTHER';
@@ -32,6 +33,6 @@ export interface ActivityItem {
   type: 'VISIT_ENTERED' | 'VISIT_EXITED' | 'VISIT_DENIED' | 'WALKIN_REQUESTED' | 'WALKIN_APPROVED' | 'WALKIN_REJECTED' | 'WALKIN_CANCELLED' | 'WALKIN_EXITED';
 }
 /** The signed-in person's own profile (Mi perfil). */
-export interface Profile { fullName: string; email: string; globalRole: Role; preferences: { alertEntries: boolean; alertExits: boolean; quietHours: { start: string; end: string } | null; timezone: string } }
+export interface Profile { fullName: string; email: string; globalRole: Role; preferences: { alertEntries: boolean; alertExpired: boolean; quietHours: { start: string; end: string } | null; timezone: string } }
 export interface GateProperty { id: string; street: string; houseNumber: string; cluster: { name: string } }
 export interface ScanResult { result: 'GRANTED'; guestName: string; guestVehicle: string | null; notes?: string | null; property: { street: string; houseNumber: string }; residentName: string; validationSource: string }

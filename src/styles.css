@@ -471,26 +471,7 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .shift-log-grid .panel { padding-bottom: 8px; }
 .shift-log .device-row { padding: 16px 0; }
 .shift-log .device-row .badge { margin-bottom: 6px; }
-.direction-nav { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); height: 84px; margin: 0 24px 24px; isolation: isolate; border-radius: 18px 18px 24px 24px; background: var(--soft); }
-.direction-nav { --dir-center: 25%; }
-.direction-nav.exit-active { --dir-center: 75%; }
 /* Only transforms move (no width/left): smooth on low-end tablets. The surface clips the pieces. */
-.direction-nav-surface { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none; filter: drop-shadow(0 8px 12px rgb(24 52 62 / .12)); }
-.direction-nav-fill { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; background: #fff; transition: transform var(--motion-slow) var(--motion-spring); }
-.direction-nav-fill-left { transform: translateX(calc(var(--dir-center) - 56px + 1.5px - 100%)); }
-.direction-nav-fill-right { transform: translateX(calc(var(--dir-center) + 56px - 1.5px)); }
-.direction-nav-notch-track { position: absolute; inset: 0; transform: translateX(var(--dir-center)); transition: transform var(--motion-slow) var(--motion-spring); }
-.direction-nav-notch { position: absolute; top: 0; left: -56px; width: 112px; height: 84px; color: #fff; }
-.direction-nav button { position: relative; display: grid; grid-template-rows: 60px 20px; justify-items: center; align-items: center; min-width: 0; height: 100%; padding: 2px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); }
-.direction-nav-icon { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; background: transparent; transform: translateY(0); transition: transform var(--motion-slow) var(--motion-spring), background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease); }
-.direction-nav-label { display: flex; min-width: 0; flex-direction: column; gap: 1px; align-items: center; color: var(--muted); line-height: 1.15; transform: translateY(0); transition: transform var(--motion-slow) var(--motion-spring), color var(--motion-fast) var(--motion-ease); }
-.direction-nav-label strong { color: inherit; font-size: 13px; }
-.direction-nav-label small { color: inherit; font-size: 10px; opacity: .78; }
-.direction-nav button.selected { color: var(--brand); }
-.direction-nav button.selected .direction-nav-icon { transform: translateY(-27px); background: #fff; box-shadow: 0 5px 14px rgb(24 52 62 / .14); }
-.direction-nav button.selected .direction-nav-label { transform: translateY(-6px); color: var(--brand); }
-.direction-nav button:focus-visible { z-index: 2; outline: 3px solid var(--brand); outline-offset: -3px; }
-.direction-nav button:disabled:not(.selected) { opacity: .58; }
 .scanner-placeholder { margin: 0 24px; padding: 30px 20px; background: #f7fafb; border: 1px dashed #a8c2ce; border-radius: 14px; text-align: center; }
 .scan-frame { display: grid; place-items: center; width: 96px; height: 96px; border: 2px solid #6d96a6; border-radius: 22px; color: #477385; margin: 0 auto 20px; }
 .scanner-placeholder p { margin-inline: auto; }
@@ -663,7 +644,6 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
   .setup-panel { margin-block: 0; }
   .gate-session { padding: 16px; }
   .gate-session > div:first-child > span:last-child { flex-basis: 100%; margin-left: 17px; }
-  .direction-nav { margin-inline: 18px; }
   .scanner-placeholder, .camera-view { margin-inline: 18px; }
   .manual-entry { padding-inline: 18px; }
   .manual-entry form { flex-direction: column; }
@@ -799,9 +779,8 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .gate-session.compact > div > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gate-session.compact .icon-button { color: var(--brand); }
 .gate-session.compact .icon-button:hover:not(:disabled) { background: #ffffff99; }
-.scan-screen { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "direction" "stage" "actions"; gap: 14px; max-width: 760px; margin: 0 auto; }
+.scan-screen { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "actions"; gap: 14px; max-width: 760px; margin: 0 auto; }
 /* The selected arrow rises 27px above the bar: leave room for it. */
-.scan-screen .direction-nav { grid-area: direction; margin: 26px 0 0; }
 .scan-actions { grid-area: actions; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .scan-actions .button { width: 100%; min-width: 0; padding-inline: 10px; }
 
@@ -868,7 +847,7 @@ textarea.pass-notes { min-height: 72px; resize: vertical; }
 @keyframes scan-countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 @media (min-width: 1000px) {
-  .scan-screen { max-width: 1180px; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); grid-template-areas: "stage direction" "stage actions" "stage none"; grid-template-rows: auto auto 1fr; column-gap: 24px; }
+  .scan-screen { max-width: 1180px; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); grid-template-areas: "stage actions" "stage none"; grid-template-rows: auto 1fr; column-gap: 24px; }
   .scan-stage { height: clamp(420px, calc(100dvh - 300px), 680px); }
   .scan-actions { grid-template-columns: 1fr; }
   .scan-actions .button { min-height: 56px; justify-content: flex-start; padding-inline: 18px; }

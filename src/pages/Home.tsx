@@ -13,7 +13,7 @@ import { describe } from './Activity';
 import './HomeOverview.css';
 
 type Expected = { id: string; guestName: string; guestVehicle: string | null; passType: PassType; validFrom: string; validUntil: string; canShare?: boolean };
-type Today = { inside: { id: string; kind: 'pass' | 'walkin'; guestName: string; since: string }[]; expected: Expected[] };
+type Today = { arrived: { id: string; kind: 'pass' | 'walkin'; guestName: string; at: string }[]; expected: Expected[] };
 
 const midnight = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); };
 const time = (iso: string) => dateText(iso, { hour: 'numeric', minute: '2-digit' });
@@ -30,11 +30,10 @@ function windowText(p: Expected, dayStart: string) {
 }
 
 /** One sentence that answers "what is happening at home today". */
-function daySentence(arrived: number, inside: number, expected: number) {
-  if (!arrived && !inside && !expected) return 'Hoy no esperas a nadie. Cuando invites a alguien, aquí verás su llegada.';
+function daySentence(arrived: number, expected: number) {
+  if (!arrived && !expected) return 'Hoy no esperas a nadie. Cuando invites a alguien, aquí verás su llegada.';
   const parts = [
     arrived ? plural(arrived, 'visita llegó', 'visitas llegaron') + ' hoy' : 'Todavía no llega nadie hoy',
-    ...(inside ? [plural(inside, 'sigue dentro', 'siguen dentro')] : []),
     ...(expected ? [plural(expected, 'más puede llegar', 'más pueden llegar')] : []),
   ];
   return list(parts) + '.';
@@ -59,8 +58,8 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
   const place = useMemo<PassPlace | undefined>(() => property ? { address: `${property.street} ${property.houseNumber}`, community: property.cluster.community?.name ?? property.cluster.name, mapsUrl: property.cluster.community?.mapsUrl } : undefined, [property]);
 
   const events = (feed.data?.data ?? []).filter(item => sameDay(item.at, dayStart));
-  const arrived = events.filter(i => i.type === 'VISIT_ENTERED' || i.type === 'WALKIN_APPROVED').length;
-  const inside = today.data?.inside ?? [];
+  // The gate records entries only: the home shows who arrived today, not who is still inside.
+  const arrived = today.data?.arrived ?? [];
   const expected = today.data?.expected ?? [];
   const ready = !!today.data && !!feed.data;
   const refresh = () => { today.refresh(); feed.refresh(); };
@@ -76,21 +75,21 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
     <header className="home-head">
       <p className="home-date">{dateText(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
       <h1>Hola, {identity!.user.fullName.split(' ')[0]}.</h1>
-      <p className="home-sentence" aria-live="polite">{ready ? daySentence(arrived, inside.length, expected.length) : ' '}</p>
+      <p className="home-sentence" aria-live="polite">{ready ? daySentence(arrived.length, expected.length) : ' '}</p>
     </header>
 
     <div className="home-top">
       <section className="home-now" aria-labelledby="home-now-title">
         <div className="home-section-head">
-          <h2 id="home-now-title"><span className={`home-live${inside.length ? ' on' : ''}`} aria-hidden="true"/>Ahora en casa</h2>
-          {inside.length > 0 && <span className="home-count">{inside.length}</span>}
+          <h2 id="home-now-title"><span className={`home-live${arrived.length ? ' on' : ''}`} aria-hidden="true"/>Llegaron hoy</h2>
+          {arrived.length > 0 && <span className="home-count">{arrived.length}</span>}
         </div>
         <ErrorBox message={today.error} retry={today.refresh}/>
-        {!today.data ? (today.error ? null : <Skeleton rows={2}/>) : !inside.length
-          ? <div className="home-quiet"><DoorOpen size={22}/><p>Ninguna de tus visitas está dentro en este momento.</p></div>
-          : <ul className="home-list">{inside.map((v, i) => <li key={v.id} className="home-row" style={{ '--i': i } as CSSProperties}>
+        {!today.data ? (today.error ? null : <Skeleton rows={2}/>) : !arrived.length
+          ? <div className="home-quiet"><DoorOpen size={22}/><p>Ninguna de tus visitas ha llegado hoy.</p></div>
+          : <ul className="home-list">{arrived.map((v, i) => <li key={v.id} className="home-row" style={{ '--i': i } as CSSProperties}>
               <span className={`home-avatar avatar-${v.guestName.length % 4}`}>{initials(v.guestName)}</span>
-              <span><strong>{v.guestName}</strong><small>{v.kind === 'walkin' ? 'Sin pase, autorizada' : 'Con pase'} · entró {sameDay(v.since, dayStart) ? `a las ${time(v.since)}` : dateText(v.since)}</small></span>
+              <span><strong>{v.guestName}</strong><small>{v.kind === 'walkin' ? 'Sin pase, autorizada' : 'Con pase'} · entró a las {time(v.at)}</small></span>
             </li>)}</ul>}
       </section>
 
@@ -139,7 +138,7 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
       </section>
     </div>
 
-    {canCreate && ready && !events.length && !expected.length && !inside.length && <button className="home-help" onClick={() => navigate('/ayuda')}><span>¿Tu primera invitación?<strong>Cómo crear y compartir un pase</strong></span><ArrowUpRight size={20}/></button>}
+    {canCreate && ready && !events.length && !expected.length && !arrived.length && <button className="home-help" onClick={() => navigate('/ayuda')}><span>¿Tu primera invitación?<strong>Cómo crear y compartir un pase</strong></span><ArrowUpRight size={20}/></button>}
 
     {canCreate && create && <CreatePass onClose={() => setCreate(false)} onCreated={(value, pass) => { setCreate(false); setShared({ value, pass, title: 'Tu pase está listo' }); rememberPass(value); refresh(); }}/>}
     {shared && <Modal title={shared.title} onClose={() => setShared(null)}><SharePass url={shared.value.shareUrl} pass={shared.pass} place={place}/></Modal>}

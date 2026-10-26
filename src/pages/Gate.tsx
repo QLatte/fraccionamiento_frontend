@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
-import { ClipboardPaste, DoorOpen, History, ScanLine, UserPlus, ShieldCheck, Users, RotateCw } from 'lucide-react';
+import { ClipboardPaste, DoorOpen, History, ScanLine, UserPlus, ShieldCheck, LogIn, RotateCw } from 'lucide-react';
 import { Button, Empty, ErrorBox, Loading, PageHeader } from '../components/ui';
 import { dateText, extractToken, useMutation, useOnline } from '../hooks';
 import { api, ApiError, codeText, errorText } from '../api';
 import type { GateLog, GateStation, ScanResult } from '../types';
 import { GateWalkIn } from './GateWalkIn';
 import { ManualDialog, ResultDialog, ScanStage } from './GateScanner';
-import AnimatedArrowRightDashed from '../components/icons/AnimatedArrowRightDashed';
-import AnimatedArrowLeftDashed from '../components/icons/AnimatedArrowLeftDashed';
 
 const stationModeKey = 'zentry:gate-station';
 // The scanner stays on across reloads once a guard turns it on.
@@ -18,7 +16,7 @@ const SAME_QR_COOLDOWN_MS = 4000;
 type GateView = 'scan' | 'log';
 const gateViewKey = 'zentry:gate-view';
 
-// Loaded once for the whole station so the "inside" count stays current while scanning.
+// Loaded once for the whole station so today's entry count stays current while scanning.
 function useShiftLog(enabled: boolean, online: boolean, version: number) {
   const [log, setLog] = useState<GateLog | null>(null);
   const [error, setError] = useState('');
@@ -41,7 +39,7 @@ function useShiftLog(enabled: boolean, online: boolean, version: number) {
 }
 
 // Floating "liquid glass" navbar: a frosted capsule whose pill slides to the active section.
-function GateNav({ view, onChange, inside }: { view: GateView; onChange: (view: GateView) => void; inside?: number }) {
+function GateNav({ view, onChange, today }: { view: GateView; onChange: (view: GateView) => void; today?: number }) {
   const nav = useRef<HTMLElement>(null);
   const [pill, setPill] = useState<{ x: number; width: number } | null>(null);
   useLayoutEffect(() => {
@@ -56,40 +54,38 @@ function GateNav({ view, onChange, inside }: { view: GateView; onChange: (view: 
     const observer = new ResizeObserver(place);
     bar.querySelectorAll('.gate-nav-item').forEach(item => observer.observe(item));
     return () => observer.disconnect();
-  }, [view, inside]);
+  }, [view, today]);
   const items: { id: GateView; label: string; Icon: typeof ScanLine }[] = [{ id: 'scan', label: 'Escanear', Icon: ScanLine }, { id: 'log', label: 'Bitácora', Icon: History }];
   return <nav ref={nav} className="gate-nav" role="tablist" aria-label="Secciones de caseta">
     {pill && <span className="gate-nav-pill" aria-hidden="true" style={{ transform: `translateX(${pill.x}px)`, width: pill.width }}/>}
     {items.map(({ id, label, Icon }) => <button key={id} type="button" role="tab" id={`gate-tab-${id}`} aria-controls="gate-view" aria-selected={view === id} className={'gate-nav-item' + (view === id ? ' active' : '')} onClick={() => onChange(id)}>
-      <Icon size={18}/><span>{label}</span>{id === 'log' && inside !== undefined && <span className="gate-nav-count" aria-label={`${inside} visitas dentro`}>{inside}</span>}
+      <Icon size={18}/><span>{label}</span>{id === 'log' && today !== undefined && <span className="gate-nav-count" aria-label={`${today} entradas hoy`}>{today}</span>}
     </button>)}
   </nav>;
 }
 
-function ShiftLog({ log, error, loading, updatedAt, load, online, exiting, onExit }: ReturnType<typeof useShiftLog> & { online: boolean; exiting: string | null; onExit: (id: string) => Promise<void> }) {
+function ShiftLog({ log, error, loading, updatedAt, load, online }: ReturnType<typeof useShiftLog> & { online: boolean }) {
   // Narrow screens show one list at a time; wide screens show both side by side.
-  const [tab, setTab] = useState<'inside' | 'recent'>('inside');
+  const [tab, setTab] = useState<'today' | 'recent'>('today');
   const time = (value: string | Date) => dateText(typeof value === 'string' ? value : value.toISOString(), { hour: '2-digit', minute: '2-digit' });
   return <div className="shift-log">
     <div className="shift-log-toolbar">
-      <p>Visitas dentro del fraccionamiento y lecturas de este equipo en las últimas 12 horas.{updatedAt && <><br/>Última actualización: {time(updatedAt)}</>}</p>
+      <p>Entradas de hoy en el fraccionamiento y lecturas de este equipo en las últimas 12 horas.{updatedAt && <><br/>Última actualización: {time(updatedAt)}</>}</p>
       <Button className="secondary small-button" onClick={() => void load()} disabled={!online} busy={loading}><RotateCw size={15}/> Actualizar</Button>
     </div>
     <ErrorBox message={error} retry={() => void load()}/>
     <div className="tabs shift-log-tabs" role="tablist" aria-label="Listas de la bitácora">
-      <button role="tab" aria-selected={tab === 'inside'} className={tab === 'inside' ? 'active' : ''} onClick={() => setTab('inside')}>Dentro ahora{log ? ` (${log.inside.length})` : ''}</button>
+      <button role="tab" aria-selected={tab === 'today'} className={tab === 'today' ? 'active' : ''} onClick={() => setTab('today')}>Entradas de hoy{log ? ` (${log.today.length})` : ''}</button>
       <button role="tab" aria-selected={tab === 'recent'} className={tab === 'recent' ? 'active' : ''} onClick={() => setTab('recent')}>Últimas lecturas</button>
     </div>
     {!log ? (error ? null : <Loading/>) : <div className="shift-log-grid">
-      <section className={'panel' + (tab === 'inside' ? '' : ' narrow-hidden')} aria-label="Visitas dentro">
-        <div className="panel-heading"><div><h2>Dentro ahora</h2><p>{log.inside.length === 1 ? '1 visita con entrada sin salida.' : `${log.inside.length} visitas con entrada sin salida.`}</p></div><Users/></div>
-        {!log.inside.length ? <Empty icon={<Users/>} title="No hay visitas dentro" text="Las visitas aparecen aquí al registrar su entrada y salen al registrar su salida."/> :
-          <div className="device-list">{log.inside.map(row => <div className="device-row" key={row.id}><div>{row.kind === 'walkin' && <span className="badge expired"><span/>Sin pase</span>}<h3>{row.guestName}</h3><p>{row.property.street} {row.property.houseNumber} · {row.guestVehicle || 'Peatonal'}</p><small>Entró el {dateText(row.since)}{row.authorizedBy ? ` · Autorizó ${row.authorizedBy}` : ''}</small></div>
-            {/* Walk-ins have no QR to scan on the way out. */}
-            {row.kind === 'walkin' && <Button className="secondary small-button" disabled={!online || !!exiting} busy={exiting === row.id} onClick={() => void onExit(row.id)}>Registrar salida</Button>}</div>)}</div>}
+      <section className={'panel' + (tab === 'today' ? '' : ' narrow-hidden')} aria-label="Entradas de hoy">
+        <div className="panel-heading"><div><h2>Entradas de hoy</h2><p>{log.today.length === 1 ? '1 visita entró hoy por las casetas del fraccionamiento.' : `${log.today.length} visitas entraron hoy por las casetas del fraccionamiento.`}</p></div><LogIn/></div>
+        {!log.today.length ? <Empty icon={<LogIn/>} title="Nadie ha entrado hoy" text="Cada entrada autorizada aparece aquí, la más reciente primero."/> :
+          <div className="device-list">{log.today.map(row => <div className="device-row" key={row.id}><div>{row.kind === 'walkin' && <span className="badge expired"><span/>Sin pase</span>}<h3>{row.guestName}</h3><p>{row.property.street} {row.property.houseNumber} · {row.guestVehicle || 'Peatonal'}</p><small>Entró a las {time(row.at)}{row.authorizedBy ? ` · Autorizó ${row.authorizedBy}` : ''}</small></div></div>)}</div>}
       </section>
       <section className={'panel' + (tab === 'recent' ? '' : ' narrow-hidden')} aria-label="Últimas lecturas">
-        <div className="panel-heading"><div><h2>Últimas lecturas</h2><p>Entradas, salidas y rechazos de este equipo.</p></div><History/></div>
+        <div className="panel-heading"><div><h2>Últimas lecturas</h2><p>Entradas y rechazos de este equipo.</p></div><History/></div>
         {!log.recent.length ? <Empty icon={<History/>} title="Sin lecturas recientes" text="Las lecturas de este equipo aparecerán aquí."/> :
           <div className="device-list">{log.recent.map(row => {
             const granted = row.result === 'GRANTED';
@@ -119,10 +115,9 @@ export function Gate() {
   const [notice, setNotice] = useState('');
   const [noticeLeaving, setNoticeLeaving] = useState(false);
   const [manual, setManual] = useState(false);
-  const [direction, setDirection] = useState<'ENTRY' | 'EXIT'>('ENTRY');
-  const directionName = direction === 'ENTRY' ? 'entrada' : 'salida';
   const [result, setResult] = useState<ScanResult | null>(null);
-  const [attempt, setAttempt] = useState<{ token: string; direction: 'ENTRY' | 'EXIT' } | null>(null);
+  // The gate records entries only.
+  const [attempt, setAttempt] = useState<{ token: string; direction: 'ENTRY' } | null>(null);
   const [logVersion, setLogVersion] = useState(0);
   const [view, setView] = useState<GateView>(() => {
     try { return localStorage.getItem(gateViewKey) === 'log' ? 'log' : 'scan'; } catch { return 'scan'; }
@@ -132,18 +127,10 @@ export function Gate() {
   const online = useOnline();
   const shiftLog = useShiftLog(!!station, online, logVersion);
   const [walkIn, setWalkIn] = useState(false);
-  const exit = useMutation();
-  const [exiting, setExiting] = useState<string | null>(null);
   const scanning = useRef(false);
   const cooldown = useRef<{ raw: string; until: number } | null>(null);
   const audio = useRef<AudioContext | null>(null);
   const showing = !!result || (!!attempt && !!scan.error && !scan.busy);
-
-  async function exitWalkIn(id: string) {
-    setExiting(id);
-    if (await exit.run(`/gate/scan/walk-ins/${id}/exit`, 'POST', {}, { public: true, station: true })) setLogVersion(v => v + 1);
-    setExiting(null);
-  }
 
   function openView(next: GateView) {
     setView(next);
@@ -241,7 +228,7 @@ export function Gate() {
     }
     scanning.current = true;
     setManual(false); setNotice('');
-    const action = retry && attempt ? attempt : { token, direction };
+    const action = retry && attempt ? attempt : { token, direction: 'ENTRY' as const };
     // While its result is on screen, the same QR is never read again.
     cooldown.current = { raw, until: Number.POSITIVE_INFINITY };
     setAttempt(action);
@@ -256,16 +243,13 @@ export function Gate() {
     scanning.current = false;
   }
 
-  // Choosing a movement is a deliberate new reading, even for the QR still in front of the camera.
-  function changeDirection(next: 'ENTRY' | 'EXIT') { setDirection(next); cooldown.current = null; }
-
   function next() {
     if (cooldown.current) cooldown.current = { raw: cooldown.current.raw, until: Date.now() + SAME_QR_COOLDOWN_MS };
     setResult(null); setAttempt(null); scan.clear();
   }
 
   return <div className={'gate-station' + (station ? ' has-nav' : '')}>
-    {(!station || view === 'log') && <PageHeader title={station ? 'Bitácora' : 'Caseta'} text={station ? 'Consulta quién sigue dentro y las lecturas recientes de este equipo.' : 'Vincula este equipo para escanear los pases de las visitas.'}/>}
+    {(!station || view === 'log') && <PageHeader title={station ? 'Bitácora' : 'Caseta'} text={station ? 'Consulta las entradas de hoy y las lecturas recientes de este equipo.' : 'Vincula este equipo para escanear los pases de las visitas.'}/>}
     {checking && !station ? <Loading/> : !station ? <section className="panel setup-panel">
       <div className="setup-symbol"><DoorOpen size={31}/></div>
       <h2>Vincula este equipo una sola vez</h2>
@@ -280,30 +264,13 @@ export function Gate() {
         <div><span className={'connection-dot ' + (online ? '' : 'offline')}/><strong>{station.gate.label}</strong><span>{station.label} · {online ? 'Equipo autorizado' : 'Sin conexión'}</span></div>
       </div>
       <ErrorBox message={stationError}/>
-      <GateNav view={view} onChange={openView} inside={shiftLog.log?.inside.length}/>
+      <GateNav view={view} onChange={openView} today={shiftLog.log?.today.length}/>
       {walkIn && <GateWalkIn online={online} onClose={() => setWalkIn(false)} onFinished={granted => { if (granted !== null) signal(granted); setLogVersion(v => v + 1); }}/>}
-      {manual && <ManualDialog directionName={directionName} busy={scan.busy} online={online} onClose={() => setManual(false)} onSubmit={raw => void read(raw)}/>}
-      {showing && attempt && <ResultDialog key={attempt.token + attempt.direction} result={result} error={scan.error} direction={attempt.direction} retrying={scan.busy} online={online} onNext={next} onRetry={() => void read(attempt.token, true)}/>}
+      {manual && <ManualDialog busy={scan.busy} online={online} onClose={() => setManual(false)} onSubmit={raw => void read(raw)}/>}
+      {showing && attempt && <ResultDialog key={attempt.token} result={result} error={scan.error} retrying={scan.busy} online={online} onNext={next} onRetry={() => void read(attempt.token, true)}/>}
       <div id="gate-view" role="tabpanel" aria-labelledby={view === 'scan' ? 'gate-tab-scan' : 'gate-tab-log'}>
-      {view === 'log' ? <><ShiftLog {...shiftLog} online={online} exiting={exiting} onExit={exitWalkIn}/><ErrorBox message={exit.error}/></> : <div className="scan-screen">
-        <nav className={`direction-nav ${direction === 'ENTRY' ? 'entry-active' : 'exit-active'}`} aria-label="Movimiento del visitante">
-          <span className="direction-nav-surface" aria-hidden="true">
-            <span className="direction-nav-fill direction-nav-fill-left"/>
-            <span className="direction-nav-notch-track">
-              <svg className="direction-nav-notch" viewBox="0 0 112 84" preserveAspectRatio="none">
-                <path d="M0 0 C12 0 14 4 20 16 C27 31 38 39 56 39 C74 39 85 31 92 16 C98 4 100 0 112 0 V84 H0 Z" fill="currentColor"/>
-              </svg>
-            </span>
-            <span className="direction-nav-fill direction-nav-fill-right"/>
-          </span>
-          <button type="button" disabled={scan.busy} className={direction === 'ENTRY' ? 'selected' : ''} aria-pressed={direction === 'ENTRY'} onClick={() => changeDirection('ENTRY')}>
-            <span className="direction-nav-icon"><AnimatedArrowRightDashed size={21}/></span><span className="direction-nav-label"><strong>Entrada</strong><small>La visita llega</small></span>
-          </button>
-          <button type="button" disabled={scan.busy} className={direction === 'EXIT' ? 'selected' : ''} aria-pressed={direction === 'EXIT'} onClick={() => changeDirection('EXIT')}>
-            <span className="direction-nav-icon"><AnimatedArrowLeftDashed size={21}/></span><span className="direction-nav-label"><strong>Salida</strong><small>La visita se retira</small></span>
-          </button>
-        </nav>
-        <ScanStage cameraOn={cameraOn} online={online} busy={scan.busy} paused={showing || manual || walkIn} directionName={directionName} notice={notice} noticeLeaving={noticeLeaving} cameraError={cameraError}
+      {view === 'log' ? <ShiftLog {...shiftLog} online={online}/> : <div className="scan-screen">
+        <ScanStage cameraOn={cameraOn} online={online} busy={scan.busy} paused={showing || manual || walkIn} notice={notice} noticeLeaving={noticeLeaving} cameraError={cameraError}
           onStart={() => { unlockAudio(); switchCamera(true); }} onStop={() => switchCamera(false)} onRead={raw => void read(raw)} onCameraError={setCameraError}/>
         <div className="scan-actions">
           <Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setManual(true); }}><ClipboardPaste size={17}/> Pegar enlace</Button>

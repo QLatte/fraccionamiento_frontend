@@ -56,18 +56,18 @@ export function CameraReader({ onRead, paused, onError }: { onRead: (raw: string
 }
 
 type StageProps = {
-  cameraOn: boolean; online: boolean; busy: boolean; paused: boolean; directionName: string; notice: string; noticeLeaving: boolean; cameraError: string;
+  cameraOn: boolean; online: boolean; busy: boolean; paused: boolean; notice: string; noticeLeaving: boolean; cameraError: string;
   onStart: () => void; onStop: () => void; onRead: (raw: string) => void; onCameraError: (message: string) => void;
 };
 
 /** The camera area: start button when off, live view with a scan guide when on. */
-export function ScanStage({ cameraOn, online, busy, paused, directionName, notice, noticeLeaving, cameraError, onStart, onStop, onRead, onCameraError }: StageProps) {
+export function ScanStage({ cameraOn, online, busy, paused, notice, noticeLeaving, cameraError, onStart, onStop, onRead, onCameraError }: StageProps) {
   const live = cameraOn && online && !cameraError;
   return <div className={'scan-stage' + (live ? ' on' : '') + (busy ? ' busy' : '')}>
     {live && <CameraReader onRead={onRead} paused={paused || busy} onError={onCameraError}/>}
     {live ? <>
       <div className="scan-guide" aria-hidden="true"><i/><i/><i/><i/><span className="scan-line"/></div>
-      <div className="scan-status" role="status">{busy ? <><LoaderCircle className="spin" size={16}/> Validando {directionName}…</> : <><span className="scan-dot"/> Escaneando {directionName}</>}</div>
+      <div className="scan-status" role="status">{busy ? <><LoaderCircle className="spin" size={16}/> Validando entrada…</> : <><span className="scan-dot"/> Escaneando entradas</>}</div>
       <button type="button" className="scan-pause" onClick={onStop} aria-label="Apagar cámara"><Pause size={18}/></button>
     </> : <div className="scan-idle">
       {!online ? <><WifiOff size={30}/><h3>Sin conexión</h3><p>Sin conexión no se autorizan accesos. La cámara vuelve sola al reconectar.</p></>
@@ -92,8 +92,8 @@ function Sheet({ label, tone, onClose, children }: { label: string; tone: string
 const AUTO_CLOSE_MS = 8000;
 
 /** Result of a reading. Granted closes itself so the next visitor can be scanned; a touch keeps it open. */
-export function ResultDialog({ result, error, direction, retrying, online, onNext, onRetry }: {
-  result: ScanResult | null; error: string; direction: 'ENTRY' | 'EXIT'; retrying: boolean; online: boolean; onNext: () => void; onRetry: () => void;
+export function ResultDialog({ result, error, retrying, online, onNext, onRetry }: {
+  result: ScanResult | null; error: string; retrying: boolean; online: boolean; onNext: () => void; onRetry: () => void;
 }) {
   const granted = !!result;
   // A resident's note has to be read, so the result then stays open until the guard moves on.
@@ -105,7 +105,7 @@ export function ResultDialog({ result, error, direction, retrying, online, onNex
     const id = window.setTimeout(() => next.current(), AUTO_CLOSE_MS);
     return () => window.clearTimeout(id);
   }, [holding]);
-  const title = granted ? (direction === 'ENTRY' ? 'Entrada autorizada' : 'Salida registrada') : direction === 'EXIT' ? 'No se registró la salida' : 'No autorices el acceso';
+  const title = granted ? 'Entrada autorizada' : 'No autorices el acceso';
   return <Sheet label={title} tone={granted ? 'granted' : 'denied'} onClose={onNext}>
     <div className="scan-dialog-body" onPointerDown={() => setHolding(true)}>
       <div className="scan-dialog-hero" aria-live="assertive">
@@ -130,14 +130,14 @@ export function ResultDialog({ result, error, direction, retrying, online, onNex
 }
 
 /** Fallback for a QR the camera cannot read (cracked screen, glare): paste the pass link. */
-export function ManualDialog({ directionName, busy, online, onSubmit, onClose }: { directionName: string; busy: boolean; online: boolean; onSubmit: (raw: string) => void; onClose: () => void }) {
+export function ManualDialog({ busy, online, onSubmit, onClose }: { busy: boolean; online: boolean; onSubmit: (raw: string) => void; onClose: () => void }) {
   const [value, setValue] = useState('');
   function submit(e: FormEvent) { e.preventDefault(); if (value.trim()) onSubmit(value.trim()); }
   return <Sheet label="Pegar enlace del pase" tone="manual" onClose={onClose}>
     <div className="modal-top"><h2>Pegar enlace</h2><button type="button" className="icon-button" aria-label="Cerrar" onClick={onClose}><XCircle size={20}/></button></div>
     <form className="modal-content" onSubmit={submit}>
       <label>Enlace o token del pase<input autoFocus inputMode="url" autoComplete="off" placeholder="https://…/p/…" value={value} onChange={e => setValue(e.target.value)}/><small>Si la cámara no lee el QR, pide al visitante el enlace que recibió.</small></label>
-      <Button type="submit" className="full" disabled={!value.trim() || !online} busy={busy}><ClipboardPaste size={17}/> Validar {directionName}</Button>
+      <Button type="submit" className="full" disabled={!value.trim() || !online} busy={busy}><ClipboardPaste size={17}/> Validar entrada</Button>
     </form>
   </Sheet>;
 }

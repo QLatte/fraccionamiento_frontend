@@ -11,12 +11,12 @@ import AnimatedFilledBell from '../components/icons/AnimatedFilledBell';
 import { reasonLabel } from '../walkins';
 import type { ActivityItem, WalkInReason } from '../types';
 
-type Filter = 'all' | 'entries' | 'exits' | 'walkins' | 'denied';
-const filters: [Filter, string][] = [['all', 'Todo'], ['entries', 'Entradas'], ['exits', 'Salidas'], ['walkins', 'Sin pase'], ['denied', 'Rechazos']];
+type Filter = 'all' | 'entries' | 'walkins' | 'denied';
+// The gate records entries only; exits stored before that still show under Todo.
+const filters: [Filter, string][] = [['all', 'Todo'], ['entries', 'Entradas'], ['walkins', 'Sin pase'], ['denied', 'Rechazos']];
 const matches: Record<Filter, (item: ActivityItem) => boolean> = {
   all: () => true,
   entries: i => i.type === 'VISIT_ENTERED' || i.type === 'WALKIN_APPROVED',
-  exits: i => i.type === 'VISIT_EXITED' || i.type === 'WALKIN_EXITED',
   walkins: i => i.type.startsWith('WALKIN_'),
   denied: i => i.type === 'VISIT_DENIED' || i.type === 'WALKIN_REJECTED',
 };
@@ -47,7 +47,7 @@ function dayLabel(iso: string) {
   return dateText(iso, { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-/** Actividad: entries, exits, walk-ins and rejections for the selected household (last 30 days). */
+/** Actividad: entries, walk-ins and rejections for the selected household (last 30 days). */
 export function Activity() {
   const { property } = useAuth();
   const [items, setItems] = useState<ActivityItem[] | null>(null);
@@ -90,7 +90,7 @@ export function Activity() {
         <button className="icon-button" aria-label="Actualizar actividad" onClick={() => void load()} disabled={loading}><RotateCw size={18} className={loading ? 'spin' : undefined}/></button>
       </div>
       <ErrorBox message={error} retry={() => void load()}/>
-      {!items ? (error ? null : <Loading/>) : !groups.length ? <Empty icon={<History/>} title={filter === 'all' ? 'Sin actividad todavía' : 'Nada en esta categoría'} text="Aquí verás cada entrada, salida y visita sin pase de tu vivienda en cuanto ocurra."/> :
+      {!items ? (error ? null : <Loading/>) : !groups.length ? <Empty icon={<History/>} title={filter === 'all' ? 'Sin actividad todavía' : 'Nada en esta categoría'} text="Aquí verás cada entrada y visita sin pase de tu vivienda en cuanto ocurra."/> :
         <div className="activity-days">{groups.map(([day, rows]) => <div key={day} className="activity-day">
           <h3>{day}</h3>
           <ol className="activity-list">{rows.map(item => {
