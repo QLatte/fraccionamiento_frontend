@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import jsQR from 'jsqr';
-import { Camera, CameraOff, ClipboardPaste, LoaderCircle, MessageSquareText, Pause, WifiOff, XCircle } from 'lucide-react';
+import { Camera, CameraOff, ClipboardPaste, IdCard, LoaderCircle, MessageSquareText, Pause, WifiOff, XCircle } from 'lucide-react';
 import { Button, ErrorBox } from '../components/ui';
 import { lockPageScroll } from '../components/lockPageScroll';
 import { AnimatedCheck } from '../components/icons/AnimatedIcons';
 import { fadeOutCopy } from '../components/modalExit';
+import { IdPhotoCapture } from '../components/IdPhotoCapture';
 import type { ScanResult } from '../types';
 
 /**
@@ -56,13 +57,14 @@ export function CameraReader({ onRead, paused, onError }: { onRead: (raw: string
 }
 
 type StageProps = {
-  cameraOn: boolean; online: boolean; busy: boolean; paused: boolean; notice: string; noticeLeaving: boolean; cameraError: string;
+  // `suspended`: another screen (ID photo, walk-in form) is using the camera.
+  cameraOn: boolean; online: boolean; busy: boolean; paused: boolean; suspended?: boolean; notice: string; noticeLeaving: boolean; cameraError: string;
   onStart: () => void; onStop: () => void; onRead: (raw: string) => void; onCameraError: (message: string) => void;
 };
 
 /** The camera area: start button when off, live view with a scan guide when on. */
-export function ScanStage({ cameraOn, online, busy, paused, notice, noticeLeaving, cameraError, onStart, onStop, onRead, onCameraError }: StageProps) {
-  const live = cameraOn && online && !cameraError;
+export function ScanStage({ cameraOn, online, busy, paused, suspended, notice, noticeLeaving, cameraError, onStart, onStop, onRead, onCameraError }: StageProps) {
+  const live = cameraOn && online && !cameraError && !suspended;
   return <div className={'scan-stage' + (live ? ' on' : '') + (busy ? ' busy' : '')}>
     {live && <CameraReader onRead={onRead} paused={paused || busy} onError={onCameraError}/>}
     {live ? <>
@@ -70,7 +72,8 @@ export function ScanStage({ cameraOn, online, busy, paused, notice, noticeLeavin
       <div className="scan-status" role="status">{busy ? <><LoaderCircle className="spin" size={16}/> Validando entrada…</> : <><span className="scan-dot"/> Escaneando entradas</>}</div>
       <button type="button" className="scan-pause" onClick={onStop} aria-label="Apagar cámara"><Pause size={18}/></button>
     </> : <div className="scan-idle">
-      {!online ? <><WifiOff size={30}/><h3>Sin conexión</h3><p>Sin conexión no se autorizan accesos. La cámara vuelve sola al reconectar.</p></>
+      {suspended && cameraOn && online ? <><span className="scan-idle-icon"><IdCard size={30}/></span><h3>Cámara en uso</h3><p>Se está tomando la foto de la identificación. El escáner vuelve solo al terminar.</p></>
+        : !online ? <><WifiOff size={30}/><h3>Sin conexión</h3><p>Sin conexión no se autorizan accesos. La cámara vuelve sola al reconectar.</p></>
         : cameraError ? <><CameraOff size={30}/><h3>No se pudo abrir la cámara</h3><p>{cameraError}</p><Button onClick={onStart}><Camera size={18}/> Reintentar</Button></>
         : <><span className="scan-idle-icon"><Camera size={30}/></span><h3>Activa el escáner</h3><p>La cámara se queda encendida: solo acerca cada QR al recuadro.</p><Button onClick={onStart}><Camera size={18}/> Activar escáner</Button></>}
     </div>}
@@ -125,6 +128,22 @@ export function ResultDialog({ result, error, retrying, online, onNext, onRetry 
         <Button autoFocus onClick={onNext}>{granted ? 'Siguiente visita' : 'Leer otro pase'}</Button>
       </div>
       {granted && <div className="scan-dialog-timer" aria-hidden="true">{holding ? <small>Se queda abierto hasta que toques «Siguiente visita».</small> : <span className="scan-dialog-progress" style={{ animationDuration: `${AUTO_CLOSE_MS}ms` }}/>}</div>}
+    </div>
+  </Sheet>;
+}
+
+/** Every entry needs a photo of the visitor's ID; the pass is validated once it is taken. */
+export function IdPhotoDialog({ online, onConfirm, onCancel }: { online: boolean; onConfirm: (photo: string) => void; onCancel: () => void }) {
+  const [photo, setPhoto] = useState('');
+  return <Sheet label="Foto de la identificación" tone="manual" onClose={onCancel}>
+    <div className="modal-top"><h2>Foto de la identificación</h2><button type="button" className="icon-button" aria-label="Cancelar" onClick={onCancel}><XCircle size={20}/></button></div>
+    <div className="modal-content id-photo-step">
+      <p>Pide la INE u otra identificación a la visita y tómale una foto completa y legible. Solo administración puede verla y se borra a los 30 días.</p>
+      <IdPhotoCapture value={photo} onChange={setPhoto}/>
+      <div className="scan-dialog-actions">
+        <Button className="secondary" onClick={onCancel}>Cancelar</Button>
+        <Button autoFocus={!!photo} disabled={!photo || !online} onClick={() => onConfirm(photo)}>Validar entrada</Button>
+      </div>
     </div>
   </Sheet>;
 }

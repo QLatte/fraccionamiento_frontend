@@ -5,7 +5,7 @@ import { dateText, extractToken, useMutation, useOnline } from '../hooks';
 import { api, ApiError, codeText, errorText } from '../api';
 import type { GateLog, GateStation, ScanResult } from '../types';
 import { GateWalkIn } from './GateWalkIn';
-import { ManualDialog, ResultDialog, ScanStage } from './GateScanner';
+import { IdPhotoDialog, ManualDialog, ResultDialog, ScanStage } from './GateScanner';
 
 const stationModeKey = 'zentry:gate-station';
 // The scanner stays on across reloads once a guard turns it on.
@@ -116,8 +116,10 @@ export function Gate() {
   const [noticeLeaving, setNoticeLeaving] = useState(false);
   const [manual, setManual] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
-  // The gate records entries only.
-  const [attempt, setAttempt] = useState<{ token: string; direction: 'ENTRY' } | null>(null);
+  // The gate records entries only. Each one carries a photo of the visitor's ID, taken after
+  // the QR is read (`capture`) and before the pass is validated.
+  const [capture, setCapture] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState<{ token: string; idPhoto: string } | null>(null);
   const [logVersion, setLogVersion] = useState(0);
   const [view, setView] = useState<GateView>(() => {
     try { return localStorage.getItem(gateViewKey) === 'log' ? 'log' : 'scan'; } catch { return 'scan'; }
@@ -216,7 +218,7 @@ export function Gate() {
 
   async function read(raw: string, retry = false) {
     if (scanning.current || !station || !online) return;
-    if (!retry && (showing || walkIn)) return;
+    if (!retry && (showing || walkIn || capture)) return;
     // A QR that is still in view after its result closed is ignored until it leaves the camera.
     if (!retry && cooldown.current?.raw === raw && Date.now() < cooldown.current.until) { cooldown.current.until = Math.max(cooldown.current.until, Date.now() + SAME_QR_COOLDOWN_MS); return; }
     let token: string;
@@ -226,11 +228,17 @@ export function Gate() {
       cooldown.current = { raw, until: Date.now() + SAME_QR_COOLDOWN_MS };
       setNotice(errorText(cause)); signal(false); return;
     }
-    scanning.current = true;
-    setManual(false); setNotice('');
-    const action = retry && attempt ? attempt : { token, direction: 'ENTRY' as const };
-    // While its result is on screen, the same QR is never read again.
+    // While its photo step or result is on screen, the same QR is never read again.
     cooldown.current = { raw, until: Number.POSITIVE_INFINITY };
+    setManual(false); setNotice('');
+    if (retry && attempt) await submit(attempt);
+    else setCapture(token);
+  }
+
+  async function submit(action: { token: string; idPhoto: string }) {
+    if (scanning.current) return;
+    scanning.current = true;
+    setCapture(null);
     setAttempt(action);
     setResult(null);
     let value = await scan.run<ScanResult>('/gate/scan', 'POST', action, { public: true, station: true });
@@ -246,6 +254,11 @@ export function Gate() {
   function next() {
     if (cooldown.current) cooldown.current = { raw: cooldown.current.raw, until: Date.now() + SAME_QR_COOLDOWN_MS };
     setResult(null); setAttempt(null); scan.clear();
+  }
+
+  function cancelCapture() {
+    setCapture(null);
+    if (cooldown.current) cooldown.current = { raw: cooldown.current.raw, until: Date.now() + SAME_QR_COOLDOWN_MS };
   }
 
   return <div className={'gate-station' + (station ? ' has-nav' : '')}>
@@ -266,11 +279,12 @@ export function Gate() {
       <ErrorBox message={stationError}/>
       <GateNav view={view} onChange={openView} today={shiftLog.log?.today.length}/>
       {walkIn && <GateWalkIn online={online} onClose={() => setWalkIn(false)} onFinished={granted => { if (granted !== null) signal(granted); setLogVersion(v => v + 1); }}/>}
+      {capture && <IdPhotoDialog online={online} onCancel={cancelCapture} onConfirm={idPhoto => void submit({ token: capture, idPhoto })}/>}
       {manual && <ManualDialog busy={scan.busy} online={online} onClose={() => setManual(false)} onSubmit={raw => void read(raw)}/>}
       {showing && attempt && <ResultDialog key={attempt.token} result={result} error={scan.error} retrying={scan.busy} online={online} onNext={next} onRetry={() => void read(attempt.token, true)}/>}
       <div id="gate-view" role="tabpanel" aria-labelledby={view === 'scan' ? 'gate-tab-scan' : 'gate-tab-log'}>
       {view === 'log' ? <ShiftLog {...shiftLog} online={online}/> : <div className="scan-screen">
-        <ScanStage cameraOn={cameraOn} online={online} busy={scan.busy} paused={showing || manual || walkIn} notice={notice} noticeLeaving={noticeLeaving} cameraError={cameraError}
+        <ScanStage cameraOn={cameraOn} online={online} busy={scan.busy} paused={showing || manual || walkIn || !!capture} suspended={walkIn || !!capture} notice={notice} noticeLeaving={noticeLeaving} cameraError={cameraError}
           onStart={() => { unlockAudio(); switchCamera(true); }} onStop={() => switchCamera(false)} onRead={raw => void read(raw)} onCameraError={setCameraError}/>
         <div className="scan-actions">
           <Button className="secondary" disabled={!online} onClick={() => { unlockAudio(); setManual(true); }}><ClipboardPaste size={17}/> Pegar enlace</Button>

@@ -73,6 +73,9 @@
 .log-table td small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
 .log-time { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .log-name { font-weight: 600; }
+.log-photo { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--brand); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.log-photo:hover { text-decoration: underline; }
+.id-photo-full { display: block; width: 100%; max-height: 60dvh; margin: 12px 0; object-fit: contain; border-radius: 12px; background: #0d2e39; }
 .move { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 650; white-space: nowrap; }
 .move.entry { background: #e7f3ed; color: #286648; }
 .move.exit { background: #eaf0f9; color: #395d90; }

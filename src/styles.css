@@ -918,3 +918,15 @@ textarea.pass-notes { min-height: 72px; resize: vertical; }
   .gates-admin .gate-actions { flex-basis: 100%; justify-content: flex-start; padding-left: 58px; }
   .gates-admin .gate-actions .button { white-space: nowrap; }
 }
+
+/* Photo of the visitor's ID (src/components/IdPhotoCapture.tsx): live camera with an ID-card guide. */
+.id-capture { display: grid; gap: 10px; margin-bottom: 14px; }
+.id-capture-view { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: 16px; background: radial-gradient(120% 90% at 50% 0%, #1d5568 0%, var(--brand) 58%, #0d2e39 100%); }
+.id-capture-view video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity var(--motion-standard) var(--motion-ease); }
+.id-capture-view video.live { opacity: 1; }
+.id-capture-guide { position: absolute; inset: 0; margin: auto; width: 82%; aspect-ratio: 85.6 / 54; border: 2px dashed #ffffffcc; border-radius: 12px; box-shadow: 0 0 0 999px #0d2e3966; }
+.id-capture-photo { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: contain; border-radius: 16px; background: #0d2e39; }
+.id-capture-fallback { padding: 16px; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); font-size: 14px; text-align: center; }
+.id-capture-fallback p { margin: 0; }
+.id-capture label.button { cursor: pointer; }
+.id-photo-step > p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }

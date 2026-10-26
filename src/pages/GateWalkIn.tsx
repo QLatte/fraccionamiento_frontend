@@ -5,6 +5,7 @@ import { Button, ErrorBox, Info, Loading, Modal } from '../components/ui';
 import { api, errorText } from '../api';
 import { useMutation } from '../hooks';
 import type { GateProperty, IdDocumentType, WalkInReason, WalkInView } from '../types';
+import { IdPhotoCapture } from '../components/IdPhotoCapture';
 import { countdown, idTypeLabel, reasonLabel } from '../walkins';
 
 const station = { public: true, station: true } as const;
@@ -45,6 +46,7 @@ function WalkInForm({ online, onCreated }: { online: boolean; onCreated: (view: 
   const [idType, setIdType] = useState<IdDocumentType>('INE');
   const [idLast4, setIdLast4] = useState('');
   const [idVerified, setIdVerified] = useState(false);
+  const [idPhoto, setIdPhoto] = useState('');
   const create = useMutation();
 
   useEffect(() => { api<{ data: GateProperty[] }>('/gate/scan/properties', station).then(r => setHomes(r.data)).catch(e => setLoadError(errorText(e))); }, []);
@@ -56,7 +58,7 @@ function WalkInForm({ online, onCreated }: { online: boolean; onCreated: (view: 
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const value = await create.run<WalkInView>('/gate/scan/walk-ins', 'POST', { propertyId, guestName: guestName.trim(), ...(guestVehicle.trim() ? { guestVehicle: guestVehicle.trim() } : {}), reason, idType, idLast4: idLast4.trim().toUpperCase(), idVerified }, station);
+    const value = await create.run<WalkInView>('/gate/scan/walk-ins', 'POST', { propertyId, guestName: guestName.trim(), ...(guestVehicle.trim() ? { guestVehicle: guestVehicle.trim() } : {}), reason, idType, idLast4: idLast4.trim().toUpperCase(), idVerified, idPhoto }, station);
     if (value) onCreated(value);
   }
 
@@ -71,9 +73,11 @@ function WalkInForm({ online, onCreated }: { online: boolean; onCreated: (view: 
     <div className="field-label" id="walkin-reason">Motivo</div>
     <div className="walkin-reasons" role="group" aria-labelledby="walkin-reason">{(Object.keys(reasonLabel) as WalkInReason[]).map(r => <button type="button" key={r} className={reason === r ? 'selected' : ''} aria-pressed={reason === r} onClick={() => setReason(r)}>{reasonLabel[r]}</button>)}</div>
     <div className="field-grid"><label>Identificación<select value={idType} onChange={e => setIdType(e.target.value as IdDocumentType)}>{(Object.keys(idTypeLabel) as IdDocumentType[]).map(t => <option key={t} value={t}>{idTypeLabel[t]}</option>)}</select></label><label>Últimos 4 caracteres<input required inputMode="text" pattern="[A-Za-z0-9]{4}" minLength={4} maxLength={4} value={idLast4} onChange={e => setIdLast4(e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase())} placeholder="1234"/></label></div>
+    <div className="field-label" id="walkin-photo">Foto de la identificación</div>
+    <div aria-labelledby="walkin-photo" role="group"><IdPhotoCapture value={idPhoto} onChange={setIdPhoto}/></div>
     <label className="checkbox-label"><input type="checkbox" required checked={idVerified} onChange={e => setIdVerified(e.target.checked)}/><span>Revisé la identificación en persona y coincide con el visitante.</span></label>
-    <Info>Solo se guardan los últimos 4 caracteres de la identificación. No retengas la credencial.</Info>
-  </fieldset><ErrorBox message={create.error}/><div className="modal-actions"><Button type="submit" busy={create.busy} disabled={!propertyId || !online}>Pedir autorización a la vivienda</Button></div></form>;
+    <Info>La vivienda solo ve los últimos 4 caracteres. La foto solo la ve administración y se borra a los 30 días. No retengas la credencial.</Info>
+  </fieldset><ErrorBox message={create.error}/><div className="modal-actions"><Button type="submit" busy={create.busy} disabled={!propertyId || !idPhoto || !online}>Pedir autorización a la vivienda</Button></div></form>;
 }
 
 function WalkInWait({ view, online, onChange, onClose }: { view: WalkInView; online: boolean; onChange: (view: WalkInView) => void; onClose: () => void }) {
@@ -97,7 +101,7 @@ function WalkInWait({ view, online, onChange, onClose }: { view: WalkInView; onl
 
   const who = `${view.guestName} · ${reasonLabel[view.reason]}`;
   const home = view.property ? `${view.property.street} ${view.property.houseNumber}` : '';
-  if (view.status === 'APPROVED') return <div className="walkin-result"><div className="result-symbol granted"><AnimatedCheck size={34}/></div><h2>Entrada autorizada</h2><p>{who} → {home}</p><p className="small">Autorizó: <strong>{view.authorizedBy}</strong> {view.method === 'APP' ? '(desde la app)' : '(por teléfono)'}</p><Button className="full" onClick={onClose}>Listo</Button><p className="small muted">Registra su salida desde la Bitácora cuando se retire.</p></div>;
+  if (view.status === 'APPROVED') return <div className="walkin-result"><div className="result-symbol granted"><AnimatedCheck size={34}/></div><h2>Entrada autorizada</h2><p>{who} → {home}</p><p className="small">Autorizó: <strong>{view.authorizedBy}</strong> {view.method === 'APP' ? '(desde la app)' : '(por teléfono)'}</p><Button className="full" onClick={onClose}>Listo</Button></div>;
   if (view.status === 'REJECTED') return <div className="walkin-result"><div className="result-symbol denied"><XCircle size={34}/></div><h2>No autorices el acceso</h2><p>{who} → {home}</p>{view.authorizedBy && <p className="small">Rechazó: <strong>{view.authorizedBy}</strong> {view.method === 'APP' ? '(desde la app)' : '(por teléfono)'}</p>}<Button className="full" onClick={onClose}>Listo</Button></div>;
   if (view.status === 'CANCELLED') return <div className="walkin-result"><div className="result-symbol denied"><UserX size={34}/></div><h2>Solicitud cancelada</h2><Button className="full" onClick={onClose}>Listo</Button></div>;
 

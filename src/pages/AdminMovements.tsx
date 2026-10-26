@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Download, LogIn, Search, ShieldAlert } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Download, IdCard, LogIn, Search, ShieldAlert } from 'lucide-react';
 import { api, errorText } from '../api';
 import { dateText, useQuery } from '../hooks';
-import { Button, Empty, ErrorBox, Loading } from '../components/ui';
+import { Button, Empty, ErrorBox, Loading, Modal } from '../components/ui';
 import { AnimatedTrend } from '../components/icons/AnimatedIcons';
 import './AdminMovements.css';
 
@@ -23,7 +23,7 @@ type Summary = {
   topHomes: { home: string; count: number }[];
   rejects: { reason: string; count: number }[];
 };
-type LogRow = { id: string; at: string; move: 'ENTRY' | 'EXIT' | 'DENIED'; guestName: string | null; kind: 'PASS' | 'WALKIN'; motive: string | null; denial: string | null; home: string | null; by: string | null; gate: string | null; vehicle: string | null };
+type LogRow = { id: string; at: string; move: 'ENTRY' | 'EXIT' | 'DENIED'; guestName: string | null; kind: 'PASS' | 'WALKIN'; motive: string | null; denial: string | null; home: string | null; by: string | null; gate: string | null; vehicle: string | null; photoId?: string | null };
 /** `truncated`: the period has more readings than the log reads; it only covers back to `since`. */
 type LogPage = { data: LogRow[]; total: number; nextOffset: number | null; truncated?: boolean; since?: string | null };
 
@@ -90,6 +90,7 @@ export function AdminMovements() {
   const [more, setMore] = useState<LogRow[]>([]); const [next, setNext] = useState<number | null>(null); const [moreBusy, setMoreBusy] = useState(false);
   useEffect(() => { setMore([]); setNext(log.data?.nextOffset ?? null); }, [log.data]);
   const [exporting, setExporting] = useState(false); const [exportError, setExportError] = useState('');
+  const [photoOf, setPhotoOf] = useState<LogRow | null>(null);
 
   async function loadMore() {
     if (next === null || !logPath) return;
@@ -166,13 +167,14 @@ export function AdminMovements() {
           <tbody>{rows.map(r => <tr key={r.id}>
             <td data-label="Hora" className="log-time">{dateText(r.at, s?.range.unit === 'hour' ? { hour: 'numeric', minute: '2-digit' } : undefined)}</td>
             <td data-label="Movimiento"><span className={'move ' + r.move.toLowerCase()}>{r.move === 'ENTRY' ? <><ArrowDownLeft size={13}/> Entrada</> : r.move === 'EXIT' ? <><ArrowUpRight size={13}/> Salida</> : 'Rechazo'}</span></td>
-            <td data-label="Visitante" className="log-name">{r.guestName ?? '—'}{r.vehicle && <small>{r.vehicle}</small>}</td>
+            <td data-label="Visitante" className="log-name">{r.guestName ?? '—'}{r.vehicle && <small>{r.vehicle}</small>}{r.photoId && <button type="button" className="log-photo" onClick={() => setPhotoOf(r)}><IdCard size={14}/> Ver identificación</button>}</td>
             <td data-label="Tipo">{r.kind === 'PASS' ? 'Pase QR' : `Sin pase · ${MOTIVE[r.motive ?? ''] ?? 'Visita'}`}{r.denial && <small className="danger-text">{REJECT[r.denial] ?? r.denial}</small>}</td>
             <td data-label="Destino">{r.home ?? '—'}</td>
             <td data-label="Autorizó">{r.by ?? '—'}</td>
             <td data-label="Caseta">{r.gate ?? '—'}</td>
           </tr>)}</tbody>
         </table></div>
+        {photoOf?.photoId && <IdPhotoViewer row={photoOf} onClose={() => setPhotoOf(null)}/>}
         {log.data?.truncated && log.data.since && <p className="small muted" role="status">El periodo tiene demasiados movimientos: el registro llega solo hasta el {dateText(log.data.since)}. Elige un periodo más corto para ver o descargar los anteriores. Los totales de arriba sí cuentan todo el periodo.</p>}
         <div className="log-footer"><span>Mostrando {number(rows.length)} de {number(log.data?.total ?? rows.length)}{log.data?.truncated ? ' más recientes' : ''} movimientos</span>{next !== null && <Button className="secondary" busy={moreBusy} onClick={() => void loadMore()}>Ver más</Button>}</div>
       </>}
@@ -190,4 +192,15 @@ export function AdminMovements() {
     </div>}
     <p className="small muted movements-note">Solo se registran visitas (con pase QR o sin pase); los residentes no pasan por el escáner. No se muestran identificaciones y las placas aparecen abreviadas. Cada consulta y descarga de la bitácora queda registrada.</p>
   </div>;
+}
+
+/** Photo of a visitor's ID taken at the gate. Opening it is audited by the API. */
+function IdPhotoViewer({ row, onClose }: { row: LogRow; onClose: () => void }) {
+  const [image, setImage] = useState(''); const [error, setError] = useState('');
+  useEffect(() => { api<{ image: string }>(`/admin/movements/id-photo/${row.photoId}`).then(r => setImage(r.image)).catch(e => setError(errorText(e))); }, [row.photoId]);
+  return <Modal title="Identificación de la visita" onClose={onClose}>
+    <p className="small muted">{row.guestName ?? 'Visita'} · {row.home ?? '—'} · {dateText(row.at)}</p>
+    {error ? <ErrorBox message={error}/> : !image ? <Loading/> : <img className="id-photo-full" src={image} alt={`Identificación de ${row.guestName ?? 'la visita'}`}/>}
+    <p className="small muted">Cada consulta queda registrada. Las fotos se borran a los 30 días.</p>
+  </Modal>;
 }
