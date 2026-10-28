@@ -6,12 +6,12 @@ type Props = {
   label?: string;
   className?: string;
   size?: number;
-  /** ms the X animates before closing; inside a dialog the dialog's own exit covers the rest. */
+  /** ms the X animates before closing. 0 (the default) closes on the tap: the panel's own exit covers the gesture. */
   delay?: number;
 };
 
 /** Close control based on the two independently moving strokes of Its Hover's X icon. */
-export default function AnimatedX({ onClose, label = 'Cerrar', className = '', size = 24, delay = 430 }: Props) {
+export default function AnimatedX({ onClose, label = 'Cerrar', className = '', size = 24, delay = 0 }: Props) {
   const button = useRef<HTMLButtonElement>(null);
   const timeout = useRef<number | undefined>(undefined);
   const closing = useRef(false);
@@ -20,7 +20,7 @@ export default function AnimatedX({ onClose, label = 'Cerrar', className = '', s
 
   const close = () => {
     if (closing.current) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (delay <= 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       onClose();
       return;
     }

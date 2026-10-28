@@ -3,10 +3,12 @@ import './AnimatedAlignCenter.css';
 
 type Props = { size?: number; strokeWidth?: number; className?: string };
 
-/** Let the three-line gesture finish before the menu covers its trigger. */
+/**
+ * Opens right away: the gesture plays on as the menu slides in. Waiting for it to finish
+ * left a tap that animated but did nothing for half a second, so people tapped twice.
+ */
 export function afterMenuIconAnimation(open: () => void) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) open();
-  else window.setTimeout(open, 450);
+  open();
 }
 
 /** Centered line geometry and staggered scale motion adapted from Its Hover. */

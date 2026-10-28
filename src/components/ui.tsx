@@ -24,7 +24,7 @@ export function Modal({ title, children, onClose }: { title: string; children: R
   }, []);
   return createPortal(
     <dialog ref={ref} className="modal" aria-label={title} onCancel={e => { e.preventDefault(); onClose(); }}>
-      <div className="modal-top"><h2>{title}</h2><AnimatedX size={20} onClose={onClose} delay={140}/></div>
+      <div className="modal-top"><h2>{title}</h2><AnimatedX size={20} onClose={onClose}/></div>
       <div className="modal-content">{children}</div>
     </dialog>,
     document.body,

@@ -32,7 +32,10 @@ export default function AnimatedQr({ size = 24, strokeWidth = 2, className = '' 
       return () => window.clearTimeout(release);
     }
 
-    trigger.addEventListener('pointerenter', start);
+    // Hover only with a mouse: a tap also fires pointerenter, and iOS may take a style change
+    // there as a hover and hold back the click until a second tap.
+    const enter = (event: PointerEvent) => { if (event.pointerType === 'mouse') start(); };
+    trigger.addEventListener('pointerenter', enter as EventListener);
     trigger.addEventListener('pointerleave', leave as EventListener);
     trigger.addEventListener('pointerdown', start);
     trigger.addEventListener('pointerup', pressEnd);
@@ -41,7 +44,7 @@ export default function AnimatedQr({ size = 24, strokeWidth = 2, className = '' 
     trigger.addEventListener('blur', stop);
     return () => {
       window.clearTimeout(release);
-      trigger.removeEventListener('pointerenter', start);
+      trigger.removeEventListener('pointerenter', enter as EventListener);
       trigger.removeEventListener('pointerleave', leave as EventListener);
       trigger.removeEventListener('pointerdown', start);
       trigger.removeEventListener('pointerup', pressEnd);

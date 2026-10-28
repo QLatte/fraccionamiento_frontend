@@ -3,10 +3,9 @@ import './AnimatedSlidersHorizontal.css';
 
 type Props = { size?: number; strokeWidth?: number; className?: string };
 
-/** Keep the mobile sidebar visible long enough for the slider gesture to finish. */
+/** Navigates right away (see afterMenuIconAnimation): a tap must act when it lands. */
 export function afterSlidersAnimation(navigate: () => void) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigate();
-  else window.setTimeout(navigate, 720);
+  navigate();
 }
 
 /** Three staggered horizontal sliders adapted from Its Hover's icon. */
