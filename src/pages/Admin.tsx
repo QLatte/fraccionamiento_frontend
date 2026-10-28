@@ -8,6 +8,7 @@ import { AdminInvitations } from './AdminInvitations';
 import { AdminMovements } from './AdminMovements';
 import { AdminGateDevices } from './AdminGateDevices';
 import { AdminSystemStatus } from './AdminSystemStatus';
+import { AdminSupportPhones } from './AdminSupportPhones';
 import { adminSections } from './adminSections';
 
 const communityKey = 'zentry:admin-community';
@@ -52,7 +53,7 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
     {needsCommunity && !known ? (communities.loading ? <Loading/> : <section className="panel"><Empty icon={<Building2/>} title="Elige un fraccionamiento" text="Cada fraccionamiento se administra por separado: sus residentes, casetas y movimientos nunca se mezclan con los de otro."/></section>) :
       <div key={`${current}:${community}`} className="page-enter">
         {current === '/admin/movimientos' ? <AdminMovements/> : current === '/admin/invitaciones' ? <AdminInvitations/> :
-          current === '/admin/dispositivos' ? <AdminGateDevices/> : <AdminSystemStatus/>}
+          current === '/admin/dispositivos' ? <AdminGateDevices/> : current === '/admin/telefonos' ? <AdminSupportPhones/> : <AdminSystemStatus/>}
       </div>}
   </>;
 }

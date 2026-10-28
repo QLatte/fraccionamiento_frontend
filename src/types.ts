@@ -36,3 +36,5 @@ export interface ActivityItem {
 export interface Profile { fullName: string; email: string; globalRole: Role; preferences: { alertEntries: boolean; alertExpired: boolean; quietHours: { start: string; end: string } | null; timezone: string } }
 export interface GateProperty { id: string; street: string; houseNumber: string; cluster: { name: string } }
 export interface ScanResult { result: 'GRANTED'; guestName: string; guestVehicle: string | null; notes?: string | null; property: { street: string; houseNumber: string }; residentName: string; validationSource: string }
+/** A Teléfono de apoyo published by the fraccionamiento. */
+export interface SupportContact { id: string; label: string; phone: string }

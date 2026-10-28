@@ -34,19 +34,24 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
     { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },
     { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone },
-    { path: null, label: 'Más', Icon: AnimatedAlignCenter },
+    // The menu opens from the top-left button, so the resident dock has no «Más».
+    { path: '/telefonos', label: 'Teléfonos', Icon: AnimatedPhoneVolume },
   ];
   const current = items.findIndex(item => item.path === path);
-  const activeIndex = menuOpen && (role !== 'ADMIN' && role !== 'SUPERADMIN') || current < 0 ? items.length - 1 : current;
+  const resident = role !== 'ADMIN' && role !== 'SUPERADMIN';
+  // Admins fall back to «Más»; a resident page outside the dock (Actividad, Mi perfil) or the open
+  // menu selects nothing, and the notch closes.
+  const activeIndex = resident ? (menuOpen ? -1 : current) : current < 0 ? items.length - 1 : current;
   // Equally spaced centers within the bar's 12px side padding.
-  const offset = 12 - 24 * (activeIndex + .5) / items.length;
+  const anchor = Math.max(0, activeIndex);
+  const offset = 12 - 24 * (anchor + .5) / items.length;
   const style = {
     '--nav-columns': items.length,
-    '--nav-center': `calc(${(activeIndex + .5) * 100 / items.length}% ${offset < 0 ? '-' : '+'} ${Math.abs(offset)}px)`,
+    '--nav-center': `calc(${(anchor + .5) * 100 / items.length}% ${offset < 0 ? '-' : '+'} ${Math.abs(offset)}px)`,
   } as CSSProperties;
 
   return (
-    <nav className="mobile-nav" aria-label="Navegación móvil" style={style} inert={menuOpen}>
+    <nav className={`mobile-nav${activeIndex < 0 ? " idle" : ""}`} aria-label="Navegación móvil" style={style} inert={menuOpen}>
       <div className="mobile-nav-surface" aria-hidden="true">
         <span className="mobile-nav-fill mobile-nav-fill-left"/>
         <span className="mobile-nav-notch-track">
