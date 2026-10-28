@@ -24,7 +24,7 @@ export interface GateLog {
 export type WalkInReason = 'VISIT' | 'DELIVERY' | 'SERVICE' | 'OTHER';
 export type IdDocumentType = 'INE' | 'LICENSE' | 'PASSPORT' | 'OTHER';
 /** A visitor without a pass, as the gate sees it while waiting for the household. */
-export interface WalkInView { id: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'; method: 'APP' | 'PHONE' | null; notified: number; expiresAt: string; canCall: boolean; guestName: string; guestVehicle: string | null; reason: WalkInReason; property: { street: string; houseNumber: string } | null; authorizedBy: string | null; enteredAt: string | null; exitedAt: string | null }
+export interface WalkInView { id: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'; method: 'APP' | 'PHONE' | null; notified: number; expiresAt: string; canCall: boolean; contacts?: { fullName: string; phone: string }[]; guestName: string; guestVehicle: string | null; reason: WalkInReason; property: { street: string; houseNumber: string } | null; authorizedBy: string | null; enteredAt: string | null; exitedAt: string | null }
 /** A pending request shown to household members. */
 export interface WalkInPending { id: string; createdAt: string; expiresAt: string; reason: WalkInReason; idType: IdDocumentType; guestName: string; guestVehicle: string | null; idLast4: string }
 /** One event in a household's gate activity (Actividad). */

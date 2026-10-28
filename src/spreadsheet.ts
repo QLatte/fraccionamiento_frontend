@@ -45,9 +45,9 @@ export async function readWorkbook(file: File): Promise<Sheet[]> {
 /** The suggested layout, as CSV so Excel opens it without extra libraries. */
 export function templateCsv() {
   const rows = [
-    ['Tipo', 'Privada o lote', 'Casa', 'Habitante 1', 'Correo 1', 'Habitante 2', 'Correo 2'],
-    ['Privada', 'Roble', '12', 'Juan Pérez López', 'juan@correo.com', 'Ana Ruiz Gómez', 'ana@correo.com'],
-    ['Lote', '5', '3', 'Luis Mora', 'luis@correo.com', '', ''],
+    ['Tipo', 'Privada o lote', 'Casa', 'Habitante 1', 'Correo 1', 'Teléfono de contacto 1', 'Habitante 2', 'Correo 2', 'Teléfono de contacto 2'],
+    ['Privada', 'Roble', '12', 'Juan Pérez López', 'juan@correo.com', '5512345678', 'Ana Ruiz Gómez', 'ana@correo.com', '5587654321'],
+    ['Lote', '5', '3', 'Luis Mora', 'luis@correo.com', '5511223344', '', '', ''],
   ];
   return '﻿' + rows.map(row => row.map(value => /[",;\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value).join(',')).join('\r\n');
 }

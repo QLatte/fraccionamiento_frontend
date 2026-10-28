@@ -39,7 +39,7 @@ export function PlatformImport({ communityId, emailEnabled, onImported }: { comm
   const warnings = preview?.issues.filter(i => i.level === 'warning') ?? [];
   const s = preview?.summary;
   return <div className="platform-import">
-    <div className="platform-section-heading"><div><h3>Importar residentes desde Excel</h3><p className="small">Acepta el formato del fraccionamiento (privada o lote, número de casa, nombres y correos de los habitantes, aunque vengan varios en una celda) o la plantilla de Zentry. Privadas y lotes pueden venir mezclados, en bloques o en varias hojas. Solo agrega: no borra casas ni personas que falten en el archivo.</p></div>
+    <div className="platform-section-heading"><div><h3>Importar residentes desde Excel</h3><p className="small">Acepta el formato del fraccionamiento (privada o lote, número de casa, nombres, correos y teléfonos de contacto de los habitantes, aunque vengan varios en una celda) o la plantilla de Zentry. Privadas y lotes pueden venir mezclados, en bloques o en varias hojas. Solo agrega: no borra casas ni personas que falten en el archivo.</p></div>
       <Button className="secondary" onClick={template}><Download size={17}/> Descargar plantilla</Button></div>
     <input ref={input} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={e => void choose(e.target.files?.[0])}/>
     <Button busy={busy === 'read'} disabled={!!busy} onClick={() => input.current?.click()}><Upload size={17}/> {file && !result ? 'Elegir otro archivo' : 'Elegir archivo .xlsx o .csv'}</Button>
@@ -59,7 +59,7 @@ export function PlatformImport({ communityId, emailEnabled, onImported }: { comm
       <div className="platform-table import-table"><table><thead><tr><th>Vivienda</th><th>Residentes</th><th>Teléfonos</th></tr></thead><tbody>
         {preview.sections.flatMap(section => section.houses.map(house => <tr key={house.label}>
           <td data-label="Vivienda"><strong>{house.label}</strong>{!house.propertyId && <><br/><span className="badge used"><span/>Nueva</span></>}</td>
-          <td data-label="Residentes">{house.residents.map(r => <div key={r.email}>{r.fullName} · <span className="muted">{r.email}</span>{r.role === 'FAMILY_MEMBER' && <span className="muted"> · familiar</span>}{!r.member && <span className="muted"> · alta nueva</span>}</div>)}{house.extra > 0 && <span className="badge expired"><span/>+{house.extra} extra</span>}</td>
+          <td data-label="Residentes">{house.residents.map(r => <div key={r.email}>{r.fullName} · <span className="muted">{r.email}</span>{r.phone && <span className="muted"> · {r.phone}</span>}{r.role === 'FAMILY_MEMBER' && <span className="muted"> · familiar</span>}{!r.member && <span className="muted"> · alta nueva</span>}</div>)}{house.extra > 0 && <span className="badge expired"><span/>+{house.extra} extra</span>}</td>
           <td data-label="Teléfonos">{house.deviceLimit}</td>
         </tr>))}
       </tbody></table></div>

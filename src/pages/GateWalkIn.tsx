@@ -110,6 +110,8 @@ function WalkInWait({ view, online, onChange, onClose }: { view: WalkInView; onl
     <div className="walkin-visitor"><strong>{who}</strong><span>{home}</span></div>
     {!view.canCall ? <div className="walkin-countdown" role="status"><AnimatedHourglass size={26} autoplay={400} every={2600}/><div><strong>{left ?? '0:00'}</strong><span>Esperando respuesta de la vivienda en la app · {view.notified === 1 ? '1 dispositivo avisado' : `${view.notified} dispositivos avisados`}</span></div></div>
       : <div className="walkin-call"><div className="walkin-call-head"><PhoneCall size={22}/><div><strong>{view.notified === 0 ? 'Esta vivienda no tiene avisos activados' : 'Nadie respondió en la app'}</strong><span>Llama a la vivienda y registra quién autorizó.</span></div></div>
+        {!!view.contacts?.length && <div className="walkin-contacts">{view.contacts.map(contact => <a key={contact.phone + contact.fullName} className="walkin-contact" href={`tel:${contact.phone}`} onClick={() => setCaller(contact.fullName)}><PhoneCall size={18}/><span><strong>{contact.fullName}</strong><small>{phoneText(contact.phone)}</small></span></a>)}</div>}
+        {view.contacts?.length === 0 && <p className="small muted">Esta vivienda no tiene teléfonos de contacto registrados.</p>}
         <label>Nombre de quien contestó<input value={caller} onChange={e => setCaller(e.target.value)} maxLength={80} placeholder="Ej. María López"/></label>
         <div className="walkin-call-actions"><Button disabled={caller.trim().length < 2 || !online} busy={phone.busy} onClick={() => void record(true)}><Check size={17}/> Autorizó la entrada</Button><Button className="danger-outline" disabled={caller.trim().length < 2 || !online} busy={phone.busy} onClick={() => void record(false)}><XCircle size={17}/> No autorizó</Button></div>
         <p className="small muted">Si alguien responde en la app mientras llamas, esa respuesta se mostrará aquí.</p>
@@ -118,3 +120,6 @@ function WalkInWait({ view, online, onChange, onClose }: { view: WalkInView; onl
     <div className="modal-actions"><Button className="secondary" onClick={onClose}>La visita se retiró</Button></div>
   </div>;
 }
+
+/** "5512345678" → "55 1234 5678"; other lengths (with country code) stay as stored. */
+const phoneText = (phone: string) => /^\d{10}$/.test(phone) ? `${phone.slice(0, 2)} ${phone.slice(2, 6)} ${phone.slice(6)}` : phone;

@@ -343,6 +343,11 @@ button.stat-card:hover, button.stat-card[aria-pressed='true'] { background: var(
 .walkin-call-head { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border-radius: 12px; background: #fceced; color: #9b3e48; }
 .walkin-call-head strong { display: block; }
 .walkin-call-head span { font-size: 14px; color: var(--ink); }
+.walkin-contacts { display: grid; gap: 8px; }
+.walkin-contact { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); text-decoration: none; }
+.walkin-contact svg { color: var(--brand); flex-shrink: 0; }
+.walkin-contact strong { display: block; }
+.walkin-contact small { color: var(--muted); font-size: 15px; letter-spacing: .02em; }
 .walkin-call-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .walkin-call-actions .button { flex: 1 1 180px; }
 .walkin-result { text-align: center; }
