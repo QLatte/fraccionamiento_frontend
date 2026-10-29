@@ -72,9 +72,13 @@ Cada fraccionamiento es un cliente distinto y nada se mezcla entre ellos. El adm
 
 **Administración → Movimientos** (`src/pages/AdminMovements.tsx`) es la pantalla principal del administrador: el flujo de **visitas** de su fraccionamiento (los residentes no pasan por el escáner). La caseta solo registra entradas. Filtros por periodo (Hoy, 7 días, 30 días o fechas, hasta 3 meses), caseta y privada o lote. Muestra entradas, entradas sin pase, entradas de hoy y rechazos, con la comparación contra el periodo anterior (tocar un número filtra la bitácora); el flujo de entradas por hora o por día con la hora y el día más concurridos; **Entradas de hoy** (quién entró hoy, a qué hora y por qué caseta); la bitácora con búsqueda por visitante o casa, filtros (Entradas, Sin pase, Rechazos), «Ver más» y **Descargar Excel** (CSV); y resúmenes de tipo de acceso, casas con más visitas y rechazos por motivo. «Hoy» se actualiza cada minuto. Las placas aparecen abreviadas (`•••123`); la foto de la identificación se abre con **Ver identificación** (auditado, disponible 30 días). En el teléfono la bitácora se ve como tarjetas. Las salidas registradas antes del cambio siguen apareciendo en la bitácora.
 
-## Renovar accesos (administración)
+## Viviendas (administración)
 
-El administrador del fraccionamiento ya no da de alta residentes: en **Administración → Renovar accesos** busca a la persona, elige la vivienda y entrega la invitación **por correo** (a su correo registrado, 72 horas) o **en persona** (enlace de 15 minutos para abrir en su teléfono ahí mismo). La nueva llave reemplaza las anteriores de esa persona en esa vivienda.
+**Administración → Viviendas** (`src/pages/AdminHomes.tsx`) muestra las privadas y lotes del fraccionamiento con sus casas: totales (casas, residentes, sin acceso, casas con residentes extra), búsqueda por casa, nombre o correo, filtro por privada y por estado (Sin acceso, Invitación enviada, Todos activos, Con residentes extra) y **Invitar a N sin acceso** (envío en segundo plano con progreso). Al elegir una casa se abre su panel de detalle (a la derecha en pantallas anchas; encima de la lista en el teléfono) con:
+
+- **Teléfonos:** cuántos tiene registrados y cuántos permite; el administrador lo cambia de 1 a 10 (Plataforma puede asignar hasta 20).
+- **Residentes:** correo, teléfono de contacto, propietario o familiar y estado del acceso. Sin acceso: **Invitar**/**Reenviar** por correo o **En persona** (enlace de 15 minutos). Con acceso: **Renovar acceso** por correo (72 horas) o en persona; la nueva llave reemplaza las anteriores de esa persona en esa casa.
+- **Agregar:** da de alta a una persona (nombre, correo, teléfono opcional) y le envía la invitación. Los dos primeros de una casa son propietarios y los demás familiares; a partir del tercero cuenta como residente extra y se cobra aparte. Importar el Excel sigue siendo de Plataforma.
 
 ## Inicio y Mis pases (residente)
 

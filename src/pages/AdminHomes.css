@@ -1,0 +1,71 @@
+/* Viviendas (Administración): totals, homes grouped by privada or lote, and the selected home. */
+.homes { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.homes h2 { margin: 0; font-size: 20px; }
+.homes-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+
+.homes-panel { display: flex; flex-direction: column; gap: 14px; padding: 22px; min-width: 0; }
+.homes-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.homes-toolbar h2 { margin-right: auto; }
+.homes-search { display: flex; align-items: center; gap: 8px; flex: 0 1 280px; min-width: 200px; margin: 0; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted); }
+.homes-search input { border: 0; padding: 0; min-height: 42px; box-shadow: none; background: transparent; }
+.homes-search input:focus { outline: none; }
+.homes-search:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px #123c4a1f; }
+.movements-chips .homes-count { margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: #ffffffb3; font-size: 12px; }
+.movements-chips button.active .homes-count { background: #ffffff2e; }
+
+.homes-layout { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.homes-list { flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.homes-group h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font-size: 15px; }
+.homes-group h3 span { color: var(--muted); font-size: 13px; font-weight: 500; }
+.homes-group ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+.homes-group li + li { border-top: 1px solid #eef3f5; }
+.homes-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto 64px 20px; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 14px; border: 0; background: transparent; color: var(--ink); text-align: left; transition: background-color var(--motion-fast) var(--motion-ease); }
+.homes-row:hover { background: #f5f9fa; }
+.homes-row.selected { background: #e6eff2; }
+.homes-number { display: flex; flex-direction: column; font-family: var(--display); font-size: 20px; font-weight: 600; }
+.homes-number small { color: var(--danger); font-family: inherit; font-size: 11px; font-weight: 600; }
+.homes-people { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.homes-people strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.homes-people small { color: var(--muted); font-size: 13px; }
+.homes-phones { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.homes-chevron { color: #9fb3bc; }
+
+.homes-detail { position: sticky; top: 16px; flex: 1 1 380px; max-width: 460px; min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+.homes-detail-body { display: flex; flex-direction: column; gap: 16px; }
+.homes-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.homes-detail-head h2 { font-family: var(--display); font-size: 26px; font-weight: 600; }
+.homes-detail-head p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.modal .homes-detail-head h2 { display: none; }
+
+.homes-phones-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; margin: 0; padding: 14px; border-radius: 12px; background: #f5f9fa; }
+.homes-phones-form > div { display: flex; flex-direction: column; gap: 2px; }
+.homes-phones-form small { color: var(--muted); font-size: 13px; }
+.homes-phones-form label { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 13px; font-weight: 500; }
+.homes-phones-form select { width: auto; min-height: 40px; padding: 6px 10px; font-size: 14px; }
+.homes-phones-bar { grid-column: 1 / -1; display: block; height: 6px; border-radius: 3px; background: #dfe8ec; overflow: hidden; }
+.homes-phones-bar i { display: block; height: 100%; background: var(--brand); transform-origin: left; }
+.homes-phones-form .button, .homes-phones-form .error-box, .homes-phones-form .success-text { grid-column: 1 / -1; justify-self: start; }
+
+.homes-section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.homes-section-title h3 { margin: 0; font-size: 16px; }
+.homes-residents { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.homes-residents li { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px 12px; padding: 14px 0; border-top: 1px solid #eef3f5; }
+.homes-residents .avatar { width: 38px; height: 38px; }
+.homes-resident-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.homes-resident-info strong { font-size: 15px; }
+.homes-resident-info small { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.homes-resident-info a { width: fit-content; font-size: 14px; font-weight: 600; }
+.homes-resident-info .badge { margin-right: 4px; }
+.homes-resident-actions { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; }
+
+@media (max-width: 640px) {
+  .homes-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .homes-kpis .kpi { padding: 14px; }
+  .homes-kpis .kpi strong { font-size: 32px; }
+  .homes-panel { padding: 16px; }
+  .homes-search { flex: 1 1 100%; }
+  .homes-row { grid-template-columns: 58px minmax(0, 1fr) 20px; }
+  .homes-state { grid-column: 2; }
+  .homes-state:empty, .homes-phones { display: none; }
+  .homes-number { font-size: 18px; }
+}

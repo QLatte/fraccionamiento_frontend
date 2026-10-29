@@ -1,5 +1,5 @@
 export type AccessStatus = 'ACTIVE' | 'SENT' | 'FAILED' | 'EXPIRED' | 'PENDING';
-export type Person = { id: string; fullName: string; email: string; globalRole?: string };
+export type Person = { id: string; fullName: string; email: string; globalRole?: string; phone?: string | null };
 export type CommunitySummary = { id: string; name: string; mapsUrl: string | null; privadas: number; lotes: number; activeProperties: number; activeResidents: number; extraResidents: number; admins: number; gates: number };
 export type Usage = { emailEnabled: boolean; data: CommunitySummary[] };
 export type Member = { membershipRole: string; user: Person; access: { status: AccessStatus; devices: number; invitedAt: string | null; expiresAt: string | null; error: string | null } };

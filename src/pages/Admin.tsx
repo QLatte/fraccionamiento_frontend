@@ -4,7 +4,7 @@ import { useAuth } from '../auth';
 import { setAdminCommunity } from '../api';
 import { useQuery } from '../hooks';
 import { Empty, ErrorBox, Loading, PageHeader } from '../components/ui';
-import { AdminInvitations } from './AdminInvitations';
+import { AdminHomes } from './AdminHomes';
 import { AdminMovements } from './AdminMovements';
 import { AdminGateDevices } from './AdminGateDevices';
 import { AdminSystemStatus } from './AdminSystemStatus';
@@ -30,7 +30,7 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
   const needsCommunity = platform && current !== '/admin/estado';
 
   return <>
-    <PageHeader title="Administración" text="Consulta las visitas que entran y salen, renueva accesos y autoriza los equipos de caseta."/>
+    <PageHeader title="Administración" text="Consulta las visitas, administra las viviendas y sus residentes, y autoriza los equipos de caseta."/>
     {platform && <div className="admin-community">
       <Building2 size={18}/>
       <label>Fraccionamiento<select value={known ? community : ''} onChange={e => choose(e.target.value)}><option value="">Elige un fraccionamiento</option>{communities.data?.data.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
@@ -52,7 +52,7 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
     <ErrorBox message={communities.error} retry={communities.refresh}/>
     {needsCommunity && !known ? (communities.loading ? <Loading/> : <section className="panel"><Empty icon={<Building2/>} title="Elige un fraccionamiento" text="Cada fraccionamiento se administra por separado: sus residentes, casetas y movimientos nunca se mezclan con los de otro."/></section>) :
       <div key={`${current}:${community}`} className="page-enter">
-        {current === '/admin/movimientos' ? <AdminMovements/> : current === '/admin/invitaciones' ? <AdminInvitations/> :
+        {current === '/admin/movimientos' ? <AdminMovements/> : current === '/admin/viviendas' ? <AdminHomes/> :
           current === '/admin/dispositivos' ? <AdminGateDevices/> : current === '/admin/telefonos' ? <AdminSupportPhones/> : <AdminSystemStatus/>}
       </div>}
   </>;

@@ -3,7 +3,6 @@ import { Smartphone } from 'lucide-react';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedHome from './icons/AnimatedHome';
 import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAlignCenter';
-import AnimatedUserPlus from './icons/AnimatedUserPlus';
 import AnimatedPhoneVolume from './icons/AnimatedPhoneVolume';
 import AnimatedRefresh from './icons/AnimatedRefresh';
 import AnimatedHistoryCircle from './icons/AnimatedHistoryCircle';
@@ -22,12 +21,12 @@ type Props = {
 export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAlerts = 0 }: Props) {
   const items = role === 'SUPERADMIN' ? [
     { path: '/plataforma', label: 'Plataforma', Icon: AnimatedHome },
-    { path: '/admin/invitaciones', label: 'Accesos', Icon: AnimatedUserPlus },
+    { path: '/admin/viviendas', label: 'Viviendas', Icon: AnimatedHome },
     { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
     { path: '/admin/estado', label: 'Estado', Icon: AnimatedRefresh },
   ] : (role === 'ADMIN') ? [
     { path: '/admin/movimientos', label: 'Movimientos', Icon: AnimatedHistoryCircle },
-    { path: '/admin/invitaciones', label: 'Accesos', Icon: AnimatedUserPlus },
+    { path: '/admin/viviendas', label: 'Viviendas', Icon: AnimatedHome },
     { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ] : [

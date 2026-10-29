@@ -8,7 +8,8 @@ import { PlatformImport } from './PlatformImport';
 import { accessLabel, needsInvite, type CommunityDetail, type CommunitySummary, type Home, type InvitationJob, type Member } from './platformTypes';
 
 // Invitations are emailed in the background; this follows the job and refreshes the list when it ends.
-function useInvitationJob(communityId: string, onFinished: () => void) {
+// `statusPath`: Plataforma's per-fraccionamiento status, or the admin's own.
+export function useInvitationJob(statusPath: string, onFinished: () => void) {
   const [job, setJob] = useState<InvitationJob | null>(null);
   // 'open': check once when the page opens; 'sent': a send was just started from here.
   const [tracking, setTracking] = useState<'open' | 'sent' | null>('open');
@@ -18,7 +19,7 @@ function useInvitationJob(communityId: string, onFinished: () => void) {
     let alive = true; let timer = 0; let wasRunning = tracking === 'sent';
     const poll = async () => {
       try {
-        const next = await api<InvitationJob>(`/platform/communities/${communityId}/invitations/status`);
+        const next = await api<InvitationJob>(statusPath);
         if (!alive) return;
         setJob(next);
         if (next.running) { wasRunning = true; timer = window.setTimeout(poll, 1500); return; }
@@ -29,11 +30,11 @@ function useInvitationJob(communityId: string, onFinished: () => void) {
     };
     void poll();
     return () => { alive = false; window.clearTimeout(timer); };
-  }, [tracking, communityId, onFinished]);
+  }, [tracking, statusPath, onFinished]);
   return { job, track };
 }
 
-function InvitationProgress({ job }: { job: InvitationJob }) {
+export function InvitationProgress({ job }: { job: InvitationJob }) {
   const done = job.sent + job.failed;
   if (!job.total || (!job.running && !job.finishedAt)) return null;
   return <div className={'invite-progress' + (job.running ? '' : job.failed ? ' failed' : ' done')} role="status">
@@ -54,7 +55,7 @@ export function PlatformCommunity({ id, communities, emailEnabled, onChanged }: 
   const detail = useQuery<CommunityDetail>(`/platform/communities/${id}`);
   const [busy, setBusy] = useState(''); const [error, setError] = useState(''); const [message, setMessage] = useState('');
   const refresh = useCallback(() => { detail.refresh(); onChanged(); }, [detail.refresh, onChanged]);
-  const invitations = useInvitationJob(id, refresh);
+  const invitations = useInvitationJob(`/platform/communities/${id}/invitations/status`, refresh);
   // One action at a time; `key` names it so only its button shows progress.
   async function act(key: string, run: () => Promise<string>) {
     setBusy(key); setError(''); setMessage('');
@@ -81,7 +82,7 @@ export function PlatformCommunity({ id, communities, emailEnabled, onChanged }: 
     {communities.length > 1 && <Merge community={community} others={communities.filter(c => c.id !== community.id)} onMerged={refresh}/>}
 
     <h3>Administrador</h3>
-    <p className="small">Solo hay uno por fraccionamiento y debe ser propietario de una casa. Puede renovar accesos y vincular equipos de caseta; no puede dar de alta residentes.</p>
+    <p className="small">Solo hay uno por fraccionamiento y debe ser propietario de una casa. Puede dar de alta residentes en las casas, invitarlos, renovar accesos, cambiar el límite de teléfonos (hasta 10) y vincular equipos de caseta; no puede importar el Excel.</p>
     {admin ? <div className="platform-person"><span><strong>{admin.user.fullName}</strong><br/>{admin.user.email}</span><Button className="secondary" disabled={!!busy} onClick={() => { if (window.confirm(`¿Revocar la administración de ${admin.user.fullName}? Su perfil de residente se conservará.`)) void act('admin', async () => { await api(`/platform/community-admins/${admin.user.id}/${id}`, { method: 'DELETE' }); return 'Administración revocada. Su acceso residente se conserva.'; }); }}>Revocar administración</Button></div> : <p>Sin administrador asignado.</p>}
     <AssignAdmin owners={owners} replacing={!!admin} busy={busy === 'admin'} disabled={!!busy} onAssign={userId => act('admin', async () => { await api('/platform/community-admins', { method: 'POST', body: { userId, communityId: id } }); return admin ? 'Administrador reemplazado.' : 'Administrador asignado. Ya puede cambiar al perfil Administración.'; })}/>
     <ErrorBox message={error}/>{message && <p role="status" className="success-text">{message}</p>}
