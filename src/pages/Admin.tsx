@@ -9,6 +9,7 @@ import { AdminMovements } from './AdminMovements';
 import { AdminGateDevices } from './AdminGateDevices';
 import { AdminSystemStatus } from './AdminSystemStatus';
 import { AdminSupportPhones } from './AdminSupportPhones';
+import { Billing } from './Billing';
 import { adminSections } from './adminSections';
 
 const communityKey = 'zentry:admin-community';
@@ -18,8 +19,6 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
   const profile = identity?.session.profile;
   // A superadmin administers one fraccionamiento at a time; a community admin only ever has theirs.
   const platform = identity?.user.globalRole === 'SUPERADMIN';
-  const sections = adminSections.filter(s => s.path !== '/admin/estado' || profile === 'SUPERADMIN');
-  const current = sections.find(section => section.path === path)?.path ?? adminSections[0].path;
   const communities = useQuery<{ data: { id: string; name: string }[] }>(platform ? '/platform/usage' : null);
   const [community, setCommunity] = useState(() => { try { return sessionStorage.getItem(communityKey) ?? ''; } catch { return ''; } });
   const known = !!communities.data?.data.some(c => c.id === community);
@@ -27,6 +26,9 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
   setAdminCommunity(platform && known ? community : null);
   useEffect(() => () => setAdminCommunity(null), []);
   function choose(id: string) { setCommunity(id); try { sessionStorage.setItem(communityKey, id); } catch { /* Optional. */ } }
+  const billing = useQuery<{ canManage: boolean; canResolve: boolean }>(platform ? (known ? `/billing/availability?communityId=${community}` : null) : '/billing/availability');
+  const sections = adminSections.filter(s => (s.path !== '/admin/estado' || profile === 'SUPERADMIN') && (s.path !== '/admin/cobranza' || platform || billing.data?.canResolve));
+  const current = sections.find(section => section.path === path)?.path ?? adminSections[0].path;
   const needsCommunity = platform && current !== '/admin/estado';
 
   return <>
@@ -52,7 +54,7 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
     <ErrorBox message={communities.error} retry={communities.refresh}/>
     {needsCommunity && !known ? (communities.loading ? <Loading/> : <section className="panel"><Empty icon={<Building2/>} title="Elige un fraccionamiento" text="Cada fraccionamiento se administra por separado: sus residentes, casetas y movimientos nunca se mezclan con los de otro."/></section>) :
       <div key={`${current}:${community}`} className="page-enter">
-        {current === '/admin/movimientos' ? <AdminMovements/> : current === '/admin/viviendas' ? <AdminHomes/> :
+        {current === '/admin/cobranza' ? <Billing canConfigure={platform} userId={identity?.user.id}/> : current === '/admin/movimientos' ? <AdminMovements/> : current === '/admin/viviendas' ? <AdminHomes/> :
           current === '/admin/dispositivos' ? <AdminGateDevices/> : current === '/admin/telefonos' ? <AdminSupportPhones/> : <AdminSystemStatus/>}
       </div>}
   </>;

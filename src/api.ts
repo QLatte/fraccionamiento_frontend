@@ -5,7 +5,7 @@ export function setToken(value: string | null) { token = value; }
 let adminCommunity: string | null = null;
 export function setAdminCommunity(value: string | null) { adminCommunity = value; }
 function scoped(path: string) {
-  if (!adminCommunity || !(path.startsWith('/admin/') || path.startsWith('/gate/gates')) || path.includes('communityId=')) return path;
+  if (!adminCommunity || !(path.startsWith('/admin/') || path.startsWith('/billing/') || path.startsWith('/gate/gates')) || path.includes('communityId=')) return path;
   return path + (path.includes('?') ? '&' : '?') + 'communityId=' + encodeURIComponent(adminCommunity);
 }
 const base = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/$/, '');

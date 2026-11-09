@@ -1,3 +1,4 @@
+import { Wallet } from 'lucide-react';
 import AnimatedHome from '../components/icons/AnimatedHome';
 import AnimatedPhoneVolume from '../components/icons/AnimatedPhoneVolume';
 import AnimatedRefresh from '../components/icons/AnimatedRefresh';
@@ -8,6 +9,7 @@ import { Phone } from 'lucide-react';
 export const adminSections = [
   { path: '/admin/movimientos', label: 'Movimientos', Icon: AnimatedHistoryCircle },
   { path: '/admin/viviendas', label: 'Viviendas', Icon: AnimatedHome },
+  { path: '/admin/cobranza', label: 'Cobranza', Icon: Wallet },
   { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
   { path: '/admin/telefonos', label: 'Teléfonos de apoyo', Icon: Phone },
   { path: '/admin/estado', label: 'Estado del sistema', Icon: AnimatedRefresh },
