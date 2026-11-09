@@ -9,7 +9,7 @@ export function useQuery<T>(path: string | null, interval = 0) {
     const controller = new AbortController();
     setState(s => ({ path, data: s.path === path ? s.data : undefined, error: '', loading: true }));
     api<T>(path, { signal: controller.signal }).then(data => { if (!controller.signal.aborted) setState({ path, data, error: '', loading: false }); })
-      .catch(e => { if (!controller.signal.aborted) setState(s => ({ ...s, error: errorText(e), loading: false })); });
+      .catch(e => { if (!controller.signal.aborted) setState(s => ({ ...s, data: e instanceof ApiError && [401, 403].includes(e.status) ? undefined : s.data, error: errorText(e), loading: false })); });
     return () => controller.abort();
   }, [path, version]);
   useEffect(() => { if (!interval) return; const id = setInterval(() => { if (document.visibilityState === 'visible' && navigator.onLine) refresh(); }, interval); return () => clearInterval(id); }, [interval, refresh]);

@@ -1,3 +1,4 @@
+import { FinancialBoundary } from '../components/FinancialBoundary';
 import { useState, type FormEvent } from 'react';
 import { api, errorText } from '../api';
 import { useQuery } from '../hooks';
@@ -18,12 +19,12 @@ function cents(value: string) {
 const categories: Record<string, string> = { MAINTENANCE: 'Mantenimiento', EXTRAORDINARY: 'Cuota extraordinaria', RESERVE: 'Fondo de reserva', FINE: 'Multa', OTHER: 'Otro' };
 const monthNow = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit' }).format(new Date()).slice(0, 7);
 
-export function Billing({ canConfigure = false, userId, communityId }: { canConfigure?: boolean; userId?: string; communityId?: string }) {
+function BillingContent({ canConfigure = false, userId, communityId }: { canConfigure?: boolean; userId?: string; communityId?: string }) {
   const scoped = (path: string) => communityId ? `${path}${path.includes('?') ? '&' : '?'}communityId=${encodeURIComponent(communityId)}` : path;
   const access = useQuery<{ enabled: boolean; canManage: boolean; canResolve: boolean; canConfigure: boolean }>(scoped('/billing/availability'));
   const settings = useQuery<{ enabled: boolean; emissionEnabled: boolean; startMonth: string } | null>(access.data?.canManage || canConfigure ? scoped('/billing/settings') : null);
   const overview = useQuery<Overview>(access.data?.canManage ? scoped('/billing/overview') : null);
-  const grants = useQuery<{ users: { id: string; fullName: string; active: boolean }[] }>(canConfigure ? scoped('/billing/grants') : null);
+  const grants = useQuery<{ users: { id: string; fullName: string; active: boolean }[]; operators: { id: string; fullName: string }[] }>(canConfigure ? scoped('/billing/grants') : null);
   const [selected, setSelected] = useState('');
   const statement = useQuery<Statement>(selected && access.data?.canManage ? scoped(`/billing/accounts/${selected}/statement`) : null);
   const [month, setMonth] = useState(monthNow);
@@ -34,6 +35,7 @@ export function Billing({ canConfigure = false, userId, communityId }: { canConf
   const [pending] = useState(() => new Map<string, string>());
   const [reverseId, setReverseId] = useState(''); const [reverseReason, setReverseReason] = useState('');
   const [grantUser, setGrantUser] = useState('');
+  const [operatorUser, setOperatorUser] = useState(''), [operatorReason, setOperatorReason] = useState('');
   const latest = overview.data?.concepts.filter((c, i, all) => !all.slice(0, i).some(v => v.conceptId === c.conceptId)) ?? [];
   const effectiveConcepts = overview.data?.concepts.filter((c, i, all) => c.effectiveMonth <= month && !all.slice(0, i).some(v => v.conceptId === c.conceptId && v.effectiveMonth <= month)) ?? [];
   const home = overview.data?.accounts.find(a => a.id === selected);
@@ -60,11 +62,11 @@ export function Billing({ canConfigure = false, userId, communityId }: { canConf
     <ErrorBox message={error || access.error || overview.error || settings.error || grants.error}/>{notice && <p role="status">{notice}</p>}
     {access.loading && <Loading/>}
     {canConfigure && <section className="panel"><h3>Habilitación del fraccionamiento</h3><p>Al habilitar, la emisión permanece pausada hasta revisar conceptos y ajustes.</p><label>Primer periodo<input type="month" value={settings.data?.startMonth ?? month} disabled={!!settings.data} onChange={e => setMonth(e.target.value)}/></label><Button disabled={busy} onClick={() => void mutate('/billing/settings', { enabled: !settings.data?.enabled, startMonth: settings.data?.startMonth ?? month, reason: settings.data?.enabled ? 'Deshabilitar cobranza' : 'Habilitar apertura en cero' })}>{settings.data?.enabled ? 'Deshabilitar cobranza' : 'Habilitar cobranza'}</Button>
-      {settings.data?.enabled && !access.data?.canManage && userId && <p><Button disabled={busy} onClick={() => void mutate('/billing/grants', { userId, role: 'OPERATOR', active: true, reason: 'Asignación explícita de soporte financiero' })}>Asignarme permiso financiero de soporte</Button></p>}
-      <form onSubmit={e => { e.preventDefault(); void mutate('/billing/grants', { userId: grantUser, role: 'TREASURER', active: true, reason: 'Asignación de tesorería' }); }}><label>Persona responsable de tesorería<select required value={grantUser} onChange={e => setGrantUser(e.target.value)}><option value="">Selecciona una persona</option>{grants.data?.users.map(u => <option key={u.id} value={u.id}>{u.fullName}{u.active ? ' · Tesorero activo' : ''}</option>)}</select></label><div className="billing-actions"><Button type="submit" disabled={busy}>Asignar tesorero</Button><Button type="button" className="secondary" disabled={busy || !grantUser} onClick={() => void mutate('/billing/grants', { userId: grantUser, role: 'TREASURER', active: false, reason: 'Revocación de tesorería' })}>Revocar tesorero</Button></div></form>
+      <form onSubmit={e => { e.preventDefault(); void mutate('/billing/grants', { userId: grantUser, role: 'TREASURER', active: true, reason: 'Asignación de tesorería' }); }}><label>Persona responsable de tesorería<select required value={grantUser} onChange={e => setGrantUser(e.target.value)}><option value="">Selecciona una persona</option>{grants.data?.users.filter(u => u.id !== userId).map(u => <option key={u.id} value={u.id}>{u.fullName}{u.active ? ' · Tesorero activo' : ''}</option>)}</select></label><div className="billing-actions"><Button type="submit" disabled={busy}>Asignar tesorero</Button><Button type="button" className="secondary" disabled={busy || !grantUser} onClick={() => void mutate('/billing/grants', { userId: grantUser, role: 'TREASURER', active: false, reason: 'Revocación de tesorería' })}>Revocar tesorero</Button></div></form>
+      <form onSubmit={e => { e.preventDefault(); void mutate('/billing/grants', { userId: operatorUser, role: 'OPERATOR', active: true, reason: operatorReason }); }}><label>Otra persona de plataforma para soporte financiero<select required value={operatorUser} onChange={e => setOperatorUser(e.target.value)}><option value="">Selecciona a otra persona</option>{grants.data?.operators?.filter(u => u.id !== userId).map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}</select></label><label>Motivo de aprobación de soporte<input required minLength={3} maxLength={300} value={operatorReason} onChange={e => setOperatorReason(e.target.value)}/></label><Button type="submit" disabled={busy}>Aprobar soporte financiero</Button><Button type="button" disabled={busy || !operatorUser || operatorReason.length < 3} onClick={() => void mutate('/billing/grants', { userId: operatorUser, role: 'OPERATOR', active: false, reason: operatorReason })}>Revocar soporte financiero</Button></form>
     </section>}
     {!access.loading && !access.data?.canManage && !canConfigure && <section className="panel"><p>La cobranza no está habilitada o no tienes permiso financiero.</p></section>}
-    {access.data?.canResolve && <AdminPayments key={communityId ?? "local"} communityId={communityId} accountId={selected || undefined} enabled={access.data.enabled} refresh={() => { overview.refresh(); statement.refresh(); }}/>}
+    {access.data?.canResolve && <AdminPayments key={`${communityId ?? "local"}:${selected}`} communityId={communityId} accountId={selected || undefined} enabled={access.data.enabled} refresh={() => { overview.refresh(); statement.refresh(); }}/>}
     {access.data?.canManage && <>
       <section className="panel"><h3>Emisión mensual</h3><p>{settings.data?.emissionEnabled ? 'La emisión está activa. El proceso revisa cada minuto los cargos pendientes desde el primer periodo.' : 'Emisión pausada. Configura primero los conceptos y ajustes de cada vivienda.'}</p><Button disabled={busy} onClick={() => void mutate('/billing/emission', { emissionEnabled: !settings.data?.emissionEnabled, reason: settings.data?.emissionEnabled ? 'Pausa de emisión mensual' : 'Configuración revisada, activar emisión mensual' })}>{settings.data?.emissionEnabled ? 'Pausar emisión' : 'Activar emisión mensual'}</Button></section>
       <section className="panel"><h3>Conceptos y cuotas base</h3><p>Las versiones nuevas conservan el historial. Si ya se emitió un periodo, programa el cambio para el siguiente.</p>
@@ -80,4 +82,8 @@ export function Billing({ canConfigure = false, userId, communityId }: { canConf
       </section>}
     </>}
   </div>;
+}
+
+export function Billing(props: { canConfigure?: boolean; userId?: string; communityId?: string }) {
+  return <FinancialBoundary scope={`${props.userId}:${props.communityId}`}><BillingContent {...props}/></FinancialBoundary>;
 }
