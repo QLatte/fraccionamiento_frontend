@@ -1,0 +1,12 @@
+.billing-page { max-width: 1100px; margin: 0 auto; }
+.billing-page form { margin-top: 1.2rem; }
+.billing-page fieldset { min-width: 0; border: 0; padding: 0; }
+.billing-page legend { font-weight: 600; margin-bottom: .8rem; }
+.billing-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.billing-list { display: grid; gap: .75rem; margin: 1rem 0; }
+.billing-list > div, .billing-home { display: grid; gap: .4rem; padding: 1rem; border: 1px solid #d9dee7; border-radius: 12px; overflow-wrap: anywhere; }
+.billing-home { text-align: left; width: 100%; color: inherit; background: transparent; cursor: pointer; }
+.billing-home[aria-pressed="true"] { border-color: #365c91; background: #eef4fc; }
+.billing-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .75rem; }
+.billing-list span { font-size: .9rem; }
+@media (max-width: 640px) { .billing-fields { grid-template-columns: 1fr; } .billing-actions > button { width: 100%; } }
