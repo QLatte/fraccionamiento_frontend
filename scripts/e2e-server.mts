@@ -1,4 +1,4 @@
-import { Client } from 'pg';
+import { testDatabaseUrl } from '../../sica-qr-backend/tests/test-database-url.js';
 import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
@@ -14,7 +14,9 @@ const backendRoot = resolve(import.meta.dirname, '../../sica-qr-backend');
 const frontendRoot = resolve(import.meta.dirname, '..');
 process.chdir(backendRoot);
 const schema = 'sica_e2e_' + randomUUID().replaceAll('-', '');
-const url = new URL(process.env.TEST_DATABASE_URL);
+const backendRequire = createRequire(resolve(backendRoot, 'package.json'));
+const { Client } = backendRequire('pg');
+const url = new URL(testDatabaseUrl());
 if (url.searchParams.get('sslmode') === 'require') url.searchParams.set('sslmode', 'verify-full');
 const owner = new Client({ connectionString: url.toString() });
 await owner.connect(); await owner.query(`CREATE SCHEMA "${schema}"`); await owner.query(`SET search_path TO "${schema}"`);

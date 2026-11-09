@@ -1,9 +1,19 @@
+let financialEpoch = 0;
+let financialBlocked = false;
+const financialListeners = new Set<() => void>();
+export const financialState = () => `${financialEpoch}:${financialBlocked}`;
+export const subscribeFinancial = (listener: () => void) => { financialListeners.add(listener); return () => { financialListeners.delete(listener); }; };
+export function invalidateFinancial(blocked = false) { financialEpoch++; financialBlocked = blocked; financialListeners.forEach(listener => listener()); }
+window.addEventListener('offline', () => invalidateFinancial(true));
+window.addEventListener('online', () => invalidateFinancial());
+window.addEventListener('pagehide', () => invalidateFinancial(true));
+window.addEventListener('pageshow', () => invalidateFinancial());
 let token: string | null = null;
-export function setToken(value: string | null) { token = value; }
+export function setToken(value: string | null) { if (token !== value) invalidateFinancial(); token = value; }
 // The fraccionamiento a superadmin is administering. Admin requests always name exactly one;
 // a community admin's requests are fixed to theirs by the API.
 let adminCommunity: string | null = null;
-export function setAdminCommunity(value: string | null) { adminCommunity = value; }
+export function setAdminCommunity(value: string | null) { if (adminCommunity !== value) invalidateFinancial(); adminCommunity = value; }
 function scoped(path: string) {
   if (!adminCommunity || !(path.startsWith('/admin/') || path.startsWith('/billing/') || path.startsWith('/gate/gates')) || path.includes('communityId=')) return path;
   return path + (path.includes('?') ? '&' : '?') + 'communityId=' + encodeURIComponent(adminCommunity);
@@ -25,6 +35,8 @@ export function errorText(error: unknown): string {
   return error instanceof Error ? error.message : 'No se pudo completar la acción. Inténtalo de nuevo.';
 }
 export async function api<T>(path: string, options: { method?: string; body?: unknown; key?: string; token?: string; public?: boolean; station?: boolean; signal?: AbortSignal } = {}): Promise<T> {
+  const epoch = financialEpoch, financial = path.startsWith('/billing/');
+  if (financial && financialBlocked) throw new ApiError(403, 'FINANCIAL_CONTEXT_INVALID', 'Actualiza la sesión para consultar finanzas.');
   if (!navigator.onLine) throw new ApiError(0, 'OFFLINE', 'No tienes conexión. Vuelve a intentarlo cuando estés en línea.');
   const auth = options.public ? null : options.token ?? token;
   const controller = new AbortController();
@@ -37,8 +49,16 @@ export async function api<T>(path: string, options: { method?: string; body?: un
       headers: { ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(auth ? { Authorization: `Bearer ${auth}` } : {}), ...(options.key ? { 'Idempotency-Key': options.key } : {}) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
+    if (financial && epoch !== financialEpoch) throw new DOMException('Contexto financiero cambiado', 'AbortError');
+    if (financial && [401, 403].includes(response.status)) {
+      // Headers already establish revocation; never wait for a slow/error response body to clear private data.
+      invalidateFinancial(true);
+      if (response.status === 401 && auth && auth === token && !options.token && !options.public) window.dispatchEvent(new Event('sica:expired'));
+      throw new ApiError(response.status, 'FINANCIAL_CONTEXT_INVALID', 'Ya no tienes autorización para consultar esta información financiera.');
+    }
     if (response.status === 204) return undefined as T;
     const data = await response.json().catch(() => null);
+    if (financial && epoch !== financialEpoch) throw new DOMException('Contexto financiero cambiado', 'AbortError');
     if (!response.ok) {
       // A profile switch revokes the previous token; a request still in flight with it must not end the new session.
       if (response.status === 401 && auth && auth === token && !options.token && !options.public) window.dispatchEvent(new Event('sica:expired'));
