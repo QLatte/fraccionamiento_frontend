@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeftRight, Banknote, Check, CircleCheck, Clock, Copy, CreditCard, ExternalLink, FileText, Landmark, Receipt as ReceiptIcon, RotateCcw, ShieldCheck } from 'lucide-react';
 import { FinancialBoundary } from '../components/FinancialBoundary';
 import { errorText } from '../api';
@@ -16,7 +16,9 @@ const METHOD_ICON: Record<string, typeof CreditCard> = { CARD: CreditCard, SPEI:
 const MIN_CARD = 1000n;
 type Item = { id: string; kind: string; amountCents: string; remainingCents: string; period: string | null; dueAt: string | null; description: string; effectiveAt: string };
 type MyStatement = { balanceCents: string; overdueCents?: string; creditCents?: string; items?: Item[]; movements?: { id: string; reversesId: string | null }[] };
-type MyPayments = { accountId: string; communityId: string; destination: boolean; instructions: { clabe: string; bank: string; beneficiary: string } | null; payments: { id: string; amountCents: string; method: string; createdAt?: string }[]; tasks: { id: string; kind: string; status: string; errorCode?: string | null; result: { url?: string } | null }[] };
+type MyPayments = { accountId: string; communityId: string; destination: boolean; instructions: { clabe: string; bank: string; beneficiary: string } | null; payments: { id: string; amountCents: string; method: string; createdAt?: string }[]; tasks: CheckoutTask[] };
+/** `paid`: Stripe confirmed it (it names its payment). `expired`: an unpaid Stripe link older than 24 hours. */
+type CheckoutTask = { id: string; kind: string; status: string; errorCode?: string | null; result: { url?: string } | null; amountCents?: string | null; paid?: boolean; paymentId?: string | null; expired?: boolean };
 
 /** What the household owes, or has in its favor, in one sentence. */
 function BalanceCard({ statement }: { statement: MyStatement }) {
@@ -44,16 +46,31 @@ function Charges({ statement }: { statement: MyStatement }) {
 }
 
 function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
-  const data = useQuery<MyPayments>(`/billing/my-payments?propertyId=${propertyId}`, 10000);
-  const statement = useQuery<MyStatement>(`/billing/my-statement?propertyId=${propertyId}`, 10000);
+  // Back from Stripe: check often until the payment is confirmed.
+  const [returned, setReturned] = useState(() => new URLSearchParams(location.search).get('resultado') === 'regreso');
+  const data = useQuery<MyPayments>(`/billing/my-payments?propertyId=${propertyId}`, returned ? 3000 : 10000);
+  const statement = useQuery<MyStatement>(`/billing/my-statement?propertyId=${propertyId}`, returned ? 3000 : 10000);
   const action = useFinanceAction(() => { data.refresh(); statement.refresh(); });
-  const [amount, setAmount] = useState(''), [receipt, setReceipt] = useState<Receipt | null>(null), [copied, setCopied] = useState(false);
+  const [amount, setAmount] = useState(''), [receipt, setReceipt] = useState<Receipt | null>(null), [copied, setCopied] = useState(false), [paid, setPaid] = useState<CheckoutTask | null>(null);
   const online = useOnline();
   const d = data.data, s = statement.data;
   const owed = s && BigInt(s.balanceCents) > 0n ? BigInt(s.balanceCents) : 0n;
   const checkout = d?.tasks.find(t => t.kind === 'CHECKOUT');
   const preparingClabe = !!d?.tasks.some(t => t.kind === 'CUSTOMER' && t.status === 'PENDING');
-  const returned = new URLSearchParams(location.search).get('resultado') === 'regreso';
+  // Announce a checkout once, when it turns paid while the page is open or right after returning from Stripe.
+  const seen = useRef(new Map<string, boolean>()), announced = useRef(new Set<string>());
+  useEffect(() => {
+    if (!d) return;
+    for (const t of d.tasks.filter(t => t.kind === 'CHECKOUT')) {
+      const before = seen.current.get(t.id);
+      if (t.paid && !announced.current.has(t.id) && (before === false || (before === undefined && returned && t.id === checkout?.id))) {
+        announced.current.add(t.id); setPaid(t); setReturned(false); statement.refresh();
+        history.replaceState(history.state, '', location.pathname);
+      }
+      seen.current.set(t.id, !!t.paid);
+    }
+  }, [d]); // eslint-disable-line react-hooks/exhaustive-deps
+  const paidAmount = paid && (paid.amountCents ?? d?.payments.find(p => p.id === paid.paymentId)?.amountCents);
   async function request(kind: 'CUSTOMER' | 'CHECKOUT') {
     if (!d) return;
     try { await action.run('/billing/my-payments', { accountId: d.accountId, communityId: d.communityId, kind, ...(kind === 'CHECKOUT' ? { amountCents: toCents(amount) } : {}) }, kind === 'CHECKOUT' ? 'Preparando tu pago seguro…' : 'Generando tu CLABE…'); }
@@ -66,7 +83,7 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
     <ErrorBox message={data.error || statement.error || action.error}/>
     {(data.loading && !d) || (statement.loading && !s) ? <Loading/> : <>
       {s && <BalanceCard statement={s}/>}
-      {returned && <Info>Regresaste de Stripe. Tu pago aparecerá aquí en cuanto Stripe lo confirme, normalmente en unos segundos.</Info>}
+      {returned && !checkout?.paid && <p className="fin-waiting"><Clock size={16}/> Estamos confirmando tu pago con Stripe. Tarda unos segundos; no cierres esta pantalla.</p>}
       {d && !d.destination ? <Info>Administración aún no activa los pagos en línea. Mientras tanto, paga como de costumbre en administración.</Info> : d && <div className="fin-methods">
         <section className="panel fin-method">
           <div className="fin-method-head"><span className="fin-method-icon"><Landmark size={20}/></span><div><h3>Transferencia SPEI</h3><p>Desde la app de tu banco. Se acredita sola en cuanto llega.</p></div></div>
@@ -81,7 +98,7 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
           <div className="fin-method-head"><span className="fin-method-icon"><CreditCard size={20}/></span><div><h3>Tarjeta de crédito o débito</h3><p>En la página segura de Stripe. Zentry nunca ve los datos de tu tarjeta.</p></div></div>
           {!d.instructions ? <p className="small muted">Primero solicita tus datos SPEI: con ellos se identifica tu casa en Stripe.</p> :
             checkout?.status === 'PENDING' ? <p className="fin-waiting"><Clock size={16}/> Preparando tu pago seguro… espera unos segundos.</p> : <>
-              {checkout?.status === 'DONE' && checkout.result?.url && new URL(checkout.result.url).origin === 'https://checkout.stripe.com' && <div className="fin-ready"><Success>Tu pago está listo.</Success><a className="button" href={checkout.result.url} rel="noreferrer">Continuar en Stripe <ExternalLink size={16}/></a><small>Volver de Stripe no confirma el pago; el recibo aparece cuando Stripe lo confirme.</small></div>}
+              {checkout?.status === 'DONE' && !checkout.paid && !checkout.expired && checkout.result?.url && new URL(checkout.result.url).origin === 'https://checkout.stripe.com' && <div className="fin-ready"><Success>Tu pago está listo.</Success><a className="button" href={checkout.result.url} rel="noreferrer">Continuar en Stripe <ExternalLink size={16}/></a><small>Volver de Stripe no confirma el pago; el recibo aparece cuando Stripe lo confirme.</small></div>}
               {checkout?.status === 'REVIEW' && <p className="fin-alert">No se pudo preparar tu último pago. Administración ya ve el motivo para resolverlo; no hace falta volver a intentarlo.</p>}
               <form onSubmit={e => { e.preventDefault(); void request('CHECKOUT'); }}>
                 <label>Importe a pagar en MXN<div className="fin-money-input"><span>$</span><input required inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></div></label>
@@ -98,6 +115,11 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
           <div className="fin-row-side"><strong className="fin-amount">{money(p.amountCents)}</strong><Button className="secondary small-button" onClick={() => void action.read<Receipt>(`/billing/payments/${p.id}/receipt?communityId=${d.communityId}`, setReceipt)}>Ver recibo</Button></div></li>; })}</ul>}
         <p className="small muted">El fraccionamiento absorbe las comisiones de tarjeta y SPEI. Zentry no cobra comisión.</p></section>
     </>}
+    {paid && <Modal title="Pago realizado" onClose={() => setPaid(null)}><div className="fin-paid" role="status">
+      <span className="fin-paid-icon"><CircleCheck size={40}/></span>
+      <strong>{paidAmount ? `Recibimos tu pago de ${money(paidAmount)}` : 'Recibimos tu pago'}</strong>
+      <p>Stripe lo confirmó y ya se aplicó a tus cuotas, empezando por la más antigua.</p>
+    </div><div className="modal-actions">{paid.paymentId && d && <Button className="secondary" onClick={() => { const id = paid.paymentId!; setPaid(null); void action.read<Receipt>(`/billing/payments/${id}/receipt?communityId=${d.communityId}`, setReceipt); }}>Ver recibo</Button>}<Button onClick={() => setPaid(null)}>Listo</Button></div></Modal>}
     {receipt && <ReceiptDialog value={receipt} onClose={() => setReceipt(null)}/>}
   </div>;
 }

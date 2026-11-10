@@ -65,6 +65,11 @@
 .fin-chip { align-self: flex-start; min-height: 36px; padding: 0 14px; border: 1px solid #b9cdd5; border-radius: 999px; background: #fff; color: var(--brand); font-weight: 600; font-size: 13.5px; }
 .fin-chip:hover { background: var(--soft); }
 
+.fin-paid { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0 4px; text-align: center; }
+.fin-paid-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: #e7f3ed; color: #286648; }
+.fin-paid strong { font-family: var(--display); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.fin-paid p { margin: 0; color: var(--muted); font-size: 14.5px; max-width: 34ch; }
+
 /* Key/value facts. */
 .fin-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: 14px; }
 .fin-facts dt { color: var(--muted); }

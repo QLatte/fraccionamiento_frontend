@@ -128,3 +128,24 @@ test('pending review explains why Stripe refused, also for records saved before 
   await expect(page.getByText(/falla temporal. Se reintentará sola/)).toBeVisible();
   await expect(page.getByText(/Requiere revisión ·/).first()).toBeVisible();
 });
+test('announces a confirmed card payment once and stops offering its Stripe link', async ({ page }) => {
+  let confirmed = false;
+  await page.route('https://payments.test/**', route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/') return route.fulfill({ contentType: 'text/html', body: '<div id="root"></div><script src="/test.js"></script>' });
+    if (path === '/test.js') return route.fulfill({ contentType: 'text/javascript', body: js });
+    if (path.endsWith('/my-statement')) return route.fulfill({ json: { balanceCents: confirmed ? '0' : '85000' } });
+    const task = confirmed ? { id: 'task', kind: 'CHECKOUT', status: 'DONE', amountCents: '85000', paid: true, paymentId: 'payment', result: null } : { id: 'task', kind: 'CHECKOUT', status: 'DONE', amountCents: '85000', paid: false, result: { url: 'https://checkout.stripe.com/c/pay/cs_test_paid' } };
+    return route.fulfill({ json: { accountId: 'account', communityId: 'community', destination: true, instructions: { clabe: '646180000000000001', bank: 'Banco de prueba', beneficiary: 'Fraccionamiento' }, payments: confirmed ? [{ id: 'payment', amountCents: '85000', method: 'CARD' }] : [], tasks: [task] } });
+  });
+  await page.goto('https://payments.test/?resultado=regreso');
+  await expect(page.getByText(/Estamos confirmando tu pago/)).toBeVisible();
+  confirmed = true;
+  await expect(page.getByRole('dialog', { name: 'Pago realizado' })).toContainText('Recibimos tu pago de $850.00 MXN');
+  await expect(page.getByRole('link', { name: /Continuar en Stripe/ })).toHaveCount(0);
+  expect(new URL(page.url()).search).toBe('');
+  await page.getByRole('button', { name: 'Listo' }).click();
+  await expect(page.getByRole('dialog', { name: 'Pago realizado' })).toHaveCount(0);
+  await page.waitForTimeout(3500);
+  await expect(page.getByRole('dialog', { name: 'Pago realizado' })).toHaveCount(0);
+});
