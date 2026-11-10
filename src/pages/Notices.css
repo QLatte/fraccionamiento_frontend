@@ -1,0 +1,41 @@
+/* Comunicados: announcements read like a short feed; urgent ones stand out in red. */
+.notices { display: flex; flex-direction: column; gap: 16px; max-width: 760px; }
+.notice-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.notice-card { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); animation: skeleton-rise 320ms var(--motion-ease) both; }
+.notice-card.unread { border-color: #b9cdd5; box-shadow: 0 6px 18px #123c4a14; }
+.notice-card.urgent { border-color: #e7b7bc; background: #fffafa; }
+.notice-card h2 { margin: 0; font-size: 19px; line-height: 1.3; text-wrap: pretty; }
+.notice-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.notice-flag { padding: 3px 9px; border-radius: 6px; background: var(--danger); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+.notice-new { display: inline-flex; align-items: center; gap: 6px; color: var(--brand); font-weight: 700; }
+.notice-new span { width: 8px; height: 8px; border-radius: 50%; background: var(--sun); }
+.notice-body { margin: 0; color: var(--ink); font-size: 15px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
+.notice-body.clamped { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.notice-more { align-self: flex-start; min-height: 32px; padding: 0; border: 0; background: none; color: var(--brand); font-weight: 600; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+.notice-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid #eef3f5; }
+.notice-author { color: var(--muted); font-size: 13px; }
+.notice-done { display: inline-flex; align-items: center; gap: 6px; color: #286648; font-weight: 700; font-size: 14px; }
+
+/* Inicio: the newest unread comunicado. */
+.home-notice { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 1px solid #b9cdd5; border-radius: 16px; background: var(--surface); color: var(--ink); text-align: left; transition: border-color var(--motion-fast) var(--motion-ease); }
+.home-notice:hover { border-color: var(--brand); }
+.home-notice.urgent { border-color: #e7b7bc; background: #fffafa; }
+.home-notice-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--soft); color: var(--brand); }
+.home-notice.urgent .home-notice-icon { background: #fceced; color: var(--danger); }
+.home-notice > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.home-notice small { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.home-notice strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Administration. */
+.admin-notices { display: flex; flex-direction: column; gap: 16px; }
+.admin-notice-stats { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: var(--muted); }
+.admin-notice-bar { display: block; height: 8px; border-radius: 4px; background: #e8eff2; overflow: hidden; }
+.admin-notice-bar i { display: block; height: 100%; background: var(--brand); transform-origin: left; }
+.notice-card.archived { opacity: .7; }
+.notice-preview { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; background: #f5f9fa; }
+.notice-preview img { flex: none; width: 36px; height: 36px; border-radius: 8px; }
+.notice-preview div { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 13.5px; }
+.notice-preview strong { overflow-wrap: anywhere; }
+.notice-preview span { color: var(--muted); overflow-wrap: anywhere; }
+.notice-count { display: block; text-align: right; color: var(--muted); font-size: 12px; }
+@media (max-width: 640px) { .notice-card { padding: 16px; } }

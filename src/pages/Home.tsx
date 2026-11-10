@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { ArrowUpRight, Car, ChevronRight, DoorOpen, History, Plus } from 'lucide-react';
+import { ArrowUpRight, Car, ChevronRight, DoorOpen, History, Megaphone, Plus } from 'lucide-react';
 import { useAuth } from '../auth';
 import { dateText, typeLabel, useQuery } from '../hooks';
 import type { ActivityItem, CreatedPass, PassType } from '../types';
@@ -8,6 +8,7 @@ import { SharePass } from '../components/SharePass';
 import type { PassPlace, PassSummary } from '../components/passCard';
 import { CommunityArt } from '../components/CommunityArt';
 import AnimatedQr from '../components/icons/AnimatedQr';
+import './Notices.css';
 import { CreatePass } from './Passes';
 import { describe } from './Activity';
 import './HomeOverview.css';
@@ -78,6 +79,7 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
       <p className="home-sentence" aria-live="polite">{ready ? daySentence(arrived.length, expected.length) : ' '}</p>
     </header>
 
+    <LatestNotice propertyId={id} onOpen={() => navigate('/avisos')}/>
     <div className="home-top">
       <section className="home-now" aria-labelledby="home-now-title">
         <div className="home-section-head">
@@ -143,4 +145,17 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
     {canCreate && create && <CreatePass onClose={() => setCreate(false)} onCreated={(value, pass) => { setCreate(false); setShared({ value, pass, title: 'Tu pase está listo' }); rememberPass(value); refresh(); }}/>}
     {shared && <Modal title={shared.title} onClose={() => setShared(null)}><SharePass url={shared.value.shareUrl} pass={shared.pass} place={place}/></Modal>}
   </div>;
+}
+
+/** The newest unread comunicado, at the top of Inicio until it is read. */
+function LatestNotice({ propertyId, onOpen }: { propertyId: string; onOpen: () => void }) {
+  const summary = useQuery<{ unread: number; latest: { id: string; title: string; urgent: boolean } | null }>(`/notices/summary?propertyId=${propertyId}`, 60_000);
+  const latest = summary.data?.latest;
+  if (!latest) return null;
+  const more = (summary.data?.unread ?? 1) - 1;
+  return <button type="button" className={`home-notice${latest.urgent ? ' urgent' : ''}`} onClick={onOpen}>
+    <span className="home-notice-icon"><Megaphone size={20}/></span>
+    <span><small>{latest.urgent ? 'Comunicado urgente' : 'Comunicado nuevo'}{more > 0 ? ` · y ${more} más` : ''}</small><strong>{latest.title}</strong></span>
+    <ChevronRight size={18}/>
+  </button>;
 }

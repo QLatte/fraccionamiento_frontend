@@ -9,6 +9,7 @@ import { AdminMovements } from './AdminMovements';
 import { AdminGateDevices } from './AdminGateDevices';
 import { AdminSystemStatus } from './AdminSystemStatus';
 import { AdminSupportPhones } from './AdminSupportPhones';
+import { AdminNotices } from './AdminNotices';
 import { Billing } from './Billing';
 import { adminSections } from './adminSections';
 
@@ -55,7 +56,7 @@ export function Admin({ path, navigate }: { path: string; navigate: (path: strin
     {needsCommunity && !known ? (communities.loading ? <Loading/> : <section className="panel"><Empty icon={<Building2/>} title="Elige un fraccionamiento" text="Cada fraccionamiento se administra por separado: sus residentes, casetas y movimientos nunca se mezclan con los de otro."/></section>) :
       <div key={`${current}:${community}`} className="page-enter">
         {current === '/admin/cobranza' ? <Billing canConfigure={platform} userId={identity?.user.id}/> : current === '/admin/movimientos' ? <AdminMovements/> : current === '/admin/viviendas' ? <AdminHomes/> :
-          current === '/admin/dispositivos' ? <AdminGateDevices/> : current === '/admin/telefonos' ? <AdminSupportPhones/> : <AdminSystemStatus/>}
+          current === '/admin/dispositivos' ? <AdminGateDevices/> : current === '/admin/telefonos' ? <AdminSupportPhones/> : current === '/admin/comunicados' ? <AdminNotices/> : <AdminSystemStatus/>}
       </div>}
   </>;
 }
