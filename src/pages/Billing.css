@@ -9,4 +9,7 @@
 .billing-home[aria-pressed="true"] { border-color: #365c91; background: #eef4fc; }
 .billing-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .75rem; }
 .billing-list span { font-size: .9rem; }
+.payment-issue { display: grid; gap: .25rem; }
+.payment-issue small { font-size: .82rem; color: #8a5a00; }
+.payment-issue small.muted { color: var(--muted); }
 @media (max-width: 640px) { .billing-fields { grid-template-columns: 1fr; } .billing-actions > button { width: 100%; } }

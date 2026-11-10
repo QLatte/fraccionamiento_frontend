@@ -108,3 +108,21 @@ test('H09 session change discards an in-flight receipt even when the route remai
   await page.getByRole('button', { name: 'Cambiar sesión de prueba' }).click(); release();
   await expect(page.getByText('Folio: previous-session')).toHaveCount(0);
 });
+test('pending review explains why Stripe refused, also for records saved before the reason existed', async ({ page }) => {
+  await page.route('https://payments.test/**', route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/admin') return route.fulfill({ contentType: 'text/html', body: '<div id="root"></div><script src="/test.js"></script>' });
+    if (path === '/test.js') return route.fulfill({ contentType: 'text/javascript', body: js });
+    return route.fulfill({ json: { destination: { stripeAccount: 'acct_test', reconciledAt: null }, payments: [], events: [], tasks: [
+      { id: 't1', kind: 'CHECKOUT', status: 'REVIEW', errorCode: 'STRIPE_REQUEST_FAILED:400:resource_missing:customer', createdAt: '2026-11-09T18:00:00Z' },
+      { id: 't2', kind: 'CHECKOUT', status: 'REVIEW', errorCode: 'STRIPE_REQUEST_FAILED', createdAt: '2026-11-09T17:00:00Z' },
+      { id: 't3', kind: 'CHECKOUT', status: 'PENDING', errorCode: 'STRIPE_REQUEST_FAILED:500:api_error:', createdAt: '2026-11-09T16:00:00Z' },
+    ] } });
+  });
+  await page.goto('https://payments.test/admin');
+  await expect(page.getByText(/Stripe no encuentra el cliente de esta casa/)).toBeVisible();
+  await expect(page.getByText('Reintentar fallará igual hasta corregir la causa.')).toHaveCount(1);
+  await expect(page.getByText(/anterior a que se guardara el motivo/)).toBeVisible();
+  await expect(page.getByText(/falla temporal. Se reintentará sola/)).toBeVisible();
+  await expect(page.getByText(/Pago con tarjeta · Requiere revisión/).first()).toBeVisible();
+});
