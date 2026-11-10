@@ -69,8 +69,8 @@ function AlertsCard({ profile, propertyId, onSaved }: { profile: ProfileData; pr
   const [quietOn, setQuietOn] = useState(!!profile.preferences.quietHours);
   const [moonPlays, setMoonPlays] = useState(0); // the moon tilts each time No molestar is turned on
   const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [saved, setSaved] = useState(false);
-  const desired = { alertEntries: prefs.alertEntries, alertExpired: prefs.alertExpired, alertNotices: prefs.alertNotices ?? true, quietHours: quietOn ? quiet : null };
-  const original = { alertEntries: profile.preferences.alertEntries, alertExpired: profile.preferences.alertExpired, alertNotices: profile.preferences.alertNotices ?? true, quietHours: profile.preferences.quietHours };
+  const desired = { alertEntries: prefs.alertEntries, alertExpired: prefs.alertExpired, alertNotices: prefs.alertNotices ?? true, alertChat: prefs.alertChat ?? true, quietHours: quietOn ? quiet : null };
+  const original = { alertEntries: profile.preferences.alertEntries, alertExpired: profile.preferences.alertExpired, alertNotices: profile.preferences.alertNotices ?? true, alertChat: profile.preferences.alertChat ?? true, quietHours: profile.preferences.quietHours };
   const changed = JSON.stringify(desired) !== JSON.stringify(original);
   const invalid = quietOn && quiet.start === quiet.end;
 
@@ -91,6 +91,7 @@ function AlertsCard({ profile, propertyId, onSaved }: { profile: ProfileData; pr
       <label className="checkbox-label"><input type="checkbox" checked={prefs.alertEntries} onChange={e => { setPrefs(p => ({ ...p, alertEntries: e.target.checked })); setSaved(false); }}/><span><strong>Entradas de visitas</strong><small>Cuando una visita entra al fraccionamiento.</small></span></label>
       <label className="checkbox-label"><input type="checkbox" checked={prefs.alertExpired} onChange={e => { setPrefs(p => ({ ...p, alertExpired: e.target.checked })); setSaved(false); }}/><span><strong>Pases vencidos</strong><small>Cuando vence un pase que creaste; te dice si la visita no llegó.</small></span></label>
       <label className="checkbox-label"><input type="checkbox" checked={prefs.alertNotices ?? true} onChange={e => { setPrefs(p => ({ ...p, alertNotices: e.target.checked })); setSaved(false); }}/><span><strong>Comunicados del fraccionamiento</strong><small>Avisos de la administración. Los urgentes te llegan siempre.</small></span></label>
+      <label className="checkbox-label"><input type="checkbox" checked={prefs.alertChat ?? true} onChange={e => { setPrefs(p => ({ ...p, alertChat: e.target.checked })); setSaved(false); }}/><span><strong>Chat de mi privada</strong><small>Mensajes de tus vecinos propietarios. Se agrupan en un solo aviso y no te llegan si tienes el chat abierto.</small></span></label>
       <label className="checkbox-label"><input type="checkbox" checked readOnly disabled/><span><strong>Solicitudes de visitas sin pase</strong><small>Siempre activas: necesitan tu respuesta para que la visita pueda entrar.</small></span></label>
     </div>
     <div className={'profile-quiet' + (quietOn ? ' on' : '')}>

@@ -33,7 +33,7 @@ export interface ActivityItem {
   type: 'VISIT_ENTERED' | 'VISIT_EXITED' | 'VISIT_DENIED' | 'WALKIN_REQUESTED' | 'WALKIN_APPROVED' | 'WALKIN_REJECTED' | 'WALKIN_CANCELLED' | 'WALKIN_EXITED';
 }
 /** The signed-in person's own profile (Mi perfil). */
-export interface Profile { fullName: string; email: string; globalRole: Role; preferences: { alertEntries: boolean; alertExpired: boolean; alertNotices?: boolean; quietHours: { start: string; end: string } | null; timezone: string } }
+export interface Profile { fullName: string; email: string; globalRole: Role; preferences: { alertEntries: boolean; alertExpired: boolean; alertNotices?: boolean; alertChat?: boolean; quietHours: { start: string; end: string } | null; timezone: string } }
 export interface GateProperty { id: string; street: string; houseNumber: string; cluster: { name: string } }
 export interface ScanResult { result: 'GRANTED'; guestName: string; guestVehicle: string | null; notes?: string | null; property: { street: string; houseNumber: string }; residentName: string; validationSource: string }
 /** A Teléfono de apoyo published by the fraccionamiento. */

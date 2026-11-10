@@ -10,6 +10,7 @@ window.addEventListener('pagehide', () => invalidateFinancial(true));
 window.addEventListener('pageshow', () => invalidateFinancial());
 let token: string | null = null;
 export function setToken(value: string | null) { if (token !== value) invalidateFinancial(); token = value; }
+export const currentToken = () => token;
 // The fraccionamiento a superadmin is administering. Admin requests always name exactly one;
 // a community admin's requests are fixed to theirs by the API.
 let adminCommunity: string | null = null;
@@ -18,7 +19,7 @@ function scoped(path: string) {
   if (!adminCommunity || !(path.startsWith('/admin/') || path.startsWith('/billing/') || path.startsWith('/gate/gates')) || path.includes('communityId=')) return path;
   return path + (path.includes('?') ? '&' : '?') + 'communityId=' + encodeURIComponent(adminCommunity);
 }
-const base = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/$/, '');
+export const base = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/$/, '');
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
 }
