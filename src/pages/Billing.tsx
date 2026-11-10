@@ -4,7 +4,7 @@ import { FinancialBoundary } from '../components/FinancialBoundary';
 import { errorText } from '../api';
 import { useQuery } from '../hooks';
 import { Button, Empty, ErrorBox, Info, Loading, Modal, Success } from '../components/ui';
-import { ReasonDialog, Stat, currentMonth, dateTimeText, lastPayDay, money, monthName, pesos, toCents, useFinanceAction, useWide } from './financeUi';
+import { ReasonDialog, Stat, TreasurySkeleton, currentMonth, dateTimeText, lastPayDay, money, monthName, pesos, toCents, useFinanceAction, useWide } from './financeUi';
 import { ManualPaymentDialog, PaymentList, Reconciliation, StripeAccountCard, reviewCount, scopedPath, useAdminPayments, type AdminData, type FinanceAction, type Scoped } from './Payments';
 import './Billing.css';
 
@@ -54,15 +54,15 @@ function BillingContent({ canConfigure = false, userId, communityId }: { canConf
   const homeName = (id: string) => homes.find(h => h.id === id)?.label;
   function openHome(id: string) { setSelected(id); setChosen('viviendas'); }
 
-  if (access.loading && !a) return <Loading/>;
+  if (access.loading && !a) return <TreasurySkeleton/>;
   if (!a?.canManage && !a?.canResolve && !canConfigure) return <section className="panel"><ErrorBox message={access.error}/><Empty icon={<ShieldCheck/>} title="Cobranza no disponible" text="La cobranza no está habilitada o no tienes permiso financiero."/></section>;
   return <div className="fin">
     <div className="fin-title"><div><h2>Tesorería</h2><p>Cuotas, saldos y pagos del fraccionamiento. Corte el día 1 · pago oportuno hasta el día 20 (hora de Ciudad de México).</p></div><span className="fin-flag"><ShieldCheck size={15}/> Stripe en modo de prueba</span></div>
     {tabs.length > 1 && <div className="fin-tabs" role="tablist" aria-label="Secciones de tesorería">{tabs.map(t => <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setChosen(t.id)}>{t.label}{!!t.badge && <span className="fin-tab-badge">{t.badge}</span>}</button>)}</div>}
     <ErrorBox message={access.error || overview.error || settings.error || grants.error || payments.error}/>
     {action.notice && <Success>{action.notice}</Success>}
-    {tab === 'resumen' && (overview.data ? <Summary overview={overview.data} settings={settings.data ?? null} payments={payments.data} canResolve={!!a?.canResolve} path={path} action={action} homeName={homeName} onGo={setChosen} onOpenHome={openHome}/> : <Loading/>)}
-    {tab === 'viviendas' && (overview.data ? <Homes overview={overview.data} selected={selected} onSelect={setSelected} statement={statement} payments={payments.data} enabled={!!a?.enabled} path={path} action={action} homeName={homeName}/> : <Loading/>)}
+    {tab === 'resumen' && (overview.data ? <Summary overview={overview.data} settings={settings.data ?? null} payments={payments.data} canResolve={!!a?.canResolve} path={path} action={action} homeName={homeName} onGo={setChosen} onOpenHome={openHome}/> : <Loading variant="cards"/>)}
+    {tab === 'viviendas' && (overview.data ? <Homes overview={overview.data} selected={selected} onSelect={setSelected} statement={statement} payments={payments.data} enabled={!!a?.enabled} path={path} action={action} homeName={homeName}/> : <Loading rows={6}/>)}
     {tab === 'pagos' && (payments.data ? <section className="panel fin-section"><div className="fin-section-head"><div><h3>Pagos recibidos</h3><p>Los de tarjeta y SPEI llegan solos; el efectivo y las transferencias directas se registran desde la casa, en Viviendas.</p></div></div><PaymentList payments={payments.data.payments} homeName={homeName} path={path} action={action} empty="Aún no hay pagos registrados."/></section> : <Loading/>)}
     {tab === 'conciliacion' && (payments.data ? <Reconciliation data={payments.data} path={path} action={action} homes={homes} onTaskCursor={payments.setTaskCursor} onEventCursor={payments.setEventCursor} onFirstPage={payments.firstPage} paged={payments.paged}/> : <Loading/>)}
     {tab === 'configuracion' && <Configuration canConfigure={canConfigure} canManage={!!a?.canManage} canResolve={!!a?.canResolve} enabled={!!a?.enabled} userId={userId} settings={settings.data ?? null} overview={overview.data} grants={grants.data} payments={payments.data} path={path} action={action}/>}

@@ -4,7 +4,7 @@ import { FinancialBoundary } from '../components/FinancialBoundary';
 import { errorText } from '../api';
 import { useOnline, useQuery } from '../hooks';
 import { Button, Empty, ErrorBox, Info, Loading, Modal, PageHeader, Success } from '../components/ui';
-import { METHOD, ReasonDialog, ReceiptDialog, dateTimeText, dayText, lastPayDay, money, monthName, pesos, toCents, useFinanceAction, type Receipt } from './financeUi';
+import { METHOD, ReasonDialog, ReceiptDialog, ResidentSkeleton, dateTimeText, dayText, lastPayDay, money, monthName, pesos, toCents, useFinanceAction, type Receipt } from './financeUi';
 import { paymentIssue, taskKind } from './paymentIssues';
 import './Billing.css';
 
@@ -81,7 +81,7 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
   return <div className="fin">
     <PageHeader title="Pagos" text="Las cuotas de tu vivienda y cómo pagarlas." action={<span className="fin-flag"><ShieldCheck size={15}/> Modo de prueba de Stripe</span>}/>
     <ErrorBox message={data.error || statement.error || action.error}/>
-    {(data.loading && !d) || (statement.loading && !s) ? <Loading/> : <>
+    {(data.loading && !d) || (statement.loading && !s) ? <ResidentSkeleton/> : <>
       {s && <BalanceCard statement={s}/>}
       {returned && !checkout?.paid && <p className="fin-waiting"><Clock size={16}/> Estamos confirmando tu pago con Stripe. Tarda unos segundos; no cierres esta pantalla.</p>}
       {d && !d.destination ? <Info>Administración aún no activa los pagos en línea. Mientras tanto, paga como de costumbre en administración.</Info> : d && <div className="fin-methods">

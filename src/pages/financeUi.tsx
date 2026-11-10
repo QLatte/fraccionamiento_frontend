@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { api, errorText, financialState } from '../api';
-import { Button, ErrorBox, Modal } from '../components/ui';
+import { Button, ErrorBox, Modal, Skeleton, SkeletonCards, SkeletonRows } from '../components/ui';
 
 // Pieces shared by Pagos (resident) and Tesorería (administration): money, dates, actions and dialogs.
 
@@ -88,6 +88,23 @@ export function ReceiptDialog({ value, home, onClose }: { value: Receipt; home?:
     </dl>
     <p className="small muted">{value.notice}</p>
   </div><div className="modal-actions"><Button className="secondary" onClick={() => window.print()}>Imprimir</Button><Button onClick={onClose}>Cerrar</Button></div></Modal>;
+}
+
+/** Pagos while it loads: the balance card, both ways to pay and a couple of rows. */
+export function ResidentSkeleton() {
+  return <div className="skeleton-block" role="status" aria-busy="true"><span className="sr-only">Cargando tus pagos…</span>
+    <span className="fin-sk-balance"><Skeleton w={64} h={13}/><Skeleton w="58%" h={40}/><Skeleton w="72%" h={13}/></span>
+    <span className="fin-sk-methods">{[0, 1].map(i => <span key={i} className="fin-sk-card"><span className="fin-sk-head"><Skeleton w={42} h={42}/><span className="skeleton-lines"><Skeleton w="62%" h={16}/><Skeleton w="88%" h={12}/></span></span><Skeleton h={62}/><Skeleton h={44}/></span>)}</span>
+    <SkeletonRows rows={2}/>
+  </div>;
+}
+/** Tesorería while it loads: title, tabs, totals and rows. */
+export function TreasurySkeleton() {
+  return <div className="skeleton-block" role="status" aria-busy="true"><span className="sr-only">Cargando tesorería…</span>
+    <span className="skeleton-heading"><Skeleton w={150} h={26}/><Skeleton w="56%" h={13}/></span>
+    <span className="fin-sk-tabs">{[86, 92, 64, 104, 118].map((w, i) => <Skeleton key={i} w={w} h={34}/>)}</span>
+    <SkeletonCards/><SkeletonRows rows={4}/>
+  </div>;
 }
 
 export function Stat({ label, value, hint, tone = '' }: { label: string; value: string; hint?: string; tone?: '' | 'good' | 'warn' | 'bad' | 'accent' }) {

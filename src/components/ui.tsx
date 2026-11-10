@@ -11,7 +11,29 @@ export function Brand({ light = false, onHome, href = '/' }: { light?: boolean; 
 export function Button({ children, className = '', busy, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { busy?: boolean }) { return <button type="button" {...props} aria-busy={busy || undefined} disabled={props.disabled || busy} className={`button ${className}`}>{busy && <LoaderCircle className="spin" size={17}/>} {children}</button>; }
 export function ErrorBox({ message, retry }: { message?: string; retry?: () => void }) { if (!message) return null; return <div className="error-box" role="alert"><AlertCircle size={18}/><span>{message}</span>{retry && <button type="button" onClick={retry}>Reintentar</button>}</div>; }
 export function Badge({ status }: { status: Status }) { return <span className={`badge ${status.toLowerCase()}`}><span/>{statusLabel[status]}</span>; }
-export function Loading() { return <div className="loading" role="status"><LoaderCircle className="spin" size={23}/><span>Cargando información…</span></div>; }
+/** A grey placeholder shaped like the content that is about to appear. */
+export function Skeleton({ w = '100%', h = 14, round = false }: { w?: string | number; h?: number; round?: boolean }) {
+  return <span aria-hidden="true" className={'skeleton' + (round ? ' round' : '')} style={{ width: typeof w === 'number' ? `${w}px` : w, height: h }}/>;
+}
+/**
+ * Skeleton screen while data loads: a list of rows, KPI cards, or a page (title plus rows).
+ * Screen readers hear a single status line; it fades in late so fast loads do not flash.
+ */
+export function Loading({ variant = 'list', rows = 3 }: { variant?: 'list' | 'cards' | 'page'; rows?: number }) {
+  return <div className={`skeleton-block ${variant}`} role="status" aria-busy="true">
+    <span className="sr-only">Cargando información…</span>
+    {variant === 'page' && <span className="skeleton-heading"><Skeleton w="38%" h={30}/><Skeleton w="62%" h={14}/></span>}
+    {variant === 'cards' ? <SkeletonCards/> : <SkeletonRows rows={variant === 'page' ? 4 : rows}/>}
+  </div>;
+}
+export function SkeletonRows({ rows = 3 }: { rows?: number }) {
+  return <span className="skeleton-rows">{Array.from({ length: rows }, (_, i) => <span key={i} className="skeleton-row">
+    <Skeleton w={40} h={40} round/><span className="skeleton-lines"><Skeleton w={`${64 - (i % 3) * 9}%`} h={14}/><Skeleton w={`${38 + (i % 2) * 14}%`} h={11}/></span><Skeleton w={76} h={14}/>
+  </span>)}</span>;
+}
+export function SkeletonCards({ count = 4 }: { count?: number }) {
+  return <span className="skeleton-cards">{Array.from({ length: count }, (_, i) => <span key={i} className="skeleton-card"><Skeleton w="45%" h={12}/><Skeleton w="72%" h={26}/><Skeleton w="56%" h={11}/></span>)}</span>;
+}
 export function Empty({ icon, title, text, action }: { icon?: ReactNode; title: string; text: string; action?: ReactNode }) { return <div className="empty"><div className="empty-icon">{icon ?? <AnimatedQr/>}</div><h3>{title}</h3><p>{text}</p>{action}</div>; }
 export function Modal({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
