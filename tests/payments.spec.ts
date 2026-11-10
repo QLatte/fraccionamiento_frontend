@@ -19,12 +19,12 @@ for (const width of [390, 1440]) test(`resident sandbox checkout at ${width}px u
     return route.fulfill({ json: { accountId: 'account', communityId: 'community', destination: true, instructions: { clabe: '646180000000000001', bank: 'Banco de prueba', beneficiary: 'Fraccionamiento de prueba' }, payments: [], tasks: posts.length ? [{ id: 'task', kind: 'CHECKOUT', status: 'DONE', result: { url: 'https://checkout.stripe.com/c/pay/cs_test_123' } }] : [] } });
   });
   await page.goto('https://payments.test/?resultado=regreso');
-  await expect(page.getByText('Saldo: $1,234.50 MXN')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Saldo' })).toContainText('$1,234.50 MXN');
   await page.getByLabel('Importe a pagar en MXN').fill('200.01');
   await page.getByRole('button', { name: 'Preparar pago seguro' }).click();
   await expect(page.getByRole('link', { name: 'Continuar en Stripe' })).toHaveAttribute('href', 'https://checkout.stripe.com/c/pay/cs_test_123');
   expect(posts[0].body.amountCents).toBe('20001'); expect(posts[0].key).toBeTruthy();
-  await expect(page.getByText('Saldo: $1,234.50 MXN')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Saldo' })).toContainText('$1,234.50 MXN');
   await expect(page.getByRole('heading', { name: 'Recibo de pago' })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -38,8 +38,10 @@ test('manual transfer records a reference and explicit operator note', async ({ 
     return route.fulfill({ json: { destination: null, payments: [], tasks: [], events: [] } });
   });
   await page.goto('https://payments.test/admin');
-  await page.getByLabel('Medio', { exact: true }).selectOption('TRANSFER');
-  await page.getByLabel('Importe en MXN', { exact: true }).fill('1200.50');
+  await page.getByRole('button', { name: 'Registrar pago' }).click();
+  // A label wrapping a select also contains its options' text: find it by role.
+  await page.getByRole('combobox', { name: 'Medio' }).selectOption('TRANSFER');
+  await page.getByLabel('Importe en MXN').fill('1200.50');
   await page.getByLabel('Folio único de caja o transferencia').fill('TRANSFER-001');
   await page.getByLabel('Nota', { exact: true }).fill('Transferencia verificada en banco');
   await page.getByRole('button', { name: 'Confirmar pago recibido' }).click();
@@ -60,10 +62,10 @@ for (const code of [401, 403]) test(`H09 ${code} removes CLABE, balances and an 
   });
   await page.goto('https://payments.test/');
   await page.getByRole('button', { name: 'Ver recibo' }).click();
-  await expect(page.getByText('Folio: private-receipt')).toBeVisible();
+  await expect(page.getByText('private-receipt')).toBeVisible();
   revoked = true; await page.clock.fastForward(16000);
   await expect(page.getByText(/información financiera se retiró/)).toBeVisible();
-  await expect(page.getByText('646180000000000001')).toHaveCount(0); await expect(page.getByText('Folio: private-receipt')).toHaveCount(0);
+  await expect(page.getByText('6461 8000 0000 0000 01')).toHaveCount(0); await expect(page.getByText('private-receipt')).toHaveCount(0);
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
   expect(await page.evaluate(() => caches.keys())).toEqual([]);
 });
@@ -83,15 +85,15 @@ test('H09 discards a late receipt across rapid home changes and hides financial 
   await page.goto('https://payments.test/');
   await page.getByRole('button', { name: 'Ver recibo' }).click(); await expect.poll(() => receiptStarted).toBe(true);
   await page.getByRole('button', { name: 'Cambiar vivienda de prueba' }).click();
-  await expect(page.getByText('646180000000000002')).toBeVisible(); releaseReceipt();
-  await expect(page.getByText('Folio: old-private-receipt')).toHaveCount(0);
+  await expect(page.getByText('6461 8000 0000 0000 02')).toBeVisible(); releaseReceipt();
+  await expect(page.getByText('old-private-receipt')).toHaveCount(0);
   await context.setOffline(true); await expect(page.getByText(/información financiera se retiró/)).toBeVisible();
-  await expect(page.getByText('646180000000000002')).toHaveCount(0);
-  await context.setOffline(false); await expect(page.getByText('646180000000000002')).toBeVisible();
-  await page.getByRole('button', { name: 'Salir de prueba' }).click(); await expect(page.getByText('646180000000000002')).toHaveCount(0);
+  await expect(page.getByText('6461 8000 0000 0000 02')).toHaveCount(0);
+  await context.setOffline(false); await expect(page.getByText('6461 8000 0000 0000 02')).toBeVisible();
+  await page.getByRole('button', { name: 'Salir de prueba' }).click(); await expect(page.getByText('6461 8000 0000 0000 02')).toHaveCount(0);
   await page.goto('about:blank'); await page.goBack();
   // Fresh response is permitted; prior receipt and persisted financial state are not.
-  await expect(page.getByText('Folio: old-private-receipt')).toHaveCount(0);
+  await expect(page.getByText('old-private-receipt')).toHaveCount(0);
   await page.reload(); expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
 });
 test('H09 session change discards an in-flight receipt even when the route remains identical', async ({ page }) => {
@@ -106,7 +108,7 @@ test('H09 session change discards an in-flight receipt even when the route remai
   });
   await page.goto('https://payments.test/'); await page.getByRole('button', { name: 'Ver recibo' }).click(); await expect.poll(() => started).toBe(true);
   await page.getByRole('button', { name: 'Cambiar sesión de prueba' }).click(); release();
-  await expect(page.getByText('Folio: previous-session')).toHaveCount(0);
+  await expect(page.getByText('previous-session')).toHaveCount(0);
 });
 test('pending review explains why Stripe refused, also for records saved before the reason existed', async ({ page }) => {
   await page.route('https://payments.test/**', route => {
@@ -124,5 +126,5 @@ test('pending review explains why Stripe refused, also for records saved before 
   await expect(page.getByText('Reintentar fallará igual hasta corregir la causa.')).toHaveCount(1);
   await expect(page.getByText(/anterior a que se guardara el motivo/)).toBeVisible();
   await expect(page.getByText(/falla temporal. Se reintentará sola/)).toBeVisible();
-  await expect(page.getByText(/Pago con tarjeta · Requiere revisión/).first()).toBeVisible();
+  await expect(page.getByText(/Requiere revisión ·/).first()).toBeVisible();
 });
