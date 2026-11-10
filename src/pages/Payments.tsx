@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeftRight, Banknote, Check, CircleCheck, Clock, Copy, CreditCard, ExternalLink, FileText, Landmark, Receipt as ReceiptIcon, RotateCcw, ShieldCheck } from 'lucide-react';
+import { TailChase } from 'ldrs/react';
+import 'ldrs/react/TailChase.css';
 import { FinancialBoundary } from '../components/FinancialBoundary';
 import { errorText } from '../api';
 import { useOnline, useQuery } from '../hooks';
@@ -19,6 +21,11 @@ type MyStatement = { balanceCents: string; overdueCents?: string; creditCents?: 
 type MyPayments = { accountId: string; communityId: string; destination: boolean; instructions: { clabe: string; bank: string; beneficiary: string } | null; payments: { id: string; amountCents: string; method: string; createdAt?: string }[]; tasks: CheckoutTask[] };
 /** `paid`: Stripe confirmed it (it names its payment). `expired`: an unpaid Stripe link older than 24 hours. */
 type CheckoutTask = { id: string; kind: string; status: string; errorCode?: string | null; result: { url?: string } | null; amountCents?: string | null; paid?: boolean; paymentId?: string | null; expired?: boolean };
+
+/** While Stripe prepares the payment page or the home's CLABE: a few seconds. */
+function Preparing({ title }: { title: string }) {
+  return <div className="fin-preparing" role="status"><TailChase size="40" speed="1.75" color="#123c4a"/><strong>{title}</strong><small>Tarda unos segundos. No cierres esta pantalla.</small></div>;
+}
 
 /** What the household owes, or has in its favor, in one sentence. */
 function BalanceCard({ statement }: { statement: MyStatement }) {
@@ -95,8 +102,8 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
       {d && !d.destination ? <Info>Administración aún no activa los pagos en línea. Mientras tanto, paga como de costumbre en administración.</Info> : d && <div className="fin-methods">
         <section className="panel fin-method">
           <div className="fin-method-head"><span className="fin-method-icon"><Landmark size={20}/></span><div><h3>Transferencia SPEI</h3><p>Desde la app de tu banco. Se acredita sola en cuanto llega.</p></div></div>
-          {!d.instructions ? <>{preparingClabe ? <p className="fin-waiting"><Clock size={16}/> Generando tu CLABE… tarda unos segundos.</p> : <p className="small muted">Tu casa tendrá una CLABE propia; la usas siempre que pagues.</p>}
-            <Button disabled={action.busy || !online || preparingClabe} busy={action.busy} onClick={() => void request('CUSTOMER')}>Solicitar datos SPEI</Button></> : <>
+          {!d.instructions ? <>{preparingClabe ? <Preparing title="Generando tu CLABE…"/> : <p className="small muted">Tu casa tendrá una CLABE propia; la usas siempre que pagues.</p>}
+            {!preparingClabe && <Button disabled={action.busy || !online} busy={action.busy} onClick={() => void request('CUSTOMER')}>Solicitar datos SPEI</Button>}</> : <>
             <div className="fin-clabe"><span>CLABE de tu casa</span><strong className="fin-mono">{d.instructions.clabe.replace(/(\d{4})(?=\d)/g, '$1 ')}</strong></div>
             <dl className="fin-facts"><dt>Banco</dt><dd>{d.instructions.bank}</dd><dt>Beneficiario</dt><dd>{d.instructions.beneficiary}</dd></dl>
             <Button className="secondary" onClick={() => void copy(d.instructions!.clabe)}>{copied ? <><Check size={16}/> CLABE copiada</> : <><Copy size={16}/> Copiar CLABE</>}</Button>
@@ -105,7 +112,7 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
         <section className="panel fin-method">
           <div className="fin-method-head"><span className="fin-method-icon"><CreditCard size={20}/></span><div><h3>Tarjeta de crédito o débito</h3><p>En la página segura de Stripe. Zentry nunca ve los datos de tu tarjeta.</p></div></div>
           {!d.instructions ? <p className="small muted">Primero solicita tus datos SPEI: con ellos se identifica tu casa en Stripe.</p> :
-            checkout?.status === 'PENDING' ? <p className="fin-waiting"><Clock size={16}/> Preparando tu pago seguro… tarda unos segundos.</p> : <>
+            checkout?.status === 'PENDING' ? <Preparing title="Preparando tu pago seguro…"/> : <>
               {checkout?.status === 'DONE' && !checkout.paid && !checkout.expired && checkout.result?.url && new URL(checkout.result.url).origin === 'https://checkout.stripe.com' && <div className="fin-ready"><Success>Tu pago está listo.</Success><a className="button" href={checkout.result.url} rel="noreferrer">Continuar en Stripe <ExternalLink size={16}/></a><small>Volver de Stripe no confirma el pago; el recibo aparece cuando Stripe lo confirme.</small></div>}
               {checkout?.status === 'REVIEW' && <p className="fin-alert">No se pudo preparar tu último pago. Administración ya ve el motivo para resolverlo; no hace falta volver a intentarlo.</p>}
               <form onSubmit={e => { e.preventDefault(); void request('CHECKOUT'); }}>

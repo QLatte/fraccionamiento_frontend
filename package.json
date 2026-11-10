@@ -13,6 +13,7 @@
   "dependencies": {
     "@simplewebauthn/browser": "^13.1.0",
     "jsqr": "^1.4.0",
+    "ldrs": "1.1.9",
     "lucide-react": "^0.468.0",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
