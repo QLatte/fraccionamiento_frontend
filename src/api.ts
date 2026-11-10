@@ -72,3 +72,26 @@ export async function api<T>(path: string, options: { method?: string; body?: un
     throw new ApiError(0, 'NETWORK', 'No pudimos confirmar la respuesta. Reintenta la misma acción; evitaremos duplicarla.');
   } finally { clearTimeout(timeout); options.signal?.removeEventListener('abort', abort); }
 }
+
+/** Uploads one file as its raw bytes (the API detects its type). Resolves to the API's JSON. */
+export async function apiUpload<T>(path: string, file: Blob, name: string): Promise<T> {
+  if (!navigator.onLine) throw new ApiError(0, 'OFFLINE', 'No tienes conexión. Vuelve a intentarlo cuando estés en línea.');
+  let response: Response;
+  try {
+    response = await fetch(base + scoped(path), { method: 'POST', cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(60000),
+      headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(name), ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: file });
+  } catch { throw new ApiError(0, 'NETWORK', 'No se pudo subir el archivo. Revisa tu conexión e inténtalo de nuevo.'); }
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiError(response.status, data?.error?.code ?? 'REQUEST_FAILED', response.status === 413 ? 'Cada archivo puede pesar hasta 5 MB.' : data?.error?.message ?? 'No se pudo subir el archivo.');
+  return data as T;
+}
+
+/** Downloads a protected file (it needs the session, so it cannot be a plain link). */
+export async function apiFile(path: string): Promise<Blob> {
+  if (!navigator.onLine) throw new ApiError(0, 'OFFLINE', 'No tienes conexión. Vuelve a intentarlo cuando estés en línea.');
+  let response: Response;
+  try { response = await fetch(base + scoped(path), { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(60000), headers: token ? { Authorization: `Bearer ${token}` } : {} }); }
+  catch { throw new ApiError(0, 'NETWORK', 'No se pudo abrir el archivo. Revisa tu conexión.'); }
+  if (!response.ok) { const data = await response.json().catch(() => null); throw new ApiError(response.status, data?.error?.code ?? 'REQUEST_FAILED', data?.error?.message ?? 'No se pudo abrir el archivo.'); }
+  return response.blob();
+}

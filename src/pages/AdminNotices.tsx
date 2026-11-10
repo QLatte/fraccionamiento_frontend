@@ -2,11 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { Archive, Megaphone, Plus } from 'lucide-react';
 import { dateText, useMutation, useQuery } from '../hooks';
 import { Button, Empty, ErrorBox, Info, Loading, Modal, Success } from '../components/ui';
+import { AttachmentList, AttachmentPicker, type Attachment } from '../components/NoticeAttachments';
 import './Notices.css';
 
 // Comunicados: the fraccionamiento's administration writes once and every resident gets it in
 // the app and by push. Read and «Enterado» counts tell how far it reached.
-type AdminNotice = { id: string; title: string; body: string; urgent: boolean; createdAt: string; archivedAt: string | null; author: string; read: number; acknowledged: number };
+type AdminNotice = { id: string; title: string; body: string; urgent: boolean; createdAt: string; archivedAt: string | null; author: string; read: number; acknowledged: number; attachments?: Attachment[] };
 type Data = { audience: number; data: AdminNotice[] };
 const TITLE = 120, BODY = 4000;
 
@@ -34,6 +35,7 @@ export function AdminNotices() {
           <div className="notice-meta">{n.urgent && <span className="notice-flag">Urgente</span>}{n.archivedAt && <span className="badge pending"><span/>Archivado</span>}<span>{dateText(n.createdAt, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · {n.author}</span></div>
           <h2>{n.title}</h2>
           <p className="notice-body clamped">{n.body}</p>
+          <AttachmentList attachments={n.attachments ?? []} pathFor={id => `/admin/notices/attachments/${id}`}/>
           <div className="admin-notice-stats">
             <span><strong>Leído por {n.read} de {audience}</strong> residentes · <strong>{n.acknowledged}</strong> dieron «Enterado»</span>
             <span className="admin-notice-bar" aria-hidden="true"><i style={{ transform: `scaleX(${readPct})` }}/></span>
@@ -47,17 +49,19 @@ export function AdminNotices() {
 
 function Compose({ audience, onClose, onPublished }: { audience: number; onClose: () => void; onPublished: () => void }) {
   const [title, setTitle] = useState(''), [body, setBody] = useState(''), [urgent, setUrgent] = useState(false);
+  const [files, setFiles] = useState<{ ids: string[]; busy: boolean }>({ ids: [], busy: false });
   const mutation = useMutation();
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (await mutation.run('/admin/notices', 'POST', { title: title.trim(), body: body.trim(), urgent })) onPublished();
+    if (await mutation.run('/admin/notices', 'POST', { title: title.trim(), body: body.trim(), urgent, attachmentIds: files.ids })) onPublished();
   }
   const preview = body.trim().length > 160 ? `${body.trim().slice(0, 159)}…` : body.trim();
   return <Modal title="Nuevo comunicado" onClose={() => { if (!mutation.busy) onClose(); }}><form onSubmit={submit}><fieldset disabled={mutation.busy}>
     <label>Título<input required minLength={3} maxLength={TITLE} value={title} onChange={e => setTitle(e.target.value)} placeholder="Por ejemplo: Corte de agua el jueves"/><span className="notice-count">{title.length}/{TITLE}</span></label>
     <label>Mensaje<textarea required rows={7} maxLength={BODY} value={body} onChange={e => setBody(e.target.value)} placeholder="Qué pasa, cuándo y qué deben hacer los residentes."/><span className="notice-count">{body.length}/{BODY}</span></label>
+    <AttachmentPicker onChange={(ids, busy) => setFiles({ ids, busy })}/>
     <label className="checkbox-label"><input type="checkbox" checked={urgent} onChange={e => setUrgent(e.target.checked)}/><span><strong>Urgente</strong><small>Llega aunque tengan «No molestar» o hayan apagado los avisos de comunicados. Úsalo solo para emergencias.</small></span></label>
     {(title.trim() || preview) && <><small className="muted">Así llegará al celular:</small><div className="notice-preview"><img src="/icon-192.png" alt=""/><div><strong>{urgent ? 'Urgente' : 'Comunicado'}: {title.trim() || 'Título'}</strong><span>{preview || 'Mensaje'}</span></div></div></>}
     {urgent && <Info>Se mostrará en rojo al inicio de la app de cada residente hasta que lo lea.</Info>}
-  </fieldset><ErrorBox message={mutation.error}/><div className="modal-actions"><Button className="secondary" disabled={mutation.busy} onClick={onClose}>Cancelar</Button><Button type="submit" busy={mutation.busy} disabled={title.trim().length < 3 || !body.trim()}><Megaphone size={17}/> Publicar a {audience} {audience === 1 ? 'residente' : 'residentes'}</Button></div></form></Modal>;
+  </fieldset><ErrorBox message={mutation.error}/><div className="modal-actions"><Button className="secondary" disabled={mutation.busy} onClick={onClose}>Cancelar</Button><Button type="submit" busy={mutation.busy} disabled={title.trim().length < 3 || !body.trim() || files.busy}><Megaphone size={17}/> Publicar a {audience} {audience === 1 ? 'residente' : 'residentes'}</Button></div></form></Modal>;
 }

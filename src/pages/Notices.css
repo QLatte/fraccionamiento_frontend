@@ -38,4 +38,29 @@
 .notice-preview strong { overflow-wrap: anywhere; }
 .notice-preview span { color: var(--muted); overflow-wrap: anywhere; }
 .notice-count { display: block; text-align: right; color: var(--muted); font-size: 12px; }
-@media (max-width: 640px) { .notice-card { padding: 16px; } }
+/* Attachments. */
+.attach-list { display: flex; flex-direction: column; gap: 8px; }
+.attach-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.attach-images:empty { display: none; }
+.attach-thumb { aspect-ratio: 4 / 3; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--muted); }
+.attach-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform var(--motion-standard) var(--motion-ease); }
+.attach-thumb:hover img { transform: scale(1.03); }
+.attach-full { display: block; width: 100%; max-height: 75vh; object-fit: contain; border-radius: 12px; background: #000; }
+.attach-file { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); text-align: left; }
+.attach-file:hover { border-color: var(--brand); }
+.attach-file > span:nth-child(2), .attach-uploads li > span:not(.attach-icon) { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.attach-file strong, .attach-uploads strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.attach-file small, .attach-uploads small { color: var(--muted); font-size: 12.5px; }
+.attach-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: #fceced; color: var(--danger); }
+.attach-open { color: var(--brand); font-weight: 700; font-size: 13.5px; }
+.attach-picker { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.attach-uploads { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.attach-uploads li { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; border: 1px solid var(--line); border-radius: 12px; }
+.attach-uploads li.error { border-color: #e7b7bc; background: #fffafa; }
+.attach-uploads li.error small { color: var(--danger); }
+.attach-uploads img { flex: none; width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.attach-add { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin: 0; min-height: 42px; padding: 0 14px; border: 1px dashed #9fb7c1; border-radius: 12px; color: var(--brand); font-weight: 600; font-size: 14px; cursor: pointer; }
+.attach-add:hover { background: var(--soft); }
+.attach-add input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.attach-add:focus-within { outline: 3px solid var(--brand); outline-offset: 2px; }
+@media (max-width: 640px) { .notice-card { padding: 16px; } .attach-images { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

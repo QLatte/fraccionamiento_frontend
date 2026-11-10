@@ -4,11 +4,12 @@ import { api, errorText } from '../api';
 import { useAuth } from '../auth';
 import { dateText, useQuery } from '../hooks';
 import { Button, Empty, ErrorBox, Loading, PageHeader } from '../components/ui';
+import { AttachmentList, type Attachment } from '../components/NoticeAttachments';
 import './Notices.css';
 
 // Comunicados of the fraccionamiento for residents. A notice counts as read once it has been on
 // screen for a moment; «Enterado» tells administration the household is aware.
-export type Notice = { id: string; title: string; body: string; urgent: boolean; createdAt: string; author: string; read: boolean; acknowledged: boolean };
+export type Notice = { id: string; title: string; body: string; urgent: boolean; createdAt: string; author: string; read: boolean; acknowledged: boolean; attachments?: Attachment[] };
 const LONG = 420;
 
 export function Notices({ onChange }: { onChange?: () => void }) {
@@ -32,7 +33,7 @@ export function Notices({ onChange }: { onChange?: () => void }) {
     <ErrorBox message={list.error || error} retry={list.error ? list.refresh : undefined}/>
     {list.loading && !list.data ? <Loading rows={3}/> : !notices.length
       ? <section className="panel"><Empty icon={<Megaphone/>} title="Aún no hay comunicados" text="Aquí verás los avisos de la administración: cortes de servicio, asambleas, cuotas y más."/></section>
-      : <ul className="notice-list">{notices.map(n => <NoticeCard key={n.id} notice={n} onSeen={() => { if (!n.read) void mark(n.id, false); }} onAcknowledge={() => void mark(n.id, true)}/>)}</ul>}
+      : <ul className="notice-list">{notices.map(n => <NoticeCard key={n.id} notice={n} propertyId={propertyId} onSeen={() => { if (!n.read) void mark(n.id, false); }} onAcknowledge={() => void mark(n.id, true)}/>)}</ul>}
   </div>;
 }
 
@@ -52,7 +53,7 @@ function useSeen(ref: React.RefObject<HTMLElement | null>, active: boolean, onSe
   }, [ref, active]);
 }
 
-function NoticeCard({ notice, onSeen, onAcknowledge }: { notice: Notice; onSeen: () => void; onAcknowledge: () => void }) {
+function NoticeCard({ notice, propertyId, onSeen, onAcknowledge }: { notice: Notice; propertyId: string; onSeen: () => void; onAcknowledge: () => void }) {
   const ref = useRef<HTMLLIElement>(null);
   const [open, setOpen] = useState(false);
   useSeen(ref, !notice.read, onSeen);
@@ -65,6 +66,7 @@ function NoticeCard({ notice, onSeen, onAcknowledge }: { notice: Notice; onSeen:
     </div>
     <h2>{notice.title}</h2>
     <p className={`notice-body${long && !open ? ' clamped' : ''}`}>{notice.body}</p>
+    <AttachmentList attachments={notice.attachments ?? []} pathFor={id => `/notices/${notice.id}/attachments/${id}?propertyId=${propertyId}`}/>
     {long && <button type="button" className="notice-more" onClick={() => { setOpen(o => !o); onSeen(); }}>{open ? 'Ver menos' : 'Leer completo'}</button>}
     <div className="notice-foot">
       <span className="notice-author">Administración · {notice.author}</span>
