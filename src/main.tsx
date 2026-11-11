@@ -17,4 +17,22 @@ window.setTimeout(() => { try { sessionStorage.removeItem('zentry:chunk-reload')
 // The app behaves like a native one on phones: no pinch or double-tap zoom. iOS Safari ignores
 // user-scalable=no in the viewport tag, so its pinch gestures are cancelled here.
 for (const type of ['gesturestart', 'gesturechange']) document.addEventListener(type, event => event.preventDefault(), { passive: false });
+// On phones, while the on-screen keyboard is up the floating dock would sit right on top of it and
+// cover what is being typed: <html> gets .keyboard-open so the dock steps aside. --vvh is the
+// height left above the keyboard, so the chat can fit in it.
+{
+  const root = document.documentElement, touch = matchMedia('(pointer: coarse)');
+  const noKeyboard = ['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'range', 'color', 'hidden', 'image'];
+  const typing = (el: Element | null) => !!el && (el.matches('textarea, [contenteditable="true"]') || (el instanceof HTMLInputElement && !noKeyboard.includes(el.type) && !el.readOnly));
+  document.addEventListener('focusin', event => { if (touch.matches && typing(event.target as Element)) root.classList.add('keyboard-open'); });
+  document.addEventListener('focusout', () => setTimeout(() => { if (!typing(document.activeElement)) root.classList.remove('keyboard-open'); }, 50));
+  const viewport = window.visualViewport;
+  const fit = () => {
+    if (!viewport) return;
+    root.style.setProperty('--vvh', `${Math.round(viewport.height)}px`);
+    // iOS scrolls the page up to show the field; in the chat everything already fits above the keyboard.
+    if (root.classList.contains('keyboard-open') && document.querySelector('.chat-page')) window.scrollTo(0, 0);
+  };
+  viewport?.addEventListener('resize', fit); fit();
+}
 createRoot(document.getElementById('root')!).render(<App/>);

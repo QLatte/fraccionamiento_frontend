@@ -1002,3 +1002,9 @@ textarea.pass-notes { min-height: 72px; resize: vertical; }
 .chat-bubble { transition: transform 140ms var(--ease-out-strong); }
 .chat-bubble:not(.deleted):active { transform: scale(.98); }
 @media (prefers-reduced-motion: reduce) { .chat-bubble:not(.deleted):active { transform: none; filter: brightness(.96); } }
+
+/* While typing on a phone the dock steps aside (it would sit on top of the keyboard). */
+@media (max-width: 1024px) {
+  .keyboard-open .mobile-nav { display: none; }
+  .keyboard-open .app-main main { padding-bottom: 24px; }
+}

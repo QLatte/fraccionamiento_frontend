@@ -45,7 +45,7 @@ export function Chat({ clusterId, unread = 0, onRead }: { clusterId: string; unr
   const [viewer, setViewer] = useState(''); const [people, setPeople] = useState(false);
   const [version, setVersion] = useState(0);
   const list = useRef<HTMLDivElement>(null); const input = useRef<HTMLTextAreaElement>(null); const file = useRef<HTMLInputElement>(null);
-  const lastSeq = useRef(0); const readSeq = useRef(0); const stick = useRef(true); const restore = useRef<number | null>(null);
+  const lastSeq = useRef(0); const readSeq = useRef(0); const stick = useRef(true); const listHeight = useRef(0); const restore = useRef<number | null>(null);
   // Where «Mensajes nuevos» goes: fixed when the chat opens, so it does not jump while reading.
   const [firstUnread, setFirstUnread] = useState<string | null>(null);
   const me = page?.me;
@@ -92,6 +92,12 @@ export function Chat({ clusterId, unread = 0, onRead }: { clusterId: string; unr
     if (restore.current !== null) { el.scrollTop = el.scrollHeight - restore.current; restore.current = null; return; }
     if (stick.current) el.scrollTop = el.scrollHeight;
   }, [messages, loaded]);
+  useEffect(() => {
+    const el = list.current; if (!el) return;
+    const observer = new ResizeObserver(() => { listHeight.current = el.clientHeight; if (stick.current) el.scrollTop = el.scrollHeight; });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loaded]);
   async function loadOlder() {
     if (olderBusy || !hasMore || !messages.length) return;
     setOlderBusy(true);
@@ -103,6 +109,8 @@ export function Chat({ clusterId, unread = 0, onRead }: { clusterId: string; unr
   }
   function onScroll() {
     const el = list.current!;
+    // A resize (the keyboard opening) also fires scroll; only the person's own scrolling counts.
+    if (el.clientHeight !== listHeight.current) { listHeight.current = el.clientHeight; if (stick.current) el.scrollTop = el.scrollHeight; return; }
     stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
     if (stick.current) markRead();
     if (el.scrollTop < 120) void loadOlder();

@@ -121,3 +121,10 @@
 .reps-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .reps-add select { flex: 1 1 200px; min-width: 0; }
 .reps-add .button { flex: 1 0 auto; }
+
+/* Typing: the chat fills exactly the space above the keyboard, header and composer both visible. */
+@media (max-width: 1024px) {
+  .keyboard-open .chat-page .app-main main { padding-top: 8px; padding-bottom: 8px; }
+  .keyboard-open .chat-page .chat { height: calc(var(--vvh, 100dvh) - 84px); min-height: 0; }
+  .keyboard-open .chat-page .chat-pinned { display: none; }
+}
