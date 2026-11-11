@@ -17,6 +17,9 @@
   --motion-slow: 420ms;
 }
 * { box-sizing: border-box; }
+/* No rubber-band bounce or pull-to-refresh past the top or bottom, and no browser «back» from an
+   overscroll sideways; double-tap does not zoom. */
+html, body { overscroll-behavior: none; touch-action: manipulation; }
 body { margin: 0; min-width: 320px; }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

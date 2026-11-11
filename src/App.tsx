@@ -17,6 +17,7 @@ import AnimatedX from './components/icons/AnimatedX';
 import AnimatedSlidersHorizontal, { afterSlidersAnimation } from './components/icons/AnimatedSlidersHorizontal';
 import { adminSections } from './pages/adminSections';
 import { InstallButton, UpdateNotice } from './pwa';
+import { useSidebarSwipe } from './sidebarSwipe';
 import type { ChatRoom } from './chat';
 // Each profile only downloads its own screens: the gate scanner (jsQR), QR sharing
 // (qrcode), WebAuthn login, admin and platform pages load on first use.
@@ -82,6 +83,7 @@ function Shell({ path, navigate }: { path: string; navigate: (p: string) => void
   const { identity, properties, property, select, logout, switchProfile } = useAuth(); const [mobile, setMobile] = useState(false); const online = useOnline();
   const sidebar = useRef<HTMLElement>(null);
   const menuTrigger = useRef<HTMLElement | null>(null);
+  useSidebarSwipe(sidebar, mobile, setMobile);
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1025px)');
     const closeOnDesktop = () => { if (desktop.matches) setMobile(false); };

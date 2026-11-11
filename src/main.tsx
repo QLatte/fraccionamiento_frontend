@@ -14,4 +14,8 @@ window.addEventListener('vite:preloadError', event => {
 });
 // Allow another recovery only after this load has been stable for a while.
 window.setTimeout(() => { try { sessionStorage.removeItem('zentry:chunk-reload'); } catch { /* optional */ } }, 15_000);
+// The app behaves like a native one on phones: no pinch or double-tap zoom. iOS Safari ignores
+// user-scalable=no in the viewport tag, so its pinch gestures are cancelled here.
+for (const type of ['gesturestart', 'gesturechange']) document.addEventListener(type, event => event.preventDefault(), { passive: false });
+document.addEventListener('touchmove', event => { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
 createRoot(document.getElementById('root')!).render(<App/>);
