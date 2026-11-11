@@ -12,36 +12,47 @@ function scrollsSideways(target: EventTarget | null) {
   }
   return false;
 }
+// Where the menu is right now, also halfway through its opening or closing transition.
+const currentOffset = (el: HTMLElement) => new DOMMatrixReadOnly(getComputedStyle(el).transform).m41;
 
 /**
- * Opens the side menu by sliding a finger left to right anywhere on the screen (it follows the
- * finger), and closes it by sliding back. The swipe does not need to start at the screen edge,
- * which is where the phone's own «back» gesture lives.
+ * Opens the side menu by sliding a finger left to right anywhere on the screen, and closes it by
+ * sliding back. While the finger is down the menu and the dimmed background follow it 1:1; on
+ * release it finishes where the swipe was heading (a quick flick is enough). It can be caught
+ * mid-animation. The swipe does not need to start at the screen edge, where the phone's own
+ * «back» gesture lives.
  */
-export function useSidebarSwipe(sidebar: RefObject<HTMLElement | null>, open: boolean, setOpen: (open: boolean) => void) {
+export function useSidebarSwipe(sidebar: RefObject<HTMLElement | null>, scrim: RefObject<HTMLElement | null>, open: boolean, setOpen: (open: boolean) => void) {
   const openRef = useRef(open);
   openRef.current = open;
   useEffect(() => {
-    let start: { x: number; y: number; t: number } | null = null;
+    let start: { x: number; y: number } | null = null;
     let mode: 'undecided' | 'drag' | 'ignore' = 'ignore';
-    let width = 300, dx = 0, lastX = 0, lastT = 0, speed = 0;
-    const el = () => sidebar.current;
-    const place = (offset: number) => {
-      const s = el(); if (!s) return;
-      s.style.transition = 'none'; s.style.visibility = 'visible';
-      s.style.transform = `translateX(${offset}px)`;
+    let width = 300, base = 0, offset = 0, lastX = 0, lastT = 0, speed = 0;
+    const place = (value: number) => {
+      const s = sidebar.current, b = scrim.current; if (!s) return;
+      offset = Math.max(-width, Math.min(0, value));
+      s.style.transition = 'none'; s.style.visibility = 'visible'; s.style.transform = `translateX(${offset}px)`;
+      if (b) { b.style.transition = 'none'; b.style.visibility = 'visible'; b.style.opacity = String(1 + offset / width); }
     };
-    const release = () => { const s = el(); if (!s) return; s.style.transition = ''; s.style.visibility = ''; s.style.transform = ''; };
+    const release = () => {
+      for (const el of [sidebar.current, scrim.current]) if (el) { el.style.transition = ''; el.style.visibility = ''; el.style.transform = ''; el.style.opacity = ''; }
+    };
 
     function down(e: TouchEvent) {
       mode = 'ignore';
-      if (!phone() || e.touches.length !== 1 || document.querySelector('dialog[open]')) return;
-      // With the menu open, any swipe can close it; with it closed, not inside sideways scrollers.
-      if (!openRef.current && scrollsSideways(e.target)) return;
+      const s = sidebar.current;
+      if (!s || !phone() || e.touches.length !== 1 || document.querySelector('dialog[open]')) return;
+      width = s.offsetWidth || 300;
+      base = currentOffset(s);
+      const visible = base > -width + 1;
+      // With the menu showing, any swipe moves it; with it hidden, not inside sideways scrollers.
+      if (!visible && scrollsSideways(e.target)) return;
       const t = e.touches[0];
-      start = { x: t.clientX, y: t.clientY, t: e.timeStamp }; lastX = t.clientX; lastT = e.timeStamp; dx = 0; speed = 0;
-      width = el()?.offsetWidth || 300;
+      start = { x: t.clientX, y: t.clientY }; lastX = t.clientX; lastT = e.timeStamp; speed = 0;
       mode = 'undecided';
+      // Caught mid-animation: hold it where it is instead of letting it jump.
+      if (visible && base < -1) place(base);
     }
     function move(e: TouchEvent) {
       if (mode === 'ignore' || !start) return;
@@ -50,25 +61,28 @@ export function useSidebarSwipe(sidebar: RefObject<HTMLElement | null>, open: bo
       if (mode === 'undecided') {
         if (Math.abs(x) < DECIDE && Math.abs(y) < DECIDE) return;
         const sideways = Math.abs(x) > Math.abs(y) * 1.3;
-        const right = openRef.current ? x < 0 : x > 0;
-        if (!sideways || !right) { mode = 'ignore'; return; }
+        // Closed: only a swipe to the right opens. Open: only a swipe to the left closes. Halfway: either.
+        const allowed = base <= -width + 1 ? x > 0 : base >= -1 ? x < 0 : true;
+        if (!sideways || !allowed) { mode = 'ignore'; if (base < -1 && base > -width + 1) settle(); return; }
         mode = 'drag';
       }
       e.preventDefault(); // the page must not scroll while the menu follows the finger
-      if (e.timeStamp > lastT) speed = (t.clientX - lastX) / (e.timeStamp - lastT);
+      if (e.timeStamp > lastT) speed = 0.8 * ((t.clientX - lastX) / (e.timeStamp - lastT)) + 0.2 * speed;
       lastX = t.clientX; lastT = e.timeStamp;
-      dx = x;
-      place(openRef.current ? Math.min(0, x) : Math.min(0, -width + x));
+      place(base + x);
+    }
+    // Finishes toward where the swipe was heading: position plus a short projection of its speed.
+    function settle() {
+      const projected = offset + speed * 180;
+      const next = projected > -width / 2;
+      if (next !== openRef.current) setOpen(next);
+      // Once React has applied the state, the CSS transition finishes from where the finger left it.
+      requestAnimationFrame(() => requestAnimationFrame(release));
     }
     function up() {
-      if (mode !== 'drag') { mode = 'ignore'; return; }
-      mode = 'ignore';
-      const opening = !openRef.current;
-      const done = opening ? dx > width * 0.35 || (speed > 0.35 && dx > 30) : -dx > width * 0.35 || (speed < -0.35 && dx < -30);
-      const next = opening ? done : !done;
-      setOpen(next);
-      // Once React has applied the new state, let the CSS transition finish from where the finger left it.
-      requestAnimationFrame(() => requestAnimationFrame(release));
+      const was = mode; mode = 'ignore';
+      if (was === 'drag') settle();
+      else if (was === 'undecided' && base < -1 && base > -width + 1) { offset = base; speed = 0; settle(); }
     }
     document.addEventListener('touchstart', down, { passive: true });
     document.addEventListener('touchmove', move, { passive: false });
@@ -81,5 +95,5 @@ export function useSidebarSwipe(sidebar: RefObject<HTMLElement | null>, open: bo
       document.removeEventListener('touchcancel', up);
       release();
     };
-  }, [sidebar, setOpen]);
+  }, [sidebar, scrim, setOpen]);
 }

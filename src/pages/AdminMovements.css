@@ -11,7 +11,7 @@
 .movements-periods { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--soft); flex-wrap: wrap; }
 .movements-periods button, .movements-chips button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: #355967; font-weight: 600; font-size: 14px; transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
 .movements-periods button.active { background: var(--brand); color: #fff; }
-.movements-periods button:not(.active):hover { background: #ffffffaa; }
+@media (hover: hover) and (pointer: fine) { .movements-periods button:not(.active):hover { background: #ffffffaa; } }
 .movements-range { display: flex; gap: 10px; flex-wrap: wrap; }
 .movements-range label, .movements-select { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 13px; font-weight: 500; }
 .movements-range input, .movements-select select { width: auto; min-height: 40px; padding: 6px 10px; font-size: 14px; }
@@ -19,14 +19,14 @@
 
 .movements-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .kpi { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: #fff; color: var(--ink); text-align: left; text-decoration: none; transition: border-color var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease); }
-.kpi:hover { border-color: #a8c2ce; }
+@media (hover: hover) and (pointer: fine) { .kpi:hover { border-color: #a8c2ce; } }
 .kpi:active { transform: scale(.98); }
 .kpi-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .kpi strong { font-family: var(--display); font-size: 42px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .kpi small { color: var(--muted); font-size: 13px; }
 .kpi small.up { color: #286648; }
 .kpi-inside { background: var(--brand); border-color: var(--brand); color: #fff; }
-.kpi-inside:hover { border-color: var(--brand-hover); color: #fff; }
+@media (hover: hover) and (pointer: fine) { .kpi-inside:hover { border-color: var(--brand-hover); color: #fff; } }
 .kpi-inside .kpi-label { color: #cfe1e8; }
 .kpi-inside small { color: #f2c35b; }
 
@@ -74,7 +74,7 @@
 .log-time { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .log-name { font-weight: 600; }
 .log-photo { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--brand); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
-.log-photo:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) { .log-photo:hover { text-decoration: underline; } }
 .id-photo-full { display: block; width: 100%; max-height: 60dvh; margin: 12px 0; object-fit: contain; border-radius: 12px; background: #0d2e39; }
 .move { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 650; white-space: nowrap; }
 .move.entry { background: #e7f3ed; color: #286648; }

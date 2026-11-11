@@ -20,7 +20,7 @@
 .fin-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--soft); overflow-x: auto; scrollbar-width: none; }
 .fin-tabs::-webkit-scrollbar { display: none; }
 .fin-tabs button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; border: 0; border-radius: 10px; background: transparent; color: #355967; font-weight: 600; font-size: 14.5px; transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
-.fin-tabs button:hover { background: #ffffffaa; }
+@media (hover: hover) and (pointer: fine) { .fin-tabs button:hover { background: #ffffffaa; } }
 .fin-tabs button.active { background: var(--surface); color: var(--brand); box-shadow: 0 1px 3px #123c4a1f; }
 .fin-tab-badge { min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 12px; line-height: 18px; text-align: center; }
 
@@ -66,7 +66,7 @@
 .fin-money-input:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px #123c4a1f; }
 .fin-money-input input:focus { outline: none; }
 .fin-chip { align-self: flex-start; min-height: 36px; padding: 0 14px; border: 1px solid #b9cdd5; border-radius: 999px; background: #fff; color: var(--brand); font-weight: 600; font-size: 13.5px; }
-.fin-chip:hover { background: var(--soft); }
+@media (hover: hover) and (pointer: fine) { .fin-chip:hover { background: var(--soft); } }
 
 .fin-paid { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0 4px; text-align: center; }
 .fin-paid-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: #e7f3ed; color: #286648; }
@@ -94,7 +94,7 @@
 .fin-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-width: 0; }
 .fin-row-wrap { align-items: flex-start; flex-wrap: wrap; }
 .fin-row-button { width: 100%; border: 0; background: transparent; color: var(--ink); text-align: left; min-height: 64px; transition: background-color var(--motion-fast) var(--motion-ease); }
-.fin-row-button:hover { background: #f5f9fa; }
+@media (hover: hover) and (pointer: fine) { .fin-row-button:hover { background: #f5f9fa; } }
 .fin-row-button.selected { background: #e6eff2; }
 .fin-row-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--soft); color: var(--brand); font-weight: 700; }
 .fin-row-icon.bad { background: #fceced; color: var(--danger); }
@@ -106,7 +106,7 @@
 .fin-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 12px; }
 .fin-issue { color: var(--ink); font-size: 14px; line-height: 1.45; }
 .fin-link { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0; border: 0; background: transparent; color: var(--brand); font-weight: 600; font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
-.fin-link:hover { color: var(--brand-hover); }
+@media (hover: hover) and (pointer: fine) { .fin-link:hover { color: var(--brand-hover); } }
 .fin-plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .fin-plain li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; font-size: 14px; }
 .fin-plain strong { font-variant-numeric: tabular-nums; }

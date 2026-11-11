@@ -18,7 +18,7 @@
 
 /* Inicio: the newest unread comunicado. */
 .home-notice { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 1px solid #b9cdd5; border-radius: 16px; background: var(--surface); color: var(--ink); text-align: left; transition: border-color var(--motion-fast) var(--motion-ease); }
-.home-notice:hover { border-color: var(--brand); }
+@media (hover: hover) and (pointer: fine) { .home-notice:hover { border-color: var(--brand); } }
 .home-notice.urgent { border-color: #e7b7bc; background: #fffafa; }
 .home-notice-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--soft); color: var(--brand); }
 .home-notice.urgent .home-notice-icon { background: #fceced; color: var(--danger); }
@@ -44,10 +44,10 @@
 .attach-images:empty { display: none; }
 .attach-thumb { aspect-ratio: 4 / 3; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--muted); }
 .attach-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform var(--motion-standard) var(--motion-ease); }
-.attach-thumb:hover img { transform: scale(1.03); }
+@media (hover: hover) and (pointer: fine) { .attach-thumb:hover img { transform: scale(1.03); } }
 .attach-full { display: block; width: 100%; max-height: 75vh; object-fit: contain; border-radius: 12px; background: #000; }
 .attach-file { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); text-align: left; }
-.attach-file:hover { border-color: var(--brand); }
+@media (hover: hover) and (pointer: fine) { .attach-file:hover { border-color: var(--brand); } }
 .attach-file > span:nth-child(2), .attach-uploads li > span:not(.attach-icon) { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .attach-file strong, .attach-uploads strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
 .attach-file small, .attach-uploads small { color: var(--muted); font-size: 12.5px; }
@@ -60,7 +60,7 @@
 .attach-uploads li.error small { color: var(--danger); }
 .attach-uploads img { flex: none; width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
 .attach-add { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin: 0; min-height: 42px; padding: 0 14px; border: 1px dashed #9fb7c1; border-radius: 12px; color: var(--brand); font-weight: 600; font-size: 14px; cursor: pointer; }
-.attach-add:hover { background: var(--soft); }
+@media (hover: hover) and (pointer: fine) { .attach-add:hover { background: var(--soft); } }
 .attach-add input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .attach-add:focus-within { outline: 3px solid var(--brand); outline-offset: 2px; }
 @media (max-width: 640px) { .notice-card { padding: 16px; } .attach-images { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

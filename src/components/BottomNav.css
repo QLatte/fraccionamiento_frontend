@@ -120,7 +120,7 @@
   .mobile-nav-item:focus-visible .mobile-nav-icon { outline: 3px solid #247d9d; outline-offset: 3px; }
 
   @media (hover: hover) {
-    .mobile-nav-item:not(.active):hover .mobile-nav-icon { color: var(--brand); background: var(--soft); }
+    @media (hover: hover) and (pointer: fine) { .mobile-nav-item:not(.active):hover .mobile-nav-icon { color: var(--brand); background: var(--soft); } }
   }
 }
 
