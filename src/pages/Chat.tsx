@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { Camera, Copy, CornerUpLeft, ImageOff, MessagesSquare, Pin, PinOff, SendHorizontal, ShieldCheck, UsersRound, VolumeX, X } from 'lucide-react';
+import { ArrowLeft, Camera, Copy, CornerUpLeft, ImageOff, MessagesSquare, Pin, PinOff, SendHorizontal, ShieldCheck, UsersRound, VolumeX, X } from 'lucide-react';
 import { api, apiFile, apiUpload, ApiError, errorText } from '../api';
 import { compressPhoto, openChatStream, type ChatMessage, type ChatPage, type ChatPerson, type StreamState } from '../chat';
 import { Button, Empty, ErrorBox, Info, Loading, Modal } from '../components/ui';
@@ -30,7 +30,7 @@ function ChatPhoto({ clusterId, id, onOpen }: { clusterId: string; id: string; o
   return <button type="button" className="chat-photo" aria-label="Ver foto" disabled={!url} onClick={e => { e.stopPropagation(); if (url) onOpen?.(url); }}>{url ? <img src={url} alt=""/> : <span className="skeleton-block"/>}</button>;
 }
 
-export function Chat({ clusterId, unread = 0, onRead }: { clusterId: string; unread?: number; onRead?: () => void }) {
+export function Chat({ clusterId, unread = 0, onRead, onBack }: { clusterId: string; unread?: number; onRead?: () => void; onBack?: () => void }) {
   const [page, setPage] = useState<ChatPage | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pinned, setPinned] = useState<ChatMessage | null>(null);
@@ -176,6 +176,7 @@ export function Chat({ clusterId, unread = 0, onRead }: { clusterId: string; unr
   const canSend = !me?.mutedUntil;
   return <section className="chat" aria-label={`Chat de ${page.cluster.name}`}>
     <header className="chat-head">
+      {onBack && <button type="button" className="icon-button chat-back" aria-label="Volver" onClick={onBack}><ArrowLeft size={22}/></button>}
       <span className="chat-head-icon"><MessagesSquare size={20}/></span>
       <div><h1>{page.cluster.type === 'PRIVADA' ? 'Privada ' : ''}{page.cluster.name}</h1><p><span className={'chat-state ' + state}/>{state === 'live' ? 'En vivo · solo propietarios' : state === 'connecting' ? 'Conectando…' : 'Sin conexión'}{me?.representative && <span className="chat-rep"> · <ShieldCheck size={13}/> Representante</span>}</p></div>
       <button type="button" className="icon-button" aria-label="Vecinos del chat" onClick={() => setPeople(true)}><UsersRound size={19}/></button>

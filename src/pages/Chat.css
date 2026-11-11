@@ -97,16 +97,20 @@
 .chat-people strong { font-size: 14.5px; }
 .chat-people small { color: var(--muted); font-size: 12.5px; }
 
+.chat-back { display: none; }
+/* Phones: the conversation takes the whole screen, like a messaging app. Its own header (with a
+   back arrow) replaces the app's; no dock. --vvh/--vvt are the area the keyboard leaves visible
+   (set in main.tsx), so the composer sits right on the keyboard and the messages stay in view. */
 @media (max-width: 1024px) {
-  /* Room below the chat for the dock and its raised active circle. */
-  .chat-page .app-main main { padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
-  .chat { height: calc(100dvh - 228px - env(safe-area-inset-bottom)); }
-}
-@media (max-width: 700px) {
-  .chat-page .app-main main { padding-top: 12px; padding-inline: 10px; }
-  .chat { height: calc(100dvh - 206px - env(safe-area-inset-bottom)); min-height: 300px; border-radius: 16px; }
-  .chat-head-icon { display: none; }
+  html:has(.chat-page .chat), html:has(.chat-page .chat) body { overflow: hidden; }
+  .chat-page:has(.chat) .topbar, .chat-page:has(.chat) .mobile-nav { display: none; }
+  .chat-page:has(.chat) .app-main main { padding: 0; }
+  .chat { position: fixed; z-index: 35; inset: 0 0 auto; height: var(--vvh, 100dvh); min-height: 0; max-width: none; border: 0; border-radius: 0; transform: translateY(var(--vvt, 0px)); }
+  .chat-head { padding: max(8px, env(safe-area-inset-top)) 8px 8px 4px; gap: 6px; }
+  .chat-back { display: inline-flex; color: var(--brand); }
+  .chat-head-icon { width: 38px; height: 38px; border-radius: 50%; }
   .chat-bubble { max-width: 84%; }
+  .keyboard-open .chat-compose { padding-bottom: 8px; }
 }
 
 /* Admin: representatives of each privada. */
@@ -122,9 +126,3 @@
 .reps-add select { flex: 1 1 200px; min-width: 0; }
 .reps-add .button { flex: 1 0 auto; }
 
-/* Typing: the chat fills exactly the space above the keyboard, header and composer both visible. */
-@media (max-width: 1024px) {
-  .keyboard-open .chat-page .app-main main { padding-top: 8px; padding-bottom: 8px; }
-  .keyboard-open .chat-page .chat { height: calc(var(--vvh, 100dvh) - 84px); min-height: 0; }
-  .keyboard-open .chat-page .chat-pinned { display: none; }
-}
