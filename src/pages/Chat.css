@@ -7,7 +7,7 @@
 .chat-head h1 { margin: 0; font-family: var(--display); font-size: 19px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-head p { display: flex; align-items: center; gap: 5px; min-width: 0; margin: 2px 0 0; overflow: hidden; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
 .chat-rep { display: inline-flex; align-items: center; gap: 4px; }
-.chat-head-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--soft); color: var(--brand); }
+.chat-head-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--tone-chat-bg); color: var(--tone-chat); }
 .chat-state { width: 8px; height: 8px; border-radius: 50%; background: #9fb0b8; }
 .chat-state.live { background: #2f9e6a; box-shadow: 0 0 0 3px #2f9e6a26; }
 .chat-state.connecting { background: var(--sun); animation: chat-blink 1.2s ease-in-out infinite; }
@@ -19,7 +19,7 @@
 .chat-pinned small { color: #8a6a2a; font-size: 11.5px; font-weight: 700; }
 .chat-pinned strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 600; }
 
-.chat-list { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 12px 14px 8px; background: #f4f7f8; display: flex; flex-direction: column; }
+.chat-list { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 12px 14px 8px; background: var(--canvas); display: flex; flex-direction: column; }
 .chat-older, .chat-start, .chat-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 20px; color: var(--muted); font-size: 12.5px; text-align: center; }
 .chat-older button { min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--brand); font-weight: 600; }
 .chat-start svg { color: var(--brand); }
@@ -45,7 +45,7 @@
 .chat-bubble.deleted { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); cursor: default; }
 .chat-row.mine .chat-bubble.deleted { background: transparent; color: var(--muted); }
 .chat-bubble.photo-only { padding: 4px 4px 6px; }
-.chat-author { font-size: 12.5px; font-weight: 700; color: var(--brand); }
+.chat-author { font-size: 12.5px; font-weight: 700; color: var(--person, var(--brand)); }
 .chat-author small { color: var(--muted); font-weight: 600; }
 .chat-text { margin: 0; color: inherit; font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .chat-text svg { vertical-align: -2px; }
@@ -65,14 +65,14 @@
 
 .chat-compose { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--surface); }
 .chat-compose-row { display: flex; align-items: flex-end; gap: 6px; }
-.chat-compose textarea { flex: 1; min-height: 44px; max-height: 140px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 22px; background: #f4f7f8; font: inherit; font-size: 15px; line-height: 1.4; resize: none; }
+.chat-compose textarea { flex: 1; min-height: 44px; max-height: 140px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 22px; background: var(--canvas); font: inherit; font-size: 15px; line-height: 1.4; resize: none; }
 .chat-compose textarea:focus { outline: none; border-color: var(--brand); background: var(--surface); }
 .chat-camera { color: var(--brand); }
 .chat-send { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--brand); color: #fff; transition: background-color var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease); }
 .chat-send:not(:disabled):active { transform: scale(.94); }
 .chat-send:disabled { background: #b8c7cd; }
 .chat-attach { display: flex; flex-direction: column; gap: 6px; }
-.chat-reply-chip, .chat-photo-chip { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border-radius: 12px; background: #f4f7f8; font-size: 13.5px; }
+.chat-reply-chip, .chat-photo-chip { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border-radius: 12px; background: var(--canvas); font-size: 13.5px; }
 .chat-reply-chip { border-left: 3px solid var(--sun); }
 .chat-reply-chip span, .chat-photo-chip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-reply-chip small { display: block; color: var(--brand); font-weight: 700; }
@@ -83,7 +83,7 @@
 .chat-muted { display: flex; align-items: center; gap: 10px; padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: #fbf6ea; color: #6d5420; font-size: 13.5px; }
 .chat-muted svg { flex: none; }
 
-.chat-action-preview { margin-bottom: 14px; padding: 10px 12px; border-radius: 12px; background: #f4f7f8; }
+.chat-action-preview { margin-bottom: 14px; padding: 10px 12px; border-radius: 12px; background: var(--canvas); }
 .chat-action-preview small { color: var(--muted); font-size: 12px; }
 .chat-action-preview p { margin: 2px 0 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .chat-actions { display: flex; flex-direction: column; }
@@ -119,7 +119,7 @@
 .reps-card h3 { margin: 0; font-size: 17px; }
 .reps-card > p { margin: 0; color: var(--muted); font-size: 13px; }
 .reps-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.reps-people li { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 10px; border-radius: 12px; background: #f4f7f8; font-size: 14px; }
+.reps-people li { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 10px; border-radius: 12px; background: var(--canvas); font-size: 14px; }
 .reps-people li > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .reps-people small { color: var(--muted); font-size: 12px; }
 .reps-add { display: flex; flex-wrap: wrap; gap: 8px; }

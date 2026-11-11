@@ -3,7 +3,7 @@ import { ArrowUpRight, Car, ChevronRight, DoorOpen, History, Megaphone, Plus } f
 import { useAuth } from '../auth';
 import { dateText, typeLabel, useQuery } from '../hooks';
 import type { ActivityItem, CreatedPass, PassType } from '../types';
-import { Button, ErrorBox, Modal } from '../components/ui';
+import { Button, ErrorBox, Modal, toneOf } from '../components/ui';
 import { SharePass } from '../components/SharePass';
 import type { PassPlace, PassSummary } from '../components/passCard';
 import { CommunityArt } from '../components/CommunityArt';
@@ -90,7 +90,7 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
         {!today.data ? (today.error ? null : <Skeleton rows={2}/>) : !arrived.length
           ? <div className="home-quiet"><DoorOpen size={22}/><p>Ninguna de tus visitas ha llegado hoy.</p></div>
           : <ul className="home-list">{arrived.map((v, i) => <li key={v.id} className="home-row" style={{ '--i': i } as CSSProperties}>
-              <span className={`home-avatar avatar-${v.guestName.length % 4}`}>{initials(v.guestName)}</span>
+              <span className={`home-avatar ${toneOf(v.guestName)}`}>{initials(v.guestName)}</span>
               <span><strong>{v.guestName}</strong><small>{v.kind === 'walkin' ? 'Sin pase, autorizada' : 'Con pase'} · entró a las {time(v.at)}</small></span>
             </li>)}</ul>}
       </section>
@@ -108,14 +108,14 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
     <div className="home-day">
       <section className="home-panel" aria-labelledby="home-expected-title">
         <div className="home-section-head">
-          <h2 id="home-expected-title">Pueden llegar hoy</h2>
+          <h2 id="home-expected-title"><span className="home-section-icon pass" aria-hidden="true"><AnimatedQr size={17}/></span>Pueden llegar hoy</h2>
           <button className="home-link" onClick={() => navigate('/pases')}>Mis pases<ChevronRight size={16}/></button>
         </div>
         {!today.data ? (today.error ? null : <Skeleton rows={3}/>) : !expected.length
-          ? <div className="home-quiet"><AnimatedQr size={22}/><p>No hay pases vigentes para hoy.{canCreate && <> <button className="home-inline" onClick={() => setCreate(true)}>Crear uno</button></>}</p></div>
+          ? <div className="home-quiet pass"><AnimatedQr size={22}/><p>No hay pases vigentes para hoy.{canCreate && <> <button className="home-inline" onClick={() => setCreate(true)}>Crear uno</button></>}</p></div>
           : <ul className="home-list">{expected.map((p, i) => <li key={p.id} style={{ '--i': i } as CSSProperties}>
               <button className="home-row action" onClick={() => void openExpected(p)} aria-label={`${p.guestName}. ${windowText(p, dayStart)}. ${shareable(p) ? 'Ver QR' : 'Abrir en Mis pases'}`}>
-                <span className={`home-avatar avatar-${p.guestName.length % 4}`}>{initials(p.guestName)}</span>
+                <span className={`home-avatar ${toneOf(p.guestName)}`}>{initials(p.guestName)}</span>
                 <span><strong>{p.guestName}</strong><small>{p.guestVehicle ? <><Car size={12}/> {p.guestVehicle}</> : typeLabel[p.passType]}</small></span>
                 <span className="home-when">{windowText(p, dayStart)}</span>
                 {shareable(p) ? <AnimatedQr size={18}/> : <ChevronRight size={17}/>}
@@ -125,12 +125,12 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
 
       <section className="home-panel" aria-labelledby="home-feed-title">
         <div className="home-section-head">
-          <h2 id="home-feed-title">Lo que pasó hoy</h2>
+          <h2 id="home-feed-title"><span className="home-section-icon feed" aria-hidden="true"><History size={17}/></span>Lo que pasó hoy</h2>
           <button className="home-link" onClick={() => navigate('/actividad')}>Actividad<ChevronRight size={16}/></button>
         </div>
         <ErrorBox message={feed.error} retry={feed.refresh}/>
         {!feed.data ? (feed.error ? null : <Skeleton rows={3}/>) : !events.length
-          ? <div className="home-quiet"><History size={22}/><p>Sin movimientos en la caseta hoy.</p></div>
+          ? <div className="home-quiet feed"><History size={22}/><p>Sin movimientos en la caseta hoy.</p></div>
           : <ol className="home-feed">{events.slice(0, 6).map((item, i) => { const view = describe(item); return <li key={item.id} className={`activity-item ${view.tone} icon-hover`} style={{ '--i': i } as CSSProperties}>
               <span className="activity-icon">{view.icon}</span>
               <div><strong>{view.title}</strong>{view.detail && <span>{view.detail}</span>}</div>
@@ -143,7 +143,7 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
     {canCreate && ready && !events.length && !expected.length && !arrived.length && <button className="home-help" onClick={() => navigate('/ayuda')}><span>¿Tu primera invitación?<strong>Cómo crear y compartir un pase</strong></span><ArrowUpRight size={20}/></button>}
 
     {canCreate && create && <CreatePass onClose={() => setCreate(false)} onCreated={(value, pass) => { setCreate(false); setShared({ value, pass, title: 'Tu pase está listo' }); rememberPass(value); refresh(); }}/>}
-    {shared && <Modal title={shared.title} onClose={() => setShared(null)}><SharePass url={shared.value.shareUrl} pass={shared.pass} place={place}/></Modal>}
+    {shared && <Modal title={shared.title} onClose={() => setShared(null)}><SharePass url={shared.value.shareUrl} pass={shared.pass} place={place} celebrate={shared.title === 'Tu pase está listo'}/></Modal>}
   </div>;
 }
 

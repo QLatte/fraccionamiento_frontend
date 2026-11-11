@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { ArrowLeft, Camera, Copy, CornerUpLeft, ImageOff, MessagesSquare, Pin, PinOff, SendHorizontal, ShieldCheck, UsersRound, VolumeX, X } from 'lucide-react';
 import { api, apiFile, apiUpload, ApiError, errorText } from '../api';
 import { compressPhoto, openChatStream, type ChatMessage, type ChatPage, type ChatPerson, type StreamState } from '../chat';
-import { Button, Empty, ErrorBox, Info, Loading, Modal } from '../components/ui';
+import { Button, Empty, ErrorBox, Info, Loading, Modal, toneOf } from '../components/ui';
 import TrashIcon from '../components/icons/AnimatedTrash';
 import './Chat.css';
 
@@ -215,9 +215,9 @@ export function Chat({ clusterId, unread = 0, onRead, onBack }: { clusterId: str
 
 function Bubble({ m, mine, first, last, clusterId, onSelect, onJump, onPhoto }: { m: ChatMessage; mine: boolean; first: boolean; last: boolean; clusterId: string; onSelect: () => void; onJump: (id: string) => void; onPhoto: (url: string) => void }) {
   return <div className={['chat-row', mine ? 'mine' : '', first ? 'first' : '', last ? 'last' : ''].filter(Boolean).join(' ')} data-id={m.id}>
-    {!mine && <span className="chat-avatar" aria-hidden="true">{last ? m.author.name.slice(0, 1) : ''}</span>}
+    {!mine && <span className={'chat-avatar' + (last ? ' ' + toneOf(m.author.id) : '')} aria-hidden="true">{last ? m.author.name.slice(0, 1) : ''}</span>}
     <div className={'chat-bubble' + (m.deleted ? ' deleted' : '') + (m.photo && !m.body ? ' photo-only' : '')} role={m.deleted ? undefined : 'button'} tabIndex={m.deleted ? undefined : 0} aria-haspopup={m.deleted ? undefined : 'dialog'} onClick={onSelect} onKeyDown={e => { if (e.key === 'Enter' && e.target === e.currentTarget) onSelect(); }}>
-      {!mine && first && <span className="chat-author">{m.author.name}{m.author.home && <small> · Casa {m.author.home}</small>}</span>}
+      {!mine && first && <span className={'chat-author ' + toneOf(m.author.id)}>{m.author.name}{m.author.home && <small> · Casa {m.author.home}</small>}</span>}
       {m.replyTo && <button type="button" className="chat-quote" onClick={e => { e.stopPropagation(); onJump(m.replyTo!.id); }}><strong>{firstName(m.replyTo.author)}</strong><span>{m.replyTo.preview}</span></button>}
       {m.photo && <ChatPhoto clusterId={clusterId} id={m.photo.id} onOpen={onPhoto}/>}
       {m.deleted ? <p className="chat-text"><TrashIcon size={14}/> Mensaje eliminado</p> : m.body && <p className="chat-text">{m.body}</p>}
@@ -272,7 +272,7 @@ function People({ clusterId, representative, myId, onClose }: { clusterId: strin
     </> : <>
       <ErrorBox message={error}/>
       {!list ? <Loading rows={4}/> : <ul className="chat-people">{list.map(p => <li key={p.userId}>
-        <span className="chat-avatar">{p.name.slice(0, 1)}</span>
+        <span className={'chat-avatar ' + toneOf(p.userId)}>{p.name.slice(0, 1)}</span>
         <span><strong>{p.name}{p.userId === myId && ' (tú)'}</strong><small>Casa {p.home}{p.representative && ' · Representante'}{p.mutedUntil && ` · Silenciado ${mutedText(p.mutedUntil)}`}</small></span>
         {representative && !p.representative && p.userId !== myId && (p.mutedUntil
           ? <Button className="secondary" busy={busy === p.userId} onClick={() => void unmute(p)}>Quitar silencio</Button>

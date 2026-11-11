@@ -50,7 +50,7 @@
 .home-feed .activity-item strong { font-size: 14px; }
 
 /* Invite: the one brand-colored surface on the screen, so the main action is obvious. */
-.home-invite { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, .8fr); align-items: end; gap: 8px; min-height: 230px; padding: 26px; border-radius: 22px; background: var(--brand); color: #fff; overflow: hidden; animation: home-panel-enter var(--motion-standard) var(--motion-ease) 60ms both; }
+.home-invite { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, .8fr); align-items: end; gap: 8px; min-height: 230px; padding: 26px; border-radius: 22px; background: radial-gradient(70% 80% at 92% 100%, #e6b85c2e 0%, transparent 70%), radial-gradient(120% 120% at 100% 0%, #24627a 0%, var(--brand) 52%, #0c2c37 100%); box-shadow: 0 18px 40px -22px #0c2c37b3, inset 0 1px 0 #ffffff1a; color: #fff; overflow: hidden; animation: home-panel-enter var(--motion-standard) var(--motion-ease) 60ms both; }
 .home-invite h2 { margin: 0 0 8px; color: #fff; font-size: clamp(24px, 2.1vw, 30px); font-weight: 500; letter-spacing: -.035em; line-height: 1.15; }
 .home-invite p { margin: 0 0 20px; max-width: 34ch; color: #d2e3e9; font-size: 14px; line-height: 1.6; }
 .home-invite .button { background: #fff; color: var(--brand); border-color: #fff; border-radius: 28px; padding-inline: 20px; transition: transform var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease); }
@@ -99,3 +99,14 @@
   .home-row.skeleton .home-avatar, .home-row.skeleton i { animation: none; }
   .home-row.action, .home-invite .button { transition: none; }
 }
+
+/* Each section carries the tone of what it lists. */
+.home-section-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; }
+.home-section-icon.pass { background: var(--tone-pass-bg); color: var(--tone-pass); }
+.home-section-icon.feed { background: var(--tone-notice-bg); color: var(--tone-notice); }
+.home-quiet > svg { padding: 7px; width: 36px; height: 36px; border-radius: 11px; background: var(--soft); color: var(--brand); }
+.home-now .home-quiet > svg { background: var(--tone-entry-bg); color: var(--tone-entry); }
+.home-quiet.pass > svg { background: var(--tone-pass-bg); color: var(--tone-pass); }
+.home-quiet.feed > svg { background: var(--tone-notice-bg); color: var(--tone-notice); }
+.home-count { font-family: var(--display); }
+.home-sentence strong { color: var(--brand); }
