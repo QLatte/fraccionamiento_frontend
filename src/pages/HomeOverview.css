@@ -64,11 +64,13 @@
 
 /* Skeleton rows keep the final shape while loading. */
 .home-row.skeleton > span:last-child { display: grid; gap: 7px; }
-.home-row.skeleton .home-avatar, .home-row.skeleton i { background: linear-gradient(90deg, #edf2f4 0%, #f6f9fa 50%, #edf2f4 100%); background-size: 200% 100%; animation: home-shimmer 1.4s linear infinite; }
+/* Shimmer with a moving highlight (transform), not background-position (a repaint every frame). */
+.home-row.skeleton .home-avatar, .home-row.skeleton i { position: relative; overflow: hidden; background: #edf2f4; }
+.home-row.skeleton .home-avatar::after, .home-row.skeleton i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, #f8fafbcc, transparent); transform: translateX(-100%); animation: home-shimmer 1.4s linear infinite; }
 .home-row.skeleton i { display: block; height: 11px; border-radius: 6px; }
 .home-row.skeleton i:first-child { width: 55%; }
 .home-row.skeleton i:last-child { width: 35%; }
-@keyframes home-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes home-shimmer { to { transform: translateX(100%); } }
 
 @media (max-width: 1100px) {
   .home-day { grid-template-columns: 1fr; }

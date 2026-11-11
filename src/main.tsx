@@ -29,9 +29,11 @@ for (const type of ['gesturestart', 'gesturechange']) document.addEventListener(
   const viewport = window.visualViewport;
   const fit = () => {
     if (!viewport) return;
-    root.style.setProperty('--vvh', `${Math.round(viewport.height)}px`);
+    // Both live on <html> and inherit everywhere, so they are only written when they change.
+    const height = `${Math.round(viewport.height)}px`, top = `${Math.round(viewport.offsetTop)}px`;
+    if (root.style.getPropertyValue('--vvh') !== height) root.style.setProperty('--vvh', height);
     // iOS can shift the visible area down when the keyboard opens; full-screen views follow it.
-    root.style.setProperty('--vvt', `${Math.round(viewport.offsetTop)}px`);
+    if (root.style.getPropertyValue('--vvt') !== top) root.style.setProperty('--vvt', top);
     // iOS scrolls the page up to show the field; in the chat everything already fits above the keyboard.
     if (root.classList.contains('keyboard-open') && document.querySelector('.chat-page')) window.scrollTo(0, 0);
   };

@@ -51,6 +51,7 @@ export function useSidebarSwipe(sidebar: RefObject<HTMLElement | null>, scrim: R
       const t = e.touches[0];
       start = { x: t.clientX, y: t.clientY }; lastX = t.clientX; lastT = e.timeStamp; speed = 0;
       mode = 'undecided';
+      listen(true);
       // Caught mid-animation: hold it where it is instead of letting it jump.
       if (visible && base < -1) place(base);
     }
@@ -63,10 +64,10 @@ export function useSidebarSwipe(sidebar: RefObject<HTMLElement | null>, scrim: R
         const sideways = Math.abs(x) > Math.abs(y) * 1.3;
         // Closed: only a swipe to the right opens. Open: only a swipe to the left closes. Halfway: either.
         const allowed = base <= -width + 1 ? x > 0 : base >= -1 ? x < 0 : true;
-        if (!sideways || !allowed) { mode = 'ignore'; if (base < -1 && base > -width + 1) settle(); return; }
+        if (!sideways || !allowed) { mode = 'ignore'; listen(false); if (base < -1 && base > -width + 1) settle(); return; }
         mode = 'drag';
       }
-      e.preventDefault(); // the page must not scroll while the menu follows the finger
+      if (e.cancelable) e.preventDefault(); // the page must not scroll while the menu follows the finger
       if (e.timeStamp > lastT) speed = 0.8 * ((t.clientX - lastX) / (e.timeStamp - lastT)) + 0.2 * speed;
       lastX = t.clientX; lastT = e.timeStamp;
       place(base + x);
@@ -80,17 +81,25 @@ export function useSidebarSwipe(sidebar: RefObject<HTMLElement | null>, scrim: R
       requestAnimationFrame(() => requestAnimationFrame(release));
     }
     function up() {
-      const was = mode; mode = 'ignore';
+      const was = mode; mode = 'ignore'; listen(false);
       if (was === 'drag') settle();
       else if (was === 'undecided' && base < -1 && base > -width + 1) { offset = base; speed = 0; settle(); }
     }
+    // The blocking (non-passive) touchmove listener exists only during a touch that may become a
+    // swipe, and goes away as soon as it turns out to be a scroll: ordinary scrolling never waits for JS.
+    let listening = false;
+    function listen(on: boolean) {
+      if (on === listening) return;
+      listening = on;
+      if (on) document.addEventListener('touchmove', move, { passive: false });
+      else document.removeEventListener('touchmove', move);
+    }
     document.addEventListener('touchstart', down, { passive: true });
-    document.addEventListener('touchmove', move, { passive: false });
     document.addEventListener('touchend', up);
     document.addEventListener('touchcancel', up);
     return () => {
       document.removeEventListener('touchstart', down);
-      document.removeEventListener('touchmove', move);
+      listen(false);
       document.removeEventListener('touchend', up);
       document.removeEventListener('touchcancel', up);
       release();

@@ -92,14 +92,13 @@
     border-radius: 50%;
     background: transparent;
     transform: translateY(0);
-    transition: transform var(--nav-duration) var(--nav-spring), background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease);
+    transition: transform var(--nav-duration) var(--nav-spring), background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
   }
 
   .mobile-nav-item.active .mobile-nav-icon {
     transform: translateY(-31px);
     color: var(--brand);
     background: #fff;
-    box-shadow: 0 6px 16px rgb(18 60 74 / .17), 0 0 0 1px rgb(18 60 74 / .04);
   }
 
   .mobile-nav-label {
@@ -126,6 +125,9 @@
   /* Unread count on Chat and Comunicados. */
   .mobile-nav-count { position: absolute; top: 9px; right: 7px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sun); color: var(--ink); font-size: 11px; font-style: normal; font-weight: 750; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #fff; }
   .mobile-nav-icon { position: relative; }
+  /* The raised circle's shadow is its own layer that fades (opacity), not an animated box-shadow. */
+  .mobile-nav-icon::before { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 6px 16px rgb(18 60 74 / .17), 0 0 0 1px rgb(18 60 74 / .04); opacity: 0; transition: opacity var(--nav-duration) var(--nav-spring); pointer-events: none; }
+  .mobile-nav-item.active .mobile-nav-icon::before { opacity: 1; }
 }
 
 @media (max-width: 380px) {

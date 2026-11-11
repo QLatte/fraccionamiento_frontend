@@ -621,7 +621,7 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
   .sidebar { visibility: hidden; transform: translateX(-100%); width: min(320px, calc(100vw - 48px)); transition: transform 240ms var(--motion-exit), visibility 0s linear 240ms; padding-bottom: env(safe-area-inset-bottom); }
   .sidebar.open { visibility: visible; transform: translateX(0); transition: transform 340ms var(--motion-ease), visibility 0s; }
   /* Always present on phones so a swipe can fade it with the menu; a transition (not a keyframe) so it can be caught midway. */
-  .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 39; background: #18333e80; backdrop-filter: blur(3px); border: 0; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 240ms var(--motion-exit), visibility 0s linear 240ms; }
+  .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 39; background: #18333e8f; border: 0; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 240ms var(--motion-exit), visibility 0s linear 240ms; }
   .sidebar-scrim.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 340ms var(--motion-ease), visibility 0s; }
   .sidebar-install { margin-top: 24px; }
   .sidebar-brand { padding-bottom: 24px; }
@@ -873,12 +873,16 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
 .scan-guide i:nth-child(2) { top: -2px; right: -2px; border-left: 0; border-bottom: 0; border-top-right-radius: 24px; }
 .scan-guide i:nth-child(3) { bottom: -2px; left: -2px; border-right: 0; border-top: 0; border-bottom-left-radius: 24px; }
 .scan-guide i:nth-child(4) { bottom: -2px; right: -2px; border-left: 0; border-top: 0; border-bottom-right-radius: 24px; }
-.scan-line { position: absolute; left: 10%; right: 10%; top: 10%; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--sun), transparent); box-shadow: 0 0 14px 2px #e6b85c80; animation: scan-sweep 2.4s cubic-bezier(.45, 0, .55, 1) infinite alternate; }
-@keyframes scan-sweep { to { top: 90%; } }
+/* The scanner runs the camera and QR decoding on the main thread: the sweep moves with transform only
+   (the element spans the sweep, the visible line is its top edge), never with top (layout every frame). */
+.scan-line { position: absolute; left: 10%; right: 10%; top: 10%; height: 80%; pointer-events: none; animation: scan-sweep 2.4s cubic-bezier(.45, 0, .55, 1) infinite alternate; }
+.scan-line::before { content: ''; position: absolute; inset: 0 0 auto; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--sun), transparent); box-shadow: 0 0 14px 2px #e6b85c80; }
+@keyframes scan-sweep { to { transform: translateY(100%); } }
 .scan-stage.busy .scan-line { animation-play-state: paused; opacity: .4; }
 .scan-status { position: absolute; top: 14px; left: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #0b222bb3; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 14px; font-weight: 600; }
-.scan-dot { width: 8px; height: 8px; border-radius: 50%; background: #5fd49a; box-shadow: 0 0 0 0 #5fd49a99; animation: scan-pulse 1.8s ease-out infinite; }
-@keyframes scan-pulse { to { box-shadow: 0 0 0 10px #5fd49a00; } }
+.scan-dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #5fd49a; }
+.scan-dot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #5fd49a99; animation: scan-pulse 1.8s ease-out infinite; }
+@keyframes scan-pulse { to { transform: scale(3.5); opacity: 0; } }
 .scan-pause { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: #0b222bb3; color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background-color var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease); }
 @media (hover: hover) and (pointer: fine) { .scan-pause:hover { background: #0b222be6; } }
 .scan-pause:active { transform: scale(.94); }
@@ -945,7 +949,7 @@ textarea.pass-notes { min-height: 72px; resize: vertical; }
   .scan-dialog-actions { grid-auto-flow: row; padding: 18px 18px max(18px, env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .scan-line, .scan-dot, .scan-dialog-symbol, .scan-toast { animation: none; }
+  .scan-line, .scan-dot::after, .scan-dialog-symbol, .scan-toast { animation: none; }
   .scan-stage video { transition: none; }
 }
 
