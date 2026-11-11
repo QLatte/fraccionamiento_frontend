@@ -15,6 +15,8 @@
   --motion-fast: 150ms;
   --motion-standard: 280ms;
   --motion-slow: 420ms;
+  /* Strong ease-out for frequent UI (taps, tab changes): moves at once, settles softly. */
+  --ease-out-strong: cubic-bezier(.23, 1, .32, 1);
 }
 * { box-sizing: border-box; }
 /* No rubber-band bounce or pull-to-refresh past the top or bottom, and no browser «back» from an
@@ -251,7 +253,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .skip-link:focus { top: 12px; }
 
 /* Shared entrance motion. Only route content animates, never navigation or dialogs. */
-.page-enter { min-width: 0; animation: home-panel-enter 320ms var(--motion-ease) both; }
+.page-enter { min-width: 0; animation: home-panel-enter 180ms var(--ease-out-strong) both; }
 @keyframes home-panel-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
@@ -603,7 +605,8 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
   .sidebar-brand { padding-bottom: 24px; }
   .menu-button, .mobile-close { display: inline-flex; }
   .app-main { margin-left: 0; }
-  .topbar { gap: 12px; min-height: 78px; }
+  /* On phones the header stays: vivienda, alerts and menu are always one tap away. */
+  .topbar { position: sticky; top: 0; z-index: 20; gap: 12px; min-height: 68px; padding-top: max(10px, env(safe-area-inset-top)); padding-bottom: 10px; }
   .property-select { margin-right: auto; }
   .app-main main { padding-bottom: calc(156px + env(safe-area-inset-bottom)); }
   .stat-card .stat-icon { display: grid; }
@@ -611,7 +614,7 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
   .login-form-side { padding-inline: 28px; }
 }
 @media (max-width: 700px) {
-  .topbar { gap: 8px; padding: 12px 16px; }
+  .topbar { gap: 8px; padding: max(8px, env(safe-area-inset-top)) 16px 8px; min-height: 62px; }
   .topbar-actions { gap: 4px; }
   .top-avatar, .online-label, .property-select > svg:first-child { display: none; }
   .property-select { flex: 1; gap: 5px; }
@@ -935,8 +938,8 @@ textarea.pass-notes { min-height: 72px; resize: vertical; }
 /* Motion system: modals, presses and shared keyframes (tokens in :root). */
 @keyframes fade-in { from { opacity: 0; } }
 /* Modals: a heavy focus shift. They rise and settle in; the backdrop fades with them. */
-.modal[open] { animation: modal-in 360ms var(--motion-ease) both; }
-.modal[open]::backdrop { animation: fade-in 360ms var(--motion-ease) both; }
+.modal[open] { animation: modal-in 260ms var(--motion-ease) both; }
+.modal[open]::backdrop { animation: fade-in 260ms var(--motion-ease) both; }
 @keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.96); } }
 /* A granted gate result lands with a light spring; a denial enters firm. */
 .scan-dialog.granted[open] { animation: modal-in-pop var(--motion-slow) var(--motion-spring) both; }
@@ -985,3 +988,17 @@ textarea.pass-notes { min-height: 72px; resize: vertical; }
 .id-capture-fallback p { margin: 0; }
 .id-capture label.button { cursor: pointer; }
 .id-photo-step > p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+
+/* Press feedback. On touch there is no hover, so every pressable answers the instant the finger
+   lands (no transition: the press is the feedback). Buttons and icon buttons already scale. */
+.sidebar nav button:not(.active):active, .sidebar-bottom > button:active, .activity-item:active, .pass-row:active,
+.homes-row:active, .fin-row-button:active, .home-link:active, .chat-actions button:active, .chat-older button:active,
+.tabs button:not(.active):active, .fin-tabs button:not(.active):active, .movements-periods button:not(.active):active,
+.fin-chip:active, .walkin-homes button:active, .attach-add:active, .activity-button:active,
+.home-notice:active, .attach-file:active, button.stat-card:active, .station-entry-link:active, .home-help:active, .chat-pinned:active { background: var(--soft); }
+.chat-pinned:active { background: #f5ecd6; }
+.attach-thumb:active img, .chat-photo:active img { opacity: .85; }
+.mobile-nav-item:not(.active):active .mobile-nav-icon { background: var(--soft); color: var(--brand); }
+.chat-bubble { transition: transform 140ms var(--ease-out-strong); }
+.chat-bubble:not(.deleted):active { transform: scale(.98); }
+@media (prefers-reduced-motion: reduce) { .chat-bubble:not(.deleted):active { transform: none; filter: brightness(.96); } }

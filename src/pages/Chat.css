@@ -5,7 +5,8 @@
 .chat-head { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .chat-head > div { flex: 1; min-width: 0; }
 .chat-head h1 { margin: 0; font-family: var(--display); font-size: 19px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chat-head p { display: flex; align-items: center; gap: 5px; margin: 2px 0 0; color: var(--muted); font-size: 12.5px; }
+.chat-head p { display: flex; align-items: center; gap: 5px; min-width: 0; margin: 2px 0 0; overflow: hidden; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.chat-rep { display: inline-flex; align-items: center; gap: 4px; }
 .chat-head-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--soft); color: var(--brand); }
 .chat-state { width: 8px; height: 8px; border-radius: 50%; background: #9fb0b8; }
 .chat-state.live { background: #2f9e6a; box-shadow: 0 0 0 3px #2f9e6a26; }
@@ -97,12 +98,14 @@
 .chat-people small { color: var(--muted); font-size: 12.5px; }
 
 @media (max-width: 1024px) {
-  .chat-page .app-main main { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
-  .chat { height: calc(100dvh - 214px - env(safe-area-inset-bottom)); }
+  /* Room below the chat for the dock and its raised active circle. */
+  .chat-page .app-main main { padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
+  .chat { height: calc(100dvh - 228px - env(safe-area-inset-bottom)); }
 }
 @media (max-width: 700px) {
   .chat-page .app-main main { padding-top: 12px; padding-inline: 10px; }
-  .chat { height: calc(100dvh - 196px - env(safe-area-inset-bottom)); min-height: 360px; border-radius: 16px; }
+  .chat { height: calc(100dvh - 206px - env(safe-area-inset-bottom)); min-height: 300px; border-radius: 16px; }
+  .chat-head-icon { display: none; }
   .chat-bubble { max-width: 84%; }
 }
 

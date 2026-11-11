@@ -169,7 +169,7 @@ export function Chat({ clusterId, unread = 0, onRead }: { clusterId: string; unr
   return <section className="chat" aria-label={`Chat de ${page.cluster.name}`}>
     <header className="chat-head">
       <span className="chat-head-icon"><MessagesSquare size={20}/></span>
-      <div><h1>{page.cluster.type === 'PRIVADA' ? 'Privada ' : ''}{page.cluster.name}</h1><p><span className={'chat-state ' + state}/>{state === 'live' ? 'En vivo · solo propietarios' : state === 'connecting' ? 'Conectando…' : 'Sin conexión'}{me?.representative && <> · <ShieldCheck size={13}/> Eres representante</>}</p></div>
+      <div><h1>{page.cluster.type === 'PRIVADA' ? 'Privada ' : ''}{page.cluster.name}</h1><p><span className={'chat-state ' + state}/>{state === 'live' ? 'En vivo · solo propietarios' : state === 'connecting' ? 'Conectando…' : 'Sin conexión'}{me?.representative && <span className="chat-rep"> · <ShieldCheck size={13}/> Representante</span>}</p></div>
       <button type="button" className="icon-button" aria-label="Vecinos del chat" onClick={() => setPeople(true)}><UsersRound size={19}/></button>
     </header>
     {pinned && <button type="button" className="chat-pinned" onClick={() => jumpTo(pinned.id)}><Pin size={16}/><span><small>Mensaje fijado · {firstName(pinned.author.name)}</small><strong>{pinned.body || 'Foto'}</strong></span></button>}
@@ -191,7 +191,7 @@ export function Chat({ clusterId, unread = 0, onRead }: { clusterId: string; unr
       <div className="chat-compose-row">
         <input ref={file} type="file" accept="image/*" hidden onChange={e => void pickPhoto(e.target.files?.[0])}/>
         <button type="button" className="icon-button chat-camera" aria-label="Adjuntar foto" disabled={!!photo} onClick={() => file.current?.click()}><Camera size={20}/></button>
-        <textarea ref={input} rows={1} maxLength={2000} value={text} onChange={e => setText(e.target.value)} onKeyDown={onKey} placeholder="Escribe a tus vecinos…" aria-label="Mensaje"/>
+        <textarea ref={input} rows={1} maxLength={2000} value={text} onChange={e => setText(e.target.value)} onKeyDown={onKey} placeholder="Mensaje" aria-label="Mensaje" enterKeyHint="send"/>
         <button type="submit" className="chat-send" aria-label="Enviar" disabled={sending || !!photo?.busy || (!text.trim() && !photo?.id)}><SendHorizontal size={19}/></button>
       </div>
     </form> : <div className="chat-muted"><VolumeX size={18}/><span>Un representante te silenció {mutedText(me!.mutedUntil)}. Puedes leer, pero no escribir.</span></div>}

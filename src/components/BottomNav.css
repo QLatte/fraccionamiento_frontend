@@ -6,7 +6,9 @@
     --nav-height: 84px;
     --nav-notch-width: clamp(88px, 24vw, 112px);
     --nav-circle-size: 62px;
-    --nav-spring: var(--motion-spring);
+    /* Used on every tab change: quick and without bounce. */
+    --nav-spring: var(--ease-out-strong);
+    --nav-duration: 240ms;
     position: fixed;
     left: max(16px, env(safe-area-inset-left));
     right: max(16px, env(safe-area-inset-right));
@@ -41,7 +43,7 @@
     left: 0;
     width: 100%;
     background: #fff;
-    transition: transform var(--motion-slow) var(--nav-spring);
+    transition: transform var(--nav-duration) var(--nav-spring);
   }
 
   /* Nothing selected: the notch closes into a flat bar. */
@@ -54,7 +56,7 @@
     position: absolute;
     inset: 0;
     transform: translateX(var(--nav-center));
-    transition: transform var(--motion-slow) var(--nav-spring);
+    transition: transform var(--nav-duration) var(--nav-spring);
   }
 
   .mobile-nav-notch {
@@ -90,7 +92,7 @@
     border-radius: 50%;
     background: transparent;
     transform: translateY(0);
-    transition: transform var(--motion-slow) var(--nav-spring), background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease);
+    transition: transform var(--nav-duration) var(--nav-spring), background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease);
   }
 
   .mobile-nav-item.active .mobile-nav-icon {
@@ -107,7 +109,7 @@
     font-size: 12px;
     line-height: 18px;
     white-space: nowrap;
-    transition: transform var(--motion-slow) var(--nav-spring), color var(--motion-fast) var(--motion-ease);
+    transition: transform var(--nav-duration) var(--nav-spring), color var(--motion-fast) var(--motion-ease);
   }
 
   .mobile-nav-item.active .mobile-nav-label {
@@ -119,9 +121,11 @@
   .mobile-nav-item:focus-visible { outline: 3px solid #247d9d; outline-offset: 3px; }
   .mobile-nav-item:focus-visible .mobile-nav-icon { outline: 3px solid #247d9d; outline-offset: 3px; }
 
-  @media (hover: hover) {
-    @media (hover: hover) and (pointer: fine) { .mobile-nav-item:not(.active):hover .mobile-nav-icon { color: var(--brand); background: var(--soft); } }
-  }
+  @media (hover: hover) and (pointer: fine) { .mobile-nav-item:not(.active):hover .mobile-nav-icon { color: var(--brand); background: var(--soft); } }
+
+  /* Unread count on Chat and Comunicados. */
+  .mobile-nav-count { position: absolute; top: 9px; right: 7px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sun); color: var(--ink); font-size: 11px; font-style: normal; font-weight: 750; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #fff; }
+  .mobile-nav-icon { position: relative; }
 }
 
 @media (max-width: 380px) {

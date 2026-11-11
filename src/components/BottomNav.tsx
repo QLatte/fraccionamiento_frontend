@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { Smartphone } from 'lucide-react';
+import { Megaphone, MessagesSquare } from 'lucide-react';
 import AnimatedQr from './icons/AnimatedQr';
 import AnimatedHome from './icons/AnimatedHome';
 import AnimatedAlignCenter, { afterMenuIconAnimation } from './icons/AnimatedAlignCenter';
@@ -16,9 +16,13 @@ type Props = {
   onMore: (trigger: HTMLButtonElement) => void;
   /** Unread security alerts, shown as a dot on Dispositivos. */
   deviceAlerts?: number;
+  /** Whether the resident has a privada chat (owners only). */
+  chat?: boolean;
+  /** Unread counts per destination, e.g. { '/chat': 3 }. */
+  counts?: Record<string, number>;
 };
 
-export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAlerts = 0 }: Props) {
+export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAlerts = 0, chat = false, counts = {} }: Props) {
   const items = role === 'SUPERADMIN' ? [
     { path: '/plataforma', label: 'Plataforma', Icon: AnimatedHome },
     { path: '/admin/viviendas', label: 'Viviendas', Icon: AnimatedHome },
@@ -30,11 +34,12 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
     { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
     { path: null, label: 'Más', Icon: AnimatedAlignCenter },
   ] : [
+    // What residents open every day. Dispositivos and Teléfonos live in the menu (top-left button),
+    // so the resident dock has no «Más». Without a privada chat (family members), Teléfonos takes its place.
     { path: '/', label: 'Inicio', Icon: AnimatedHome },
-    { path: '/pases', label: 'Mis pases', Icon: AnimatedQr },
-    { path: '/dispositivos', label: 'Dispositivos', Icon: Smartphone },
-    // The menu opens from the top-left button, so the resident dock has no «Más».
-    { path: '/telefonos', label: 'Teléfonos', Icon: AnimatedPhoneVolume },
+    { path: '/pases', label: 'Pases', Icon: AnimatedQr },
+    chat ? { path: '/chat', label: 'Chat', Icon: MessagesSquare } : { path: '/telefonos', label: 'Teléfonos', Icon: AnimatedPhoneVolume },
+    { path: '/avisos', label: 'Comunicados', Icon: Megaphone },
   ];
   const current = items.findIndex(item => item.path === path);
   const resident = role !== 'ADMIN' && role !== 'SUPERADMIN';
@@ -66,7 +71,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
           type="button"
           className={`mobile-nav-item${activeIndex === index ? ' active' : ''}`}
           aria-current={destination === path ? 'page' : undefined}
-          aria-label={destination === null ? 'Más opciones' : destination === '/admin/dispositivos' ? 'Casetas' : destination === '/admin/estado' ? 'Estado del sistema' : destination === '/dispositivos' && deviceAlerts ? `${label}: ${deviceAlerts} avisos de seguridad` : label}
+          aria-label={destination === null ? 'Más opciones' : destination && counts[destination] ? `${label}: ${counts[destination]} sin leer` : destination === '/admin/dispositivos' ? 'Casetas' : destination === '/admin/estado' ? 'Estado del sistema' : destination === '/dispositivos' && deviceAlerts ? `${label}: ${deviceAlerts} avisos de seguridad` : label}
           aria-expanded={destination === null ? menuOpen : undefined}
           aria-controls={destination === null ? 'main-navigation' : undefined}
           aria-haspopup={destination === null ? 'dialog' : undefined}
@@ -77,7 +82,7 @@ export function BottomNav({ path, role, menuOpen, onNavigate, onMore, deviceAler
             } else onNavigate(destination);
           }}
         >
-          <span className="mobile-nav-icon" aria-hidden="true"><Icon size={25} strokeWidth={activeIndex === index ? 2.2 : 1.7}/>{destination === '/dispositivos' && deviceAlerts > 0 && <i className="mobile-nav-alert"/>}</span>
+          <span className="mobile-nav-icon" aria-hidden="true"><Icon size={25} strokeWidth={activeIndex === index ? 2.2 : 1.7}/>{destination === '/dispositivos' && deviceAlerts > 0 && <i className="mobile-nav-alert"/>}{destination && !!counts[destination] && <i className="mobile-nav-count">{counts[destination] > 9 ? '9+' : counts[destination]}</i>}</span>
           <span className="mobile-nav-label">{label}</span>
         </button>
       ))}

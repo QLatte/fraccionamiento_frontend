@@ -69,7 +69,9 @@ test('complete real WebAuthn, resident, gate, admin and offline PWA journeys', a
   await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/dashboard-mobile.png', fullPage: true });
-  await page.getByRole('navigation', { name: 'Navegación móvil' }).getByRole('button', { name: 'Dispositivos' }).click();
+  // Dispositivos lives in the side menu on phones; the dock holds Inicio, Pases, Chat and Comunicados.
+  await page.getByRole('button', { name: /^Abrir menú/ }).click();
+  await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('button', { name: 'Dispositivos' }).click();
   await expect(page.getByRole('heading', { name: 'Mis dispositivos' })).toBeVisible();
   await page.getByRole('button', { name: 'Abrir menú' }).click();
   await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click();
@@ -86,7 +88,9 @@ test('complete real WebAuthn, resident, gate, admin and offline PWA journeys', a
   await expect(residentPage.getByRole('button', { name: 'Administración', exact: true })).toHaveCount(0);
   await expect(residentPage.getByRole('button', { name: 'Caseta', exact: true })).toHaveCount(0);
   await expect(residentPage.getByRole('button', { name: /Valeria Pérez/ })).toHaveCount(0);
-  await residentPage.getByRole('navigation', { name: 'Navegación móvil' }).getByRole('button', { name: 'Dispositivos' }).click();
+  // Dispositivos lives in the side menu on phones; the dock holds Inicio, Pases, Chat and Comunicados.
+  await residentPage.getByRole('button', { name: /^Abrir menú/ }).click();
+  await residentPage.getByRole('navigation', { name: 'Navegación principal' }).getByRole('button', { name: 'Dispositivos' }).click();
   await expect(residentPage.getByRole('heading', { name: 'Mi dispositivo', exact: true })).toBeVisible();
   await residentPage.getByRole('button', { name: 'Eliminar Mi dispositivo', exact: true }).click();
   await residentPage.getByRole('button', { name: 'Eliminar llave', exact: true }).click();
