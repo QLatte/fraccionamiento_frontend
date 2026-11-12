@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useAnimate } from 'motion/react-mini';
 import './Splash.css';
 
 // The app tells the splash when its first screen is mounted (see AppReady).
@@ -7,9 +8,7 @@ const listeners = new Set<() => void>();
 export function markAppReady() { if (appReady) return; appReady = true; listeners.forEach(listener => listener()); }
 
 const sessionKey = 'zentry:splash-shown';
-const INTRO_MS = 2600;   // house appears → roof opens → QR rises out toward the camera → name lights up
-const EXIT_MS = 750;     // the dark backdrop drains and uncovers the app
-const MAX_WAIT_MS = 6000;
+const MAX_WAIT_MS = 6000; // never trap anyone behind the animation if the app does not signal readiness
 
 /** Show once per session, never on the public pass link (the visitor needs the QR instantly). */
 export function shouldShowSplash() {
@@ -18,96 +17,96 @@ export function shouldShowSplash() {
   return true;
 }
 
-// A stylised QR (decorative, not scannable): finder patterns plus a few modules on a 21×21 grid.
-const QR_MODULES = [
-  [8, 1], [10, 1], [12, 1], [9, 3], [11, 3], [8, 5], [12, 5], [1, 8], [3, 8], [5, 8], [8, 8], [10, 8], [13, 8], [15, 8], [18, 8],
-  [9, 9], [11, 10], [14, 10], [17, 10], [19, 10], [2, 10], [4, 11], [8, 11], [12, 12], [15, 12], [18, 12], [1, 12], [6, 12],
-  [9, 13], [13, 14], [16, 14], [19, 14], [8, 15], [11, 15], [15, 16], [17, 16], [9, 17], [12, 17], [19, 17], [10, 19], [13, 19], [16, 19], [18, 19],
-];
-const QR_ACCENTS = new Set(['11,10', '15,16', '9,13']);
-
-function QrMark() {
-  const finder = (x: number, y: number) => <g key={`${x}-${y}`}><rect className="splash-qr-ring" x={x + 0.5} y={y + 0.5} width="6" height="6" rx="1.6"/><rect x={x + 2} y={y + 2} width="3" height="3" rx=".8"/></g>;
-  return <svg className="splash-qr-code" viewBox="0 0 21 21" aria-hidden="true">
-    {finder(0, 0)}{finder(14, 0)}{finder(0, 14)}
-    {QR_MODULES.map(([x, y]) => <rect key={`${x},${y}`} className={QR_ACCENTS.has(`${x},${y}`) ? 'splash-qr-accent' : undefined} x={x + 0.06} y={y + 0.06} width=".88" height=".88" rx=".24"/>)}
-  </svg>;
-}
+// Strong ease-out (moves at once, settles softly) and a gentle overshoot for the tile landing.
+const OUT = [0.23, 1, 0.32, 1] as const;
+const LAND = [0.34, 1.36, 0.64, 1] as const;
+// Staggered delays (what Motion's stagger does), written here so the splash only pulls in the 2 KB mini animate.
+const stagger = (step: number, { startDelay = 0, from }: { startDelay?: number; from?: 'center' } = {}) =>
+  (i: number, total: number) => startDelay + step * (from === 'center' ? Math.abs(i - (total - 1) / 2) : i);
 
 /**
- * Minimal isometric house (2.5D, flat shading). Front-bottom corner at (100,165);
- * right wall runs along (0.866,-0.5)·70, left wall along (-0.866,-0.5)·60, walls 55 high,
- * gable roof with its ridge parallel to the right wall. The roof is two slopes hinged on
- * their eaves: they swing open (Splash.css) and light pours out of the house.
- */
-function IsoHouse() {
-  return <svg className="splash-house" viewBox="0 0 200 200" aria-hidden="true">
-    <defs>
-      <linearGradient id="splash-left" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2b7d91"/><stop offset="1" stopColor="#1d5a6c"/></linearGradient>
-      <linearGradient id="splash-right" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a4c5c"/><stop offset="1" stopColor="#123c4a"/></linearGradient>
-      <linearGradient id="splash-roof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#0f3140"/><stop offset="1" stopColor="#0b2632"/></linearGradient>
-      <radialGradient id="splash-inside-glow" cx=".5" cy=".55" r=".6"><stop offset="0" stopColor="#e6fffb"/><stop offset=".5" stopColor="#5fe3d0"/><stop offset="1" stopColor="#1d6f7f"/></radialGradient>
-      <linearGradient id="splash-beam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#bffcf3" stopOpacity=".95"/><stop offset=".45" stopColor="#5fe3d0" stopOpacity=".35"/><stop offset="1" stopColor="#5fe3d0" stopOpacity="0"/></linearGradient>
-    </defs>
-    <ellipse className="splash-house-shadow" cx="104" cy="168" rx="70" ry="18"/>
-    {/* Top of the walls: the lit inside, hidden under the roof until it opens. */}
-    <path className="splash-inside" fill="url(#splash-inside-glow)" d="M100 110 L160.6 75 L108.6 45 L48 80 Z"/>
-    {/* Left wall with the gable end (faces the viewer's left). */}
-    <path fill="url(#splash-left)" d="M100 165 L48 135 L48 80 L74 65 L100 110 Z"/>
-    {/* Right wall (faces the viewer's right). */}
-    <path fill="url(#splash-right)" d="M100 165 L160.6 130 L160.6 75 L100 110 Z"/>
-    <path className="splash-window" d="M66 112 L80 120 L80 104 L66 96 Z"/>
-    <path className="splash-door" d="M123 151.7 L137.6 143.3 L137.6 107.3 L123 115.7 Z"/>
-    {/* Back slope, drawn upright; it starts folded flat (invisible) and lifts open. */}
-    <path className="splash-roof-back splash-roof-lit" d="M44 83 L112 44 L112 1.6 L44 40.6 Z"/>
-    <path className="splash-beam" fill="url(#splash-beam)" d="M52 82 L100 108 L158 76 L150 -46 L60 -46 Z"/>
-    {/* Front slope with its warm eave line; its underside lights up as it tips toward us. */}
-    <g className="splash-roof-front">
-      <path fill="url(#splash-roof)" d="M96 113 L164 74 L138 29 L70 68 Z"/>
-      <path className="splash-roof-glow" d="M96 113 L164 74 L138 29 L70 68 Z"/>
-      <path className="splash-eave" d="M96 113 L164 74"/>
-      <path className="splash-ridge" d="M70 68 L138 29"/>
-    </g>
-    <circle className="splash-spark" cx="88" cy="70" r="1.6"/>
-    <circle className="splash-spark" cx="118" cy="62" r="1.2"/>
-    <circle className="splash-spark" cx="104" cy="76" r="1.8"/>
-    <circle className="splash-spark" cx="128" cy="70" r="1.1"/>
-  </svg>;
-}
-
-/**
- * Opening animation, replacing the loading spinner on app launch: a minimal
- * isometric house opens its roof, light pours out and a holographic QR rises from
- * inside toward the camera while the house sinks back, then the name lights up below.
+ * Opening animation built from the Zentry mark itself: the tile lands, its QR draws in
+ * (the three corners trace themselves, then the modules), a sun scan line sweeps once like
+ * the gate reading a pass, and the name rises letter by letter. About 1.4 s; seen once per
+ * session, so it can afford a little delight.
+ *
+ * Motion's mini animate runs on the Web Animations API, off the main thread: the splash plays
+ * exactly while the app is loading, when the main thread is busiest. Only transform, opacity,
+ * filter and stroke-dashoffset animate.
  */
 export function Splash({ onDone }: { onDone: () => void }) {
+  const [scope, animate] = useAnimate<HTMLDivElement>();
   const [leaving, setLeaving] = useState(false);
-  const reduced = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const left = useRef(false);
 
   useEffect(() => {
-    let introDone = false;
-    let exitTimer = 0;
-    const leave = () => {
-      if (exitTimer) return;
-      setLeaving(true);
-      exitTimer = window.setTimeout(onDone, reduced ? 250 : EXIT_MS);
-    };
-    const maybeLeave = () => { if (introDone && appReady) leave(); };
-    const intro = window.setTimeout(() => { introDone = true; maybeLeave(); }, reduced ? 400 : INTRO_MS);
-    // Never trap the user behind the animation if the app fails to signal readiness.
-    const cap = window.setTimeout(leave, MAX_WAIT_MS);
-    listeners.add(maybeLeave);
-    return () => { listeners.delete(maybeLeave); window.clearTimeout(intro); window.clearTimeout(cap); window.clearTimeout(exitTimer); };
-  }, [onDone, reduced]);
+    // The splash now covers the screen: drop the petrol placeholder painted by index.html.
+    document.documentElement.classList.remove('boot-splash');
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let introDone = false, cancelled = false;
+    let cap = 0;
 
-  return <div className={'splash' + (leaving ? ' splash-leaving' : '')} aria-hidden="true">
-    <div className="splash-fill"/>
-    <div className="splash-content">
-      <div className="splash-stage">
-        <div className="splash-house-wrap"><IsoHouse/></div>
-        <div className="splash-qr"><span className="splash-qr-shine"/><QrMark/></div>
+    async function leave() {
+      if (left.current || cancelled) return;
+      left.current = true; setLeaving(true);
+      // Exit faster than the entrance: the app is ready, get out of the way.
+      if (!reduced) animate('.splash-mark', { transform: ['scale(1)', 'scale(1.06)'], opacity: [1, 0] }, { duration: 0.26, ease: OUT });
+      await animate(scope.current!, { opacity: [1, 0] }, { duration: reduced ? 0.2 : 0.34, ease: OUT, delay: reduced ? 0 : 0.06 });
+      if (!cancelled) onDone();
+    }
+    const maybeLeave = () => { if (introDone && appReady) void leave(); };
+
+    async function intro() {
+      if (reduced) {
+        // Reduced motion: the mark simply appears, no movement.
+        await animate('.splash-mark', { opacity: [0, 1] }, { duration: 0.3 });
+      } else {
+        // 1. The tile lands (never from nothing: from 0.88 with opacity).
+        animate('.splash-tile', { transform: ['scale(0.88)', 'scale(1)'], opacity: [0, 1] }, { duration: 0.5, ease: LAND });
+        // 2. The three corners trace themselves, then their centers settle in.
+        animate('.qr-corner', { strokeDashoffset: [1, 0] }, { duration: 0.46, ease: OUT, delay: stagger(0.07, { startDelay: 0.16 }) });
+        animate('.qr-eye', { transform: ['scale(0.4)', 'scale(1)'], opacity: [0, 1] }, { duration: 0.32, ease: OUT, delay: stagger(0.07, { startDelay: 0.42 }) });
+        // 3. The modules fill in from the center outward.
+        animate('.qr-bit', { strokeDashoffset: [1, 0], opacity: [0, 1] }, { duration: 0.3, ease: OUT, delay: stagger(0.035, { startDelay: 0.5, from: 'center' }) });
+        // 4. One scan sweep in sun color, like the gate reading a pass.
+        animate('.splash-scan', { transform: ['translateY(-8%)', 'translateY(108%)'], opacity: [0, 1, 1, 0] }, { duration: 0.62, ease: [0.65, 0, 0.35, 1], delay: 0.72 });
+        // 5. The name rises letter by letter; a little blur bridges each letter in. The sun dot lands last.
+        animate('.splash-letter', { transform: ['translateY(10px)', 'translateY(0)'], opacity: [0, 1], filter: ['blur(4px)', 'blur(0px)'] }, { duration: 0.42, ease: OUT, delay: stagger(0.035, { startDelay: 0.62 }) });
+        await animate('.splash-dot', { transform: ['scale(0.5)', 'scale(1)'], opacity: [0, 1] }, { duration: 0.36, ease: LAND, delay: 0.98 });
+      }
+      introDone = true; maybeLeave();
+    }
+
+    void intro();
+    cap = window.setTimeout(() => void leave(), MAX_WAIT_MS);
+    listeners.add(maybeLeave);
+    return () => { cancelled = true; listeners.delete(maybeLeave); window.clearTimeout(cap); };
+  }, [animate, onDone, scope]);
+
+  return <div ref={scope} className={'splash' + (leaving ? ' splash-leaving' : '')} aria-hidden="true">
+    <div className="splash-mark">
+      <div className="splash-tile">
+        {/* The Zentry mark (same glyph as the logo). pathLength=1 lets each stroke draw in by its dash offset. */}
+        <svg className="splash-qr" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.7" strokeLinecap="square">
+          <path className="qr-corner" pathLength={1} d="M3 3h9v9H3z"/>
+          <path className="qr-corner" pathLength={1} d="M20 3h9v9h-9z"/>
+          <path className="qr-corner" pathLength={1} d="M3 20h9v9H3z"/>
+          <rect className="qr-eye" x="6.5" y="6.5" width="2" height="2" fill="currentColor" stroke="none"/>
+          <rect className="qr-eye" x="23.5" y="6.5" width="2" height="2" fill="currentColor" stroke="none"/>
+          <rect className="qr-eye" x="6.5" y="23.5" width="2" height="2" fill="currentColor" stroke="none"/>
+          <path className="qr-bit" pathLength={1} d="M16 7V10"/>
+          <path className="qr-bit" pathLength={1} d="M3 16H7"/>
+          <path className="qr-bit" pathLength={1} d="M13 16H18V20H16"/>
+          <path className="qr-bit qr-sun" pathLength={1} d="M22 16H26"/>
+          <path className="qr-bit" pathLength={1} d="M22 16V23H29"/>
+          <path className="qr-bit" pathLength={1} d="M16 25V29H23V27"/>
+          <path className="qr-bit" pathLength={1} d="M27 20h2v2h-2z"/>
+        </svg>
+        <span className="splash-scan"/>
       </div>
-      <div className="splash-name"><span className="splash-name-text">Zentry<span className="splash-dot">.</span></span></div>
+      <div className="splash-name" aria-label="Zentry">
+        {'Zentry'.split('').map((c, i) => <span key={i} className="splash-letter">{c}</span>)}<span className="splash-dot">.</span>
+      </div>
     </div>
   </div>;
 }

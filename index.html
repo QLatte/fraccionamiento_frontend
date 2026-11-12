@@ -12,6 +12,9 @@
     <link rel="apple-touch-icon" href="/icon-192.png"/>
     <link rel="manifest" href="/manifest.webmanifest"/>
     <title>Zentry | Acceso a tu comunidad</title>
+    <!-- Before the app's code arrives, paint the splash's petrol instead of a white flash (same rule as shouldShowSplash). -->
+    <style>html.boot-splash { background: #123c4a; }</style>
+    <script>try { if (!location.pathname.startsWith('/p/') && !sessionStorage.getItem('zentry:splash-shown')) document.documentElement.classList.add('boot-splash'); } catch (e) {}</script>
   </head>
   <body>
     <div id="root"></div>
