@@ -1,30 +1,39 @@
-/* Opening animation: the Zentry mark assembles itself on a deep petrol backdrop (see Splash.tsx).
-   Initial states live here so the first paint already shows the right frame (nothing flashes in
-   before the animation starts); Motion animates from them. */
-.splash { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; background: radial-gradient(90% 70% at 50% 38%, #1d5568 0%, #123c4a 48%, #0b2630 100%); color: #fff; }
+/* Opening animation (see Splash.tsx): pieces fly in and lock into a QR, a scan reads it, the name
+   rises, then the screen opens like a gate. Initial states live here so the first paint is already
+   the right frame; Motion animates from them. Only transform, opacity, filter and fill animate. */
+.splash { position: fixed; inset: 0; z-index: 2000; overflow: hidden; color: #f2f6f8; }
 .splash-leaving { pointer-events: none; }
 
-.splash-mark { display: grid; justify-items: center; gap: 26px; }
+/* Each leaf is half the screen and shows its half of a full-screen scene. */
+.splash-leaf { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; }
+.splash-leaf-left { left: 0; box-shadow: 1px 0 0 #0b2630; }
+.splash-leaf-right { right: 0; }
+.splash-scene { position: absolute; top: 0; bottom: 0; width: 200%; display: grid; place-items: center; background: radial-gradient(85% 65% at 50% 40%, #1f5a6e 0%, #123c4a 50%, #0a232c 100%); }
+.splash-leaf-left .splash-scene { left: 0; }
+.splash-leaf-right .splash-scene { right: 0; }
+/* The leaves cast a soft shadow on the app as they open. */
+.splash-leaving .splash-leaf-left { box-shadow: 18px 0 40px -12px #04161d99; }
+.splash-leaving .splash-leaf-right { box-shadow: -18px 0 40px -12px #04161d99; }
 
-/* The tile keeps the logo's shape (rounded top, tighter bottom corners), with a soft inner light. */
-.splash-tile { position: relative; display: grid; place-items: center; width: 116px; height: 116px; overflow: hidden; border-radius: 34px 34px 12px 12px; background: linear-gradient(160deg, #23637a 0%, #164556 100%); box-shadow: inset 0 1px 0 #ffffff26, 0 24px 48px -18px #04161dcc; opacity: 0; transform: scale(.88); }
-.splash-qr { width: 66px; height: 66px; color: #f2f6f8; overflow: visible; }
-.qr-corner, .qr-bit { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.qr-bit { opacity: 0; }
-.qr-eye { opacity: 0; transform-box: fill-box; transform-origin: center; }
-.qr-sun { stroke: #e6b85c; }
+/* Light through the seam when the gate starts to open. */
+.splash-seam { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; margin-left: -1.5px; background: linear-gradient(180deg, transparent, #f3cf86 30%, #fff6dd 50%, #f3cf86 70%, transparent); box-shadow: 0 0 24px 6px #e6b85c66; opacity: 0; transform: scaleY(0); }
 
-/* The scan line: the element spans the tile, the visible line is its top edge (moves with transform only). */
-.splash-scan { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
-.splash-scan::before { content: ''; position: absolute; left: 10%; right: 10%; top: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, #e6b85c, transparent); box-shadow: 0 0 14px 2px #e6b85c66; }
+.splash-stage { display: grid; justify-items: center; gap: 30px; }
+.splash-code-wrap { position: relative; width: 168px; height: 168px; }
+.splash-code { display: block; width: 100%; height: 100%; overflow: visible; fill: #f2f6f8; }
+.splash-piece { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.splash-accent { fill: #e6b85c; }
 
-.splash-name { display: flex; align-items: baseline; font-family: var(--display); font-size: 38px; font-weight: 600; letter-spacing: -.03em; line-height: 1; }
+/* Scan line: the element spans the code, the visible line is its top edge (moves with transform only). */
+.splash-scan { position: absolute; inset: -6% -10%; opacity: 0; pointer-events: none; }
+.splash-scan::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, #e6b85c, transparent); box-shadow: 0 0 16px 3px #e6b85c66; }
+
+.splash-name { display: flex; align-items: baseline; font-family: var(--display); font-size: 40px; font-weight: 600; letter-spacing: -.03em; line-height: 1; }
 .splash-letter { display: inline-block; opacity: 0; }
 .splash-dot { display: inline-block; color: #e6b85c; opacity: 0; transform-origin: 50% 80%; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Static mark that fades in and out as a whole. */
-  .splash-mark { opacity: 0; }
-  .splash-tile, .qr-eye, .qr-bit, .splash-letter, .splash-dot { opacity: 1; transform: none; }
-  .qr-corner, .qr-bit { stroke-dashoffset: 0; }
+  /* Static code and name that fade in and out as a whole. */
+  .splash-stage { opacity: 0; }
+  .splash-piece, .splash-letter, .splash-dot { opacity: 1; transform: none; }
 }

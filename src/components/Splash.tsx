@@ -17,22 +17,62 @@ export function shouldShowSplash() {
   return true;
 }
 
-// Strong ease-out (moves at once, settles softly) and a gentle overshoot for the tile landing.
+// Strong ease-out (moves at once, settles softly); the iOS drawer curve for the gate leaves.
 const OUT = [0.23, 1, 0.32, 1] as const;
-const LAND = [0.34, 1.36, 0.64, 1] as const;
-// Staggered delays (what Motion's stagger does), written here so the splash only pulls in the 2 KB mini animate.
-const stagger = (step: number, { startDelay = 0, from }: { startDelay?: number; from?: 'center' } = {}) =>
-  (i: number, total: number) => startDelay + step * (from === 'center' ? Math.abs(i - (total - 1) / 2) : i);
+const GATE = [0.32, 0.72, 0, 1] as const;
+
+// A stylised QR (decorative, not scannable) on a 21×21 grid: three finder patterns and loose modules.
+const MODULES: [number, number][] = [
+  [8, 1], [10, 1], [12, 1], [9, 3], [11, 3], [8, 5], [12, 5], [1, 8], [3, 8], [5, 8], [8, 8], [10, 8], [13, 8], [15, 8], [18, 8],
+  [9, 9], [11, 10], [14, 10], [17, 10], [19, 10], [2, 10], [4, 11], [8, 11], [12, 12], [15, 12], [18, 12], [1, 12], [6, 12],
+  [9, 13], [13, 14], [16, 14], [19, 14], [8, 15], [11, 15], [15, 16], [17, 16], [9, 17], [12, 17], [19, 17], [10, 19], [13, 19], [16, 19], [18, 19],
+  [10, 6], [14, 4], [16, 2], [19, 5], [3, 15], [5, 18], [6, 16],
+];
+const ACCENTS = new Set(['11,10', '15,16', '9,13']);
+const FINDERS: [number, number][] = [[0, 0], [14, 0], [0, 14]];
+// Every piece of the code with its centre, so motion can be ordered by distance from the middle.
+const PIECES = [
+  ...FINDERS.map(([x, y]) => ({ kind: 'finder' as const, x, y, cx: x + 3.5, cy: y + 3.5 })),
+  ...MODULES.map(([x, y]) => ({ kind: 'module' as const, x, y, cx: x + 0.5, cy: y + 0.5 })),
+];
+// Deterministic scatter (same on every render and in both gate leaves).
+function scatter(i: number) {
+  let s = ((i + 1) * 2654435761) >>> 0;
+  const r = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 10000) / 10000; };
+  const angle = r() * Math.PI * 2, far = 18 + r() * 22; // grid units (one unit ≈ 8 px on screen)
+  return { dx: Math.cos(angle) * far, dy: Math.sin(angle) * far, rot: (r() - 0.5) * 220, scale: 0.4 + r() * 0.5 };
+}
+const distance = (p: { cx: number; cy: number }) => Math.hypot(p.cx - 10.5, p.cy - 10.5);
+
+function Code() {
+  return <svg className="splash-code" viewBox="0 0 21 21" aria-hidden="true">
+    {PIECES.map((p, i) => p.kind === 'finder'
+      ? <g key={i} className="splash-piece splash-finder" data-i={i}>
+          <rect x={p.x + 0.5} y={p.y + 0.5} width="6" height="6" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1"/>
+          <rect x={p.x + 2} y={p.y + 2} width="3" height="3" rx=".7" fill="currentColor"/>
+        </g>
+      : <rect key={i} className={'splash-piece splash-module' + (ACCENTS.has(`${p.x},${p.y}`) ? ' splash-accent' : '')} data-i={i} x={p.x + 0.07} y={p.y + 0.07} width=".86" height=".86" rx=".24"/>)}
+  </svg>;
+}
+
+/** What each gate leaf shows: the whole scene, cut in half by the leaf. */
+function Scene() {
+  return <div className="splash-scene">
+    <div className="splash-stage">
+      <div className="splash-code-wrap"><Code/><span className="splash-scan"/></div>
+      <div className="splash-name">{'Zentry'.split('').map((c, i) => <span key={i} className="splash-letter" data-i={i}>{c}</span>)}<span className="splash-dot">.</span></div>
+    </div>
+  </div>;
+}
 
 /**
- * Opening animation built from the Zentry mark itself: the tile lands, its QR draws in
- * (the three corners trace themselves, then the modules), a sun scan line sweeps once like
- * the gate reading a pass, and the name rises letter by letter. About 1.4 s; seen once per
- * session, so it can afford a little delight.
+ * Opening animation, about «access»: scattered pieces fly in from all over the screen and lock
+ * into a QR code; a sun scan line reads it and a wave of light runs through it (access granted);
+ * the name rises. Then the screen opens like a gate: light through the seam, two leaves part and
+ * reveal the app. ~1.6 s in, ~0.55 s out; seen once per session.
  *
- * Motion's mini animate runs on the Web Animations API, off the main thread: the splash plays
- * exactly while the app is loading, when the main thread is busiest. Only transform, opacity,
- * filter and stroke-dashoffset animate.
+ * Motion's mini animate runs on the Web Animations API, off the main thread, which matters
+ * because the splash plays while the app loads. Only transform, opacity, filter and fill animate.
  */
 export function Splash({ onDone }: { onDone: () => void }) {
   const [scope, animate] = useAnimate<HTMLDivElement>();
@@ -42,72 +82,62 @@ export function Splash({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     // The splash now covers the screen: drop the petrol placeholder painted by index.html.
     document.documentElement.classList.remove('boot-splash');
+    const root = scope.current!;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const all = (selector: string) => Array.from(root.querySelectorAll<Element>(selector));
+    const index = (el: Element) => Number(el.getAttribute('data-i'));
     let introDone = false, cancelled = false;
-    let cap = 0;
 
     async function leave() {
       if (left.current || cancelled) return;
       left.current = true; setLeaving(true);
-      // Exit faster than the entrance: the app is ready, get out of the way.
-      if (!reduced) animate('.splash-mark', { transform: ['scale(1)', 'scale(1.06)'], opacity: [1, 0] }, { duration: 0.26, ease: OUT });
-      await animate(scope.current!, { opacity: [1, 0] }, { duration: reduced ? 0.2 : 0.34, ease: OUT, delay: reduced ? 0 : 0.06 });
+      if (reduced) { await animate(root, { opacity: [1, 0] }, { duration: 0.25 }); if (!cancelled) onDone(); return; }
+      // Light slips through the seam, then the two leaves part like a gate.
+      animate('.splash-seam', { transform: ['scaleY(0)', 'scaleY(1)'], opacity: [0, 1, 0] }, { duration: 0.5, ease: OUT });
+      animate('.splash-leaf-left', { transform: ['translateX(0)', 'translateX(-101%)'] }, { duration: 0.55, ease: GATE, delay: 0.08 });
+      await animate('.splash-leaf-right', { transform: ['translateX(0)', 'translateX(101%)'] }, { duration: 0.55, ease: GATE, delay: 0.08 });
       if (!cancelled) onDone();
     }
     const maybeLeave = () => { if (introDone && appReady) void leave(); };
 
     async function intro() {
       if (reduced) {
-        // Reduced motion: the mark simply appears, no movement.
-        await animate('.splash-mark', { opacity: [0, 1] }, { duration: 0.3 });
+        await animate('.splash-stage', { opacity: [0, 1] }, { duration: 0.3 });
       } else {
-        // 1. The tile lands (never from nothing: from 0.88 with opacity).
-        animate('.splash-tile', { transform: ['scale(0.88)', 'scale(1)'], opacity: [0, 1] }, { duration: 0.5, ease: LAND });
-        // 2. The three corners trace themselves, then their centers settle in.
-        animate('.qr-corner', { strokeDashoffset: [1, 0] }, { duration: 0.46, ease: OUT, delay: stagger(0.07, { startDelay: 0.16 }) });
-        animate('.qr-eye', { transform: ['scale(0.4)', 'scale(1)'], opacity: [0, 1] }, { duration: 0.32, ease: OUT, delay: stagger(0.07, { startDelay: 0.42 }) });
-        // 3. The modules fill in from the center outward.
-        animate('.qr-bit', { strokeDashoffset: [1, 0], opacity: [0, 1] }, { duration: 0.3, ease: OUT, delay: stagger(0.035, { startDelay: 0.5, from: 'center' }) });
-        // 4. One scan sweep in sun color, like the gate reading a pass.
-        animate('.splash-scan', { transform: ['translateY(-8%)', 'translateY(108%)'], opacity: [0, 1, 1, 0] }, { duration: 0.62, ease: [0.65, 0, 0.35, 1], delay: 0.72 });
-        // 5. The name rises letter by letter; a little blur bridges each letter in. The sun dot lands last.
-        animate('.splash-letter', { transform: ['translateY(10px)', 'translateY(0)'], opacity: [0, 1], filter: ['blur(4px)', 'blur(0px)'] }, { duration: 0.42, ease: OUT, delay: stagger(0.035, { startDelay: 0.62 }) });
-        await animate('.splash-dot', { transform: ['scale(0.5)', 'scale(1)'], opacity: [0, 1] }, { duration: 0.36, ease: LAND, delay: 0.98 });
+        // 1. Pieces fly in from all over and lock into place, the middle first.
+        for (const el of all('.splash-piece')) {
+          const i = index(el), p = PIECES[i], s = scatter(i);
+          animate(el, {
+            transform: [`translate(${s.dx}px, ${s.dy}px) rotate(${s.rot}deg) scale(${s.scale})`, 'translate(0px, 0px) rotate(0deg) scale(1)'],
+            opacity: [0, 1],
+          }, { duration: p.kind === 'finder' ? 0.62 : 0.55, ease: OUT, delay: 0.05 + distance(p) * 0.028 });
+        }
+        // 2. One scan sweep reads the code...
+        animate('.splash-scan', { transform: ['translateY(-6%)', 'translateY(106%)'], opacity: [0, 1, 1, 0] }, { duration: 0.6, ease: [0.65, 0, 0.35, 1], delay: 0.62 });
+        // ...and a wave of sun light runs through it from the middle: access granted.
+        for (const el of all('.splash-module:not(.splash-accent)')) {
+          animate(el, { fill: ['#f2f6f8', '#f3cf86', '#f2f6f8'] }, { duration: 0.46, ease: OUT, delay: 0.95 + distance(PIECES[index(el)]) * 0.022 });
+        }
+        // 3. The name rises letter by letter; a little blur bridges each letter in. The sun dot lands last.
+        for (const el of all('.splash-letter')) {
+          animate(el, { transform: ['translateY(12px)', 'translateY(0px)'], opacity: [0, 1], filter: ['blur(5px)', 'blur(0px)'] }, { duration: 0.44, ease: OUT, delay: 0.9 + index(el) * 0.04 });
+        }
+        await animate('.splash-dot', { transform: ['scale(0.4)', 'scale(1.15)', 'scale(1)'], opacity: [0, 1, 1] }, { duration: 0.4, ease: OUT, delay: 1.22 });
       }
       introDone = true; maybeLeave();
     }
 
     void intro();
-    cap = window.setTimeout(() => void leave(), MAX_WAIT_MS);
+    const cap = window.setTimeout(() => void leave(), MAX_WAIT_MS);
     listeners.add(maybeLeave);
     return () => { cancelled = true; listeners.delete(maybeLeave); window.clearTimeout(cap); };
   }, [animate, onDone, scope]);
 
   return <div ref={scope} className={'splash' + (leaving ? ' splash-leaving' : '')} aria-hidden="true">
-    <div className="splash-mark">
-      <div className="splash-tile">
-        {/* The Zentry mark (same glyph as the logo). pathLength=1 lets each stroke draw in by its dash offset. */}
-        <svg className="splash-qr" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.7" strokeLinecap="square">
-          <path className="qr-corner" pathLength={1} d="M3 3h9v9H3z"/>
-          <path className="qr-corner" pathLength={1} d="M20 3h9v9h-9z"/>
-          <path className="qr-corner" pathLength={1} d="M3 20h9v9H3z"/>
-          <rect className="qr-eye" x="6.5" y="6.5" width="2" height="2" fill="currentColor" stroke="none"/>
-          <rect className="qr-eye" x="23.5" y="6.5" width="2" height="2" fill="currentColor" stroke="none"/>
-          <rect className="qr-eye" x="6.5" y="23.5" width="2" height="2" fill="currentColor" stroke="none"/>
-          <path className="qr-bit" pathLength={1} d="M16 7V10"/>
-          <path className="qr-bit" pathLength={1} d="M3 16H7"/>
-          <path className="qr-bit" pathLength={1} d="M13 16H18V20H16"/>
-          <path className="qr-bit qr-sun" pathLength={1} d="M22 16H26"/>
-          <path className="qr-bit" pathLength={1} d="M22 16V23H29"/>
-          <path className="qr-bit" pathLength={1} d="M16 25V29H23V27"/>
-          <path className="qr-bit" pathLength={1} d="M27 20h2v2h-2z"/>
-        </svg>
-        <span className="splash-scan"/>
-      </div>
-      <div className="splash-name" aria-label="Zentry">
-        {'Zentry'.split('').map((c, i) => <span key={i} className="splash-letter">{c}</span>)}<span className="splash-dot">.</span>
-      </div>
-    </div>
+    {/* Two leaves, each showing half of the same scene: they part at the end like a gate. */}
+    <div className="splash-leaf splash-leaf-left"><Scene/></div>
+    <div className="splash-leaf splash-leaf-right"><Scene/></div>
+    <span className="splash-seam"/>
   </div>;
 }
 
