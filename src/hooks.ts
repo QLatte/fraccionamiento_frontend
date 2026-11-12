@@ -1,15 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, ApiError, errorText } from './api';
+import { api, ApiError, currentToken, errorText } from './api';
+
+/**
+ * The last answer of each query, so returning to a screen shows what was there at once and
+ * refreshes behind it (instead of a skeleton on every visit). Keyed by session, so another
+ * account or profile never sees it. Finance is left out: it has its own strict invalidation.
+ */
+const remembered = new Map<string, unknown>();
+const memoKey = (path: string) => `${currentToken() ?? ''}|${path}`;
+const memorable = (path: string) => !path.startsWith('/billing/');
+function remember(path: string, data: unknown) {
+  if (!memorable(path)) return;
+  const key = memoKey(path);
+  remembered.delete(key); remembered.set(key, data);
+  if (remembered.size > 80) remembered.delete(remembered.keys().next().value!);
+}
+const recall = <T,>(path: string | null) => path && memorable(path) ? remembered.get(memoKey(path)) as T | undefined : undefined;
 export function useQuery<T>(path: string | null, interval = 0) {
-  const [state, setState] = useState<{ path: string | null; data?: T; error: string; loading: boolean }>({ path, error: '', loading: true });
+  const [state, setState] = useState<{ path: string | null; data?: T; error: string; loading: boolean }>(() => ({ path, data: recall<T>(path), error: '', loading: true }));
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion(v => v + 1), []);
   useEffect(() => {
     if (!path) { setState({ path, error: '', loading: false }); return; }
     const controller = new AbortController();
-    setState(s => ({ path, data: s.path === path ? s.data : undefined, error: '', loading: true }));
-    api<T>(path, { signal: controller.signal }).then(data => { if (!controller.signal.aborted) setState({ path, data, error: '', loading: false }); })
-      .catch(e => { if (!controller.signal.aborted) setState(s => ({ ...s, data: e instanceof ApiError && [401, 403].includes(e.status) ? undefined : s.data, error: errorText(e), loading: false })); });
+    setState(s => ({ path, data: s.path === path ? s.data : recall<T>(path), error: '', loading: true }));
+    api<T>(path, { signal: controller.signal }).then(data => { if (!controller.signal.aborted) { remember(path, data); setState({ path, data, error: '', loading: false }); } })
+      .catch(e => {
+        if (controller.signal.aborted) return;
+        const denied = e instanceof ApiError && [401, 403].includes(e.status);
+        if (denied) remembered.delete(memoKey(path));
+        setState(s => ({ ...s, data: denied ? undefined : s.data, error: errorText(e), loading: false }));
+      });
     return () => controller.abort();
   }, [path, version]);
   useEffect(() => { if (!interval) return; const id = setInterval(() => { if (document.visibilityState === 'visible' && navigator.onLine) refresh(); }, interval); return () => clearInterval(id); }, [interval, refresh]);

@@ -1050,3 +1050,15 @@ textarea.pass-notes { min-height: 72px; resize: vertical; }
 }
 /* The sun as signature: a thin sun stripe under the petrol edge of the pass ticket. */
 .qr-ticket { background: linear-gradient(var(--sun), var(--sun)) top / 100% 3px no-repeat, #fff; }
+
+/* Screen change: the new screen fades in and rises 4px. Short (160ms) because it happens tens of
+   times a day; enter only, the old screen leaves at once. It ends at transform: none so nothing
+   inside keeps a transformed containing block. */
+.route-enter { min-width: 0; transition: opacity 160ms var(--ease-out-strong), transform 160ms var(--ease-out-strong); }
+@starting-style { .route-enter { opacity: 0; transform: translateY(4px); } }
+/* From the side menu: wait until the menu is already on its way out. */
+.route-enter.from-menu { transition-delay: 90ms; }
+@media (prefers-reduced-motion: reduce) {
+  .route-enter { transition: opacity 160ms ease; }
+  @starting-style { .route-enter { transform: none; } }
+}

@@ -24,9 +24,7 @@
 @keyframes home-live { from { transform: scale(1); opacity: .55; } 70%, to { transform: scale(2.6); opacity: 0; } }
 
 .home-list, .home-feed { margin: 0; padding: 0; list-style: none; }
-.home-list > li { animation: home-row-enter var(--motion-standard) var(--motion-ease) both; animation-delay: calc(var(--i, 0) * 35ms + 80ms); }
-.home-feed > li { animation: home-row-enter var(--motion-standard) var(--motion-ease) both; animation-delay: calc(var(--i, 0) * 35ms + 120ms); }
-@keyframes home-row-enter { from { opacity: 0; transform: translateY(6px); } }
+/* No per-row entrance: Inicio is opened many times a day, and the screen itself already enters. */
 
 .home-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px 8px; border-radius: 14px; }
 .home-row.action { grid-template-columns: 40px minmax(0, 1fr) auto 18px; width: 100%; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; transition: background-color var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease); }
@@ -50,7 +48,7 @@
 .home-feed .activity-item strong { font-size: 14px; }
 
 /* Invite: the one brand-colored surface on the screen, so the main action is obvious. */
-.home-invite { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, .8fr); align-items: end; gap: 8px; min-height: 230px; padding: 26px; border-radius: 22px; background: radial-gradient(70% 80% at 92% 100%, #e6b85c2e 0%, transparent 70%), radial-gradient(120% 120% at 100% 0%, #24627a 0%, var(--brand) 52%, #0c2c37 100%); box-shadow: 0 18px 40px -22px #0c2c37b3, inset 0 1px 0 #ffffff1a; color: #fff; overflow: hidden; animation: home-panel-enter var(--motion-standard) var(--motion-ease) 60ms both; }
+.home-invite { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, .8fr); align-items: end; gap: 8px; min-height: 230px; padding: 26px; border-radius: 22px; background: radial-gradient(70% 80% at 92% 100%, #e6b85c2e 0%, transparent 70%), radial-gradient(120% 120% at 100% 0%, #24627a 0%, var(--brand) 52%, #0c2c37 100%); box-shadow: 0 18px 40px -22px #0c2c37b3, inset 0 1px 0 #ffffff1a; color: #fff; overflow: hidden; }
 .home-invite h2 { margin: 0 0 8px; color: #fff; font-size: clamp(24px, 2.1vw, 30px); font-weight: 500; letter-spacing: -.035em; line-height: 1.15; }
 .home-invite p { margin: 0 0 20px; max-width: 34ch; color: #d2e3e9; font-size: 14px; line-height: 1.6; }
 .home-invite .button { background: #fff; color: var(--brand); border-color: #fff; border-radius: 28px; padding-inline: 20px; transition: transform var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease); }
@@ -96,7 +94,6 @@
   .home-invite .community-art { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .home-invite, .home-list > li, .home-feed > li { animation: none; }
   .home-live.on::after { animation: none; opacity: 0; }
   .home-row.skeleton .home-avatar, .home-row.skeleton i { animation: none; }
   .home-row.action, .home-invite .button { transition: none; }
