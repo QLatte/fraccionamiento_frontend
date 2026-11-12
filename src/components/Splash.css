@@ -20,9 +20,10 @@
 
 .splash-stage { display: grid; justify-items: center; gap: 30px; }
 .splash-code-wrap { position: relative; width: 168px; height: 168px; }
-.splash-code { display: block; width: 100%; height: 100%; overflow: visible; fill: #f2f6f8; }
-.splash-piece { opacity: 0; transform-box: fill-box; transform-origin: center; }
-.splash-accent { fill: #e6b85c; }
+.zentry-code { display: block; overflow: visible; fill: #f2f6f8; color: #f2f6f8; }
+.zc-accent { fill: #e6b85c; }
+.splash-code { width: 100%; height: 100%; }
+.splash .zc-piece { opacity: 0; transform-box: fill-box; transform-origin: center; }
 
 /* Scan line: the element spans the code, the visible line is its top edge (moves with transform only). */
 .splash-scan { position: absolute; inset: -6% -10%; opacity: 0; pointer-events: none; }
@@ -35,5 +36,5 @@
 @media (prefers-reduced-motion: reduce) {
   /* Static code and name that fade in and out as a whole. */
   .splash-stage { opacity: 0; }
-  .splash-piece, .splash-letter, .splash-dot { opacity: 1; transform: none; }
+  .splash .zc-piece, .splash-letter, .splash-dot { opacity: 1; transform: none; }
 }

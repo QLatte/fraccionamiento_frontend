@@ -472,25 +472,10 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
 .update-notice button { background: transparent; border: 0; min-height: 44px; color: inherit; font-weight: 650; text-decoration: underline; }
 
 /* Authentication */
-.login-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 100dvh; background: #fff; }
-.login-story { display: flex; flex-direction: column; background: var(--brand); color: #fff; padding: 42px clamp(28px, 4vw, 64px) 30px; }
-.story-body { margin: auto 0; padding: 56px 0 24px; }
-.story-body h1 { max-width: 12ch; font-size: clamp(38px, 4.3vw, 64px); font-weight: 500; letter-spacing: -.045em; line-height: 1.06; }
-.story-body > p { color: #d2e3e9; max-width: 36ch; font-size: 17px; margin: 24px 0 8px; }
-.story-body .community-art { max-width: 520px; margin: 12px auto 0; }
-.story-footer { display: flex; align-items: center; gap: 9px; color: #d2e3e9; font-size: 13px; }
-.login-form-side { width: 100%; max-width: 490px; padding: 48px 36px; margin: auto; }
-.login-form-side h2 { font-size: 34px; }
-.login-form-side > p { margin-bottom: 26px; }
-.login-title-icon { display: grid; place-items: center; width: 58px; height: 58px; margin: 0 0 24px; border-radius: 16px; background: var(--soft); color: var(--brand); }
-.login-form-side form { margin-top: 24px; }
-.login-form-side .button.full { margin-top: 6px; }
 .login-switch { margin-top: 24px; text-align: center; font-size: 14px; color: var(--muted); }
 .login-switch button, .subtle-link { border: 0; background: transparent; color: var(--brand); font-size: 14px; min-height: 44px; padding: 10px 6px; text-decoration: underline; text-underline-offset: 4px; }
 .login-switch button { font-weight: 650; }
 .subtle-link { display: block; margin: 8px auto; }
-.login-bottom { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
-.mobile-brand { display: none; }
 .help-card { border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin: 18px 0; }
 .help-card h3 { margin-top: 14px; }
 .help-card p { margin: 0; }
@@ -632,8 +617,6 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
   .property-select { margin-right: auto; }
   .app-main main { padding-bottom: calc(156px + env(safe-area-inset-bottom)); }
   .stat-card .stat-icon { display: grid; }
-  .login-story { padding-inline: 28px; }
-  .login-form-side { padding-inline: 28px; }
 }
 @media (max-width: 700px) {
   .topbar { gap: 8px; padding: max(8px, env(safe-area-inset-top)) 16px 8px; min-height: 62px; }
@@ -686,12 +669,6 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
   .home-bottom { grid-template-columns: 1fr; gap: 10px; }
   .app-footer { font-size: 12px; }
   .app-footer > span:last-child { display: none; }
-  .login-layout { display: block; background: var(--canvas); padding: 24px 18px; }
-  .login-story { display: none; }
-  .login-form-side { max-width: 480px; padding: 28px 24px; background: #fff; border: 1px solid var(--line); border-radius: 20px; }
-  .mobile-brand { display: block; margin-bottom: 32px; }
-  .login-title-icon { width: 50px; height: 50px; margin-bottom: 20px; }
-  .login-form-side h2 { font-size: 30px; }
   .modal { --modal-padding: 18px; width: calc(100% - 24px); max-height: calc(100dvh - 24px); border-radius: 18px; }
   .modal-top { padding-block: 14px; gap: 12px; }
   .modal-content { padding-top: 20px; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
@@ -741,8 +718,6 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
   .stat-card .stat-icon { display: none; }
   .welcome-banner { padding: 24px 20px; }
   .welcome-banner .community-art { margin-top: 8px; }
-  .login-layout { padding: 12px; }
-  .login-form-side { padding: 24px 18px; }
   .review-card dl > div, .details > div { flex-direction: column; gap: 4px; }
   .review-card dd, .details dd { text-align: left; max-width: 100%; }
 }

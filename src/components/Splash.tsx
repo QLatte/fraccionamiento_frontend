@@ -44,14 +44,15 @@ function scatter(i: number) {
 }
 const distance = (p: { cx: number; cy: number }) => Math.hypot(p.cx - 10.5, p.cy - 10.5);
 
-function Code() {
-  return <svg className="splash-code" viewBox="0 0 21 21" aria-hidden="true">
+/** The Zentry code (decorative QR) shared by the splash and the login. */
+export function ZentryCode({ className = '' }: { className?: string }) {
+  return <svg className={'zentry-code ' + className} viewBox="0 0 21 21" aria-hidden="true">
     {PIECES.map((p, i) => p.kind === 'finder'
-      ? <g key={i} className="splash-piece splash-finder" data-i={i}>
+      ? <g key={i} className="zc-piece zc-finder" data-i={i}>
           <rect x={p.x + 0.5} y={p.y + 0.5} width="6" height="6" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1"/>
           <rect x={p.x + 2} y={p.y + 2} width="3" height="3" rx=".7" fill="currentColor"/>
         </g>
-      : <rect key={i} className={'splash-piece splash-module' + (ACCENTS.has(`${p.x},${p.y}`) ? ' splash-accent' : '')} data-i={i} x={p.x + 0.07} y={p.y + 0.07} width=".86" height=".86" rx=".24"/>)}
+      : <rect key={i} className={'zc-piece zc-module' + (ACCENTS.has(`${p.x},${p.y}`) ? ' zc-accent' : '')} data-i={i} x={p.x + 0.07} y={p.y + 0.07} width=".86" height=".86" rx=".24"/>)}
   </svg>;
 }
 
@@ -59,7 +60,7 @@ function Code() {
 function Scene() {
   return <div className="splash-scene">
     <div className="splash-stage">
-      <div className="splash-code-wrap"><Code/><span className="splash-scan"/></div>
+      <div className="splash-code-wrap"><ZentryCode className="splash-code"/><span className="splash-scan"/></div>
       <div className="splash-name">{'Zentry'.split('').map((c, i) => <span key={i} className="splash-letter" data-i={i}>{c}</span>)}<span className="splash-dot">.</span></div>
     </div>
   </div>;
@@ -105,7 +106,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
         await animate('.splash-stage', { opacity: [0, 1] }, { duration: 0.3 });
       } else {
         // 1. Pieces fly in from all over and lock into place, the middle first.
-        for (const el of all('.splash-piece')) {
+        for (const el of all('.zc-piece')) {
           const i = index(el), p = PIECES[i], s = scatter(i);
           animate(el, {
             transform: [`translate(${s.dx}px, ${s.dy}px) rotate(${s.rot}deg) scale(${s.scale})`, 'translate(0px, 0px) rotate(0deg) scale(1)'],
@@ -115,7 +116,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
         // 2. One scan sweep reads the code...
         animate('.splash-scan', { transform: ['translateY(-6%)', 'translateY(106%)'], opacity: [0, 1, 1, 0] }, { duration: 0.6, ease: [0.65, 0, 0.35, 1], delay: 0.62 });
         // ...and a wave of sun light runs through it from the middle: access granted.
-        for (const el of all('.splash-module:not(.splash-accent)')) {
+        for (const el of all('.zc-module:not(.zc-accent)')) {
           animate(el, { fill: ['#f2f6f8', '#f3cf86', '#f2f6f8'] }, { duration: 0.46, ease: OUT, delay: 0.95 + distance(PIECES[index(el)]) * 0.022 });
         }
         // 3. The name rises letter by letter; a little blur bridges each letter in. The sun dot lands last.

@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { startAuthentication, startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
-import { ArrowUpRight, ShieldCheck, Sparkles, KeyRound, ArrowLeft } from 'lucide-react';
+import { ArrowUpRight, ShieldCheck, KeyRound, ArrowLeft, ScanLine, BellRing, QrCode, Check } from 'lucide-react';
 import { api, errorText } from '../api';
 import { useAuth } from '../auth';
 import { Brand, Button, ErrorBox } from '../components/ui';
-import { CommunityArt } from '../components/CommunityArt';
+import { ZentryCode } from '../components/Splash';
+import './Login.css';
 import { AnimatedFingerprint } from '../components/icons/AnimatedIcons';
 import type { SessionResult } from '../types';
 export function Login() {
@@ -31,20 +32,53 @@ export function Login() {
       await auth.accept(session); history.replaceState(null, '', '/'); window.dispatchEvent(new PopStateEvent('popstate'));
     } catch (e) { setError(errorText(e)); } finally { setBusy(false); }
   }
-  return <div className="login-layout">
-    <section className="login-story">
+  const helpMode = mode === 'help';
+  return <div className="login">
+    {/* Hero: the same Zentry code as the splash, read by a passing scan line, and the promise in one line. */}
+    <section className="login-hero">
       <Brand light/>
-      <div className="story-body">
-        <h1>Tu casa empieza en la bienvenida.</h1>
-        <p>Invita a tus visitas, comparte su pase y ten el control de los accesos a tu vivienda.</p>
-        <CommunityArt/>
+      <div className="login-hero-body">
+        <div className="login-code"><ZentryCode/><span className="login-scan" aria-hidden="true"/></div>
+        <h1>Tu casa empieza en la <em>bienvenida</em>.</h1>
+        <p>Invita a tus visitas con un QR, entérate cuando llegan y entra con tu huella.</p>
+        {/* A sample pass, to show at a glance what Zentry does. */}
+        <div className="login-ticket" aria-hidden="true">
+          <span className="login-ticket-label">Pase de visita</span>
+          <strong>Mariana López</strong>
+          <span className="login-ticket-when">Hoy · 4:00 – 8:00 p.m.</span>
+          <span className="login-ticket-ok"><Check size={14}/> Acceso concedido · 4:12 p.m.</span>
+        </div>
       </div>
-      <div className="story-footer"><ShieldCheck size={18}/> El acceso a tu comunidad, en tus manos.</div>
+      <ul className="login-perks">
+        <li><QrCode size={17}/> Pases en segundos</li>
+        <li><BellRing size={17}/> Avisos al momento</li>
+        <li><ShieldCheck size={17}/> Tu huella es tu llave</li>
+      </ul>
     </section>
-    <section className="login-form-side">
-      <div className="mobile-brand"><Brand/></div><a className="station-entry-link" href="/caseta"><strong>Acceso de caseta</strong><span>Abrir el escáner sin cuenta personal ni biometría</span></a>
-      {mode === 'help' ? <><h2>Te ayudamos a entrar.</h2><p>Tu llave de acceso usa la huella, el rostro o el PIN de tu dispositivo.</p><div className="help-card"><KeyRound/><h3>¿Es tu primera vez?</h3><p>Pide a administración una invitación de registro y úsala en “Activar mi acceso”.</p></div><div className="help-card"><ShieldCheck/><h3>¿Cambiaste de teléfono?</h3><p>Administración verificará tu identidad y te entregará una invitación de recuperación para registrar tu nuevo dispositivo.</p></div><Button className="secondary" onClick={() => setMode('login')}><ArrowLeft size={17}/> Volver al inicio</Button></> : <><div className="login-title-icon"><AnimatedFingerprint size={30} autoplay={350}/></div><h2>{mode === 'register' ? 'Activa tu acceso' : 'Bienvenido a casa'}</h2><p>{mode === 'register' ? 'Activa tu acceso con la invitación de administración.' : 'Usa tu huella, rostro o PIN para ingresar de forma segura.'}</p>{auth.expired && <div className="info-box">Tu sesión terminó. Ingresa de nuevo para continuar.</div>}
-      <form onSubmit={submit}><fieldset disabled={busy}>{mode === 'register' ? <><label>Invitación de acceso<textarea required minLength={32} maxLength={256} autoComplete="off" value={invitation} onChange={e => setInvitation(e.target.value)} placeholder="Pega aquí tu invitación" rows={3}/></label><label>Nombre de este dispositivo<input required maxLength={100} value={label} onChange={e => setLabel(e.target.value)} placeholder="Por ejemplo: Mi teléfono"/></label></> : <p className="small muted">Tu teléfono te mostrará tus llaves de acceso. Si tienes más de una vivienda, elige la llave de la vivienda a la que quieres entrar. Desde una computadora puedes usar la llave de tu teléfono escaneando el QR que aparece.</p>}</fieldset><ErrorBox message={error}/><Button busy={busy} type="submit" className="full"><AnimatedFingerprint size={19}/>{mode === 'register' ? 'Activar mi acceso' : 'Ingresar con mi llave'}<ArrowUpRight size={18}/></Button></form>
-      <div className="login-switch">{mode === 'login' ? '¿Primera vez en Zentry?' : '¿Ya tienes una llave?'} <button disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Activar mi acceso' : 'Ingresar'}</button></div><button className="subtle-link" disabled={busy} onClick={() => { setMode('help'); setError(''); }}>Necesito ayuda para ingresar</button></>}
-      <div className="login-bottom"><Sparkles size={15}/> Sin contraseñas que recordar.</div></section></div>;
+
+    {/* The form: a floating card on computers, a sheet rising from the bottom on phones. */}
+    <section className="login-sheet">
+      <div key={mode} className="login-mode">{helpMode ? <>
+        <h2>Te ayudamos a entrar.</h2>
+        <p className="login-lead">Tu llave de acceso usa la huella, el rostro o el PIN de tu dispositivo.</p>
+        <div className="help-card"><KeyRound/><h3>¿Es tu primera vez?</h3><p>Pide a administración una invitación de registro y úsala en “Activar mi acceso”.</p></div>
+        <div className="help-card"><ShieldCheck/><h3>¿Cambiaste de teléfono?</h3><p>Administración verificará tu identidad y te entregará una invitación de recuperación para registrar tu nuevo dispositivo.</p></div>
+        <Button className="secondary" onClick={() => setMode('login')}><ArrowLeft size={17}/> Volver al inicio</Button>
+      </> : <>
+        <div className="login-key"><AnimatedFingerprint size={30} autoplay={350}/></div>
+        <h2>{mode === 'register' ? 'Activa tu acceso' : 'Qué gusto verte.'}</h2>
+        <p className="login-lead">{mode === 'register' ? 'Activa tu acceso con la invitación de administración.' : 'Entra con la huella, el rostro o el PIN de tu teléfono. Sin contraseñas.'}</p>
+        {auth.expired && <div className="info-box">Tu sesión terminó. Ingresa de nuevo para continuar.</div>}
+        <form onSubmit={submit}><fieldset disabled={busy}>{mode === 'register' ? <><label>Invitación de acceso<textarea required minLength={32} maxLength={256} autoComplete="off" value={invitation} onChange={e => setInvitation(e.target.value)} placeholder="Pega aquí tu invitación" rows={3}/></label><label>Nombre de este dispositivo<input required maxLength={100} value={label} onChange={e => setLabel(e.target.value)} placeholder="Por ejemplo: Mi teléfono"/></label></> : null}</fieldset>
+          <ErrorBox message={error}/>
+          <Button busy={busy} type="submit" className="full login-cta"><AnimatedFingerprint size={20}/>{mode === 'register' ? 'Activar mi acceso' : 'Ingresar con mi llave'}<ArrowUpRight size={18}/></Button>
+          {mode === 'login' && <p className="login-hint">¿Tienes más de una vivienda? Elige la llave de la vivienda a la que quieres entrar. Desde una computadora, escanea con tu teléfono el QR que aparece.</p>}
+        </form>
+        <div className="login-switch">{mode === 'login' ? '¿Primera vez en Zentry?' : '¿Ya tienes una llave?'} <button disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Activar mi acceso' : 'Ingresar'}</button></div>
+        <button className="subtle-link" disabled={busy} onClick={() => { setMode('help'); setError(''); }}>Necesito ayuda para ingresar</button>
+      </>}</div>
+      {/* Gate devices use their own entry, without a personal account. */}
+      <a className="login-station" href="/caseta"><ScanLine size={18}/><span><strong>Acceso de caseta</strong><small>Abrir el escáner sin cuenta personal ni biometría</small></span><ArrowUpRight size={16}/></a>
+    </section>
+  </div>;
 }
