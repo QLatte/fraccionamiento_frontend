@@ -1,162 +1,110 @@
-/* Login: continues the splash. Deep petrol with a faint QR-dot texture, the Zentry code read by a
-   passing scan line, one big promise with the sun on «bienvenida», and the form as a white card
-   (a sheet rising from the bottom on phones). */
-.login { position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(400px, 500px); gap: clamp(24px, 4vw, 64px); min-height: 100dvh; padding: clamp(20px, 3vw, 40px); overflow: hidden; color: #fff;
-  background:
-    radial-gradient(60% 55% at 22% 38%, #1f5a6e 0%, transparent 70%),
-    radial-gradient(50% 50% at 90% 100%, #e6b85c1f 0%, transparent 70%),
-    linear-gradient(160deg, #143f4d 0%, #0c2b36 100%); }
-/* QR-dot texture, fading out toward the form. */
-.login::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(#ffffff14 1.2px, transparent 1.3px); background-size: 22px 22px; -webkit-mask-image: linear-gradient(105deg, #000 0%, #0008 45%, transparent 75%); mask-image: linear-gradient(105deg, #000 0%, #0008 45%, transparent 75%); }
+/* Login: the caseta. A flat illustrated entrance that lives on the person's clock, next to big
+   plain type on the app's warm canvas. No floating card, no gradient hero: the scene is the
+   identity and the barrier arm is the feedback. Motion follows Emil Kowalski's rules: transform
+   and opacity only, strong ease-out for what enters, transitions (not keyframes) for state,
+   linear for constant drift, and delight only where it is rare (the arm lifting on access). */
+.login { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(400px, 560px); grid-template-rows: auto 1fr; grid-template-areas: 'scene top' 'scene panel'; min-height: 100dvh; background: var(--canvas); color: var(--ink); }
+.login-top { grid-area: top; padding: 30px clamp(28px, 4vw, 64px) 0; }
 
-.login-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; column-gap: 32px; min-width: 0; padding: 12px clamp(4px, 2vw, 28px); }
-.login-hero > .brand { grid-column: 1 / -1; justify-self: start; }
-.login-hero .login-perks { grid-column: 1 / -1; }
-.login-hero .brand { color: #fff; }
-.login-hero-body { position: relative; align-self: center; padding: 40px 0; }
-/* On computers the orbit carries the code; the small one is for phones. */
-@media (min-width: 901px) { .login-orbit.compact, .login-ticker { display: none; } }
-/* The hero arrives as one movement: code, title, text, pass, perks, 50 ms apart (enter only). */
-.login-hero-body > *, .login-perks { transition: opacity 320ms var(--ease-out-strong), transform 320ms var(--ease-out-strong); transition-delay: calc(var(--n, 0) * 50ms); }
-@starting-style { .login-hero-body > *, .login-perks { opacity: 0; transform: translateY(8px); } }
-.login-hero-body > :nth-child(2) { --n: 1; } .login-hero-body > :nth-child(3) { --n: 2; } .login-perks { --n: 4; }
-.login-hero h1 { max-width: 13ch; margin: 0; color: #fff; font-family: var(--display); font-size: clamp(40px, 4.6vw, 70px); font-weight: 500; letter-spacing: -.045em; line-height: 1.02; text-wrap: balance; }
-.login-hero h1 em { font-style: normal; color: #e6b85c; }
-.login-hero-body > p { max-width: 38ch; margin: 22px 0 0; color: #c9dde4; font-size: 17px; line-height: 1.6; }
+/* The scene: a rounded window onto the entrance. */
+.login-scene { grid-area: scene; position: relative; margin: 14px; border-radius: 34px; overflow: hidden; background: #cfe6ee; transition: opacity 500ms var(--ease-out-strong), transform 500ms var(--ease-out-strong); }
+@starting-style { .login-scene { opacity: 0; transform: scale(.985); } }
+.gate-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  --sun: #e6b85c; --lamp: #e6b85c; --stars: 0; --cloud: #ffffff; --trunk: #6f5a44; --door: #123c4a; --roof-sun: #e6b85c; }
+/* Four palettes, one per moment of the day. */
+.gate-scene.day { --sky-1: #bfdfea; --sky-2: #f2f6ee; --orb: #f0c66a; --orb-glow: #f0c66a55; --hill-1: #b4d2c9; --hill-2: #8fbcae; --ground: #dce8da; --road: #c5d0cd; --wall: #ffffff; --roof: #123c4a; --roof-2: #1f6a7c; --win: #a9cbd6; --tree: #2f7f6b; }
+.gate-scene.dawn { --sky-1: #f4c9a4; --sky-2: #f7efdf; --orb: #f3a85f; --orb-glow: #f3a85f66; --hill-1: #c9c2ae; --hill-2: #9db7a4; --ground: #e4e2cd; --road: #cfcabb; --wall: #fffaf2; --roof: #123c4a; --roof-2: #2b6f7c; --win: #f3cf86; --tree: #3d8068; --cloud: #fff4e6; }
+.gate-scene.dusk { --sky-1: #e58f63; --sky-2: #f6d9b6; --orb: #e8703a; --orb-glow: #e8703a66; --hill-1: #9a8f9a; --hill-2: #567a83; --ground: #c9bba6; --road: #a99f92; --wall: #fbeede; --roof: #123c4a; --roof-2: #24586a; --win: #f3cf86; --tree: #2a6259; --cloud: #fbd9bf; }
+.gate-scene.night { --sky-1: #081d25; --sky-2: #1a4d5f; --orb: #eef4f6; --orb-glow: #eef4f62e; --hill-1: #15404e; --hill-2: #0f3440; --ground: #0c2a34; --road: #143f4c; --wall: #2c5b6b; --roof: #071a21; --roof-2: #0c2c37; --win: #f3cf86; --tree: #0f3a41; --trunk: #0a262d; --door: #071a21; --stars: 1; --cloud: #ffffff12; --roof-sun: #a8842f; }
+.gs-orb { fill: var(--orb); }
+.gs-orb-glow { fill: var(--orb-glow); }
+.gs-stars { fill: #eef4f6; opacity: var(--stars); }
+.gs-cloud { fill: var(--cloud); animation: gs-drift 70s linear infinite alternate; }
+.gs-cloud.slow { animation-duration: 110s; animation-direction: alternate-reverse; }
+@keyframes gs-drift { to { transform: translateX(70px); } }
+.gs-window { fill: var(--win); }
+.gs-road-line { fill: none; stroke: #ffffff8c; stroke-width: 4; stroke-dasharray: 16 14; }
 
-.login-perks { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0; padding: 0; list-style: none; color: #c9dde4; font-size: 13.5px; }
-.login-perks li { display: inline-flex; align-items: center; gap: 8px; }
-.login-perks svg { color: #e6b85c; }
+/* The barrier arm, hinged at the post. It drops into place when the login appears, lifts when
+   access is granted (a small overshoot: it is a physical arm) and shakes its head on a failure. */
+.gs-arm { transform-box: view-box; transform-origin: 521px 452px; transform: rotate(0deg); transition: transform 560ms cubic-bezier(.32, .72, 0, 1) 260ms; }
+@starting-style { .gs-arm { transform: rotate(74deg); } }
+.gate-scene.open .gs-arm { transform: rotate(76deg); transition: transform 640ms cubic-bezier(.34, 1.3, .64, 1); }
+.gate-scene.denied .gs-arm { animation: gs-deny 440ms cubic-bezier(.45, 0, .55, 1); }
+@keyframes gs-deny { 20% { transform: rotate(5deg); } 45% { transform: rotate(-2deg); } 70% { transform: rotate(3deg); } }
+/* The caseta's lamp says the state: amber steady, amber blinking while the phone asks for the
+   passkey, green on access, red on a failure. */
+.gs-lamp { fill: var(--lamp); transition: fill 200ms ease; }
+.gs-lamp-glow { fill: var(--lamp); opacity: .22; transform-box: fill-box; transform-origin: center; transition: fill 200ms ease, opacity 200ms ease, transform 400ms var(--ease-out-strong); }
+.gate-scene.waiting .gs-lamp-glow { animation: gs-blink 760ms ease-in-out infinite alternate; }
+@keyframes gs-blink { from { opacity: .12; transform: scale(.8); } to { opacity: .6; transform: scale(1.25); } }
+.gate-scene.open { --lamp: #3fbf7f; }
+.gate-scene.open .gs-lamp-glow { opacity: .55; transform: scale(1.6); }
+.gate-scene.denied { --lamp: #d9534f; }
+.gate-scene.denied .gs-lamp-glow { opacity: .5; }
 
-/* The form card. */
-.login-sheet { position: relative; align-self: center; display: flex; flex-direction: column; width: 100%; padding: 36px 34px 22px; border-radius: 28px; background: #fff; color: var(--ink); box-shadow: 0 40px 90px -40px #04161d, 0 0 0 1px #ffffff1a; transition: opacity 280ms var(--ease-out-strong), transform 280ms var(--ease-out-strong); }
-@starting-style { .login-sheet { opacity: 0; transform: translateY(12px); } }
-.login-key { position: relative; display: grid; place-items: center; width: 60px; height: 60px; margin-bottom: 22px; border-radius: 18px; background: var(--brand); color: #fff; box-shadow: 0 12px 24px -12px #123c4a99; }
-.login-key::after { content: ''; position: absolute; top: -3px; right: -3px; width: 13px; height: 13px; border-radius: 50%; background: var(--sun); box-shadow: 0 0 0 3px #fff; }
-.login-sheet h2 { margin: 0; font-family: var(--display); font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1.1; }
-.login-lead { margin: 10px 0 0; color: var(--muted); font-size: 15.5px; line-height: 1.55; }
-.login-sheet form { margin-top: 26px; }
-.login-cta { min-height: 56px; border-radius: 16px; font-size: 16px; }
-.login-hint { margin: 14px 2px 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
-.login-sheet .login-switch { margin-top: 20px; }
-.login-sheet .help-card svg { color: var(--brand); }
+/* The panel: big plain type on the canvas. */
+.login-panel { grid-area: panel; align-self: center; width: 100%; max-width: 520px; padding: 24px clamp(28px, 4vw, 64px) 34px; transition: opacity 260ms var(--ease-out-strong), transform 260ms var(--ease-out-strong); }
+/* Access granted: the panel steps back (dimmed, never blank if the server is slow) while the arm lifts. */
+.gate-open .login-panel { opacity: .4; transition-delay: 120ms; }
+/* The content arrives as one movement, 45 ms apart; also when switching Ingresar / Activar / Ayuda. */
+.login-mode > * { transition: opacity 280ms var(--ease-out-strong), transform 280ms var(--ease-out-strong); transition-delay: calc(var(--n, 0) * 45ms + 80ms); }
+@starting-style { .login-mode > * { opacity: 0; transform: translateY(10px); } }
+.login-mode > :nth-child(2) { --n: 1; } .login-mode > :nth-child(3) { --n: 2; } .login-mode > :nth-child(4) { --n: 3; } .login-mode > :nth-child(5) { --n: 4; } .login-mode > :nth-child(n + 6) { --n: 5; }
+
+.login-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 18px; max-width: none; font-size: 14px; color: var(--muted); }
+.login-when strong { position: relative; isolation: isolate; color: var(--brand); font-family: var(--display); font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+/* A hand-drawn-feeling underline in sun, not a pill. */
+.login-when strong::after { content: ''; position: absolute; left: -2px; right: -2px; bottom: -3px; height: 6px; border-radius: 3px; background: var(--sun); opacity: .55; transform: rotate(-.6deg); z-index: -1; }
+.login-when span::first-letter { text-transform: uppercase; }
+.login-panel h2 { margin: 0; font-family: var(--display); font-size: clamp(44px, 4.6vw, 68px); font-weight: 600; letter-spacing: -.045em; line-height: 1; text-wrap: balance; }
+.login-lead { margin: 16px 0 0; max-width: 34ch; color: var(--muted); font-size: 17px; line-height: 1.55; }
+.login-panel form { margin-top: 30px; }
+.login-cta { min-height: 60px; border-radius: 18px; font-size: 17px; box-shadow: 0 14px 28px -16px #123c4acc; }
+.login-hint { margin: 14px 2px 0; max-width: none; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.login-panel .login-switch { margin-top: 22px; text-align: left; }
+.login-panel .subtle-link { margin: 0; padding-left: 0; }
+.login-panel .help-card { background: var(--surface); }
+.login-panel .help-card svg { color: var(--brand); }
 
 /* Gate devices: a quiet row at the end. */
-.login-station { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 12px 14px; border-radius: 14px; background: var(--canvas); color: var(--ink); text-decoration: none; }
+.login-station { display: flex; align-items: center; gap: 12px; margin-top: 22px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; }
 .login-station > svg:first-child { flex: none; color: var(--brand); }
 .login-station span { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .login-station strong { font-size: 13.5px; }
 .login-station small { color: var(--muted); font-size: 12px; }
 .login-station > svg:last-child { color: var(--muted); }
 .login-station:active { background: var(--soft); }
-@media (hover: hover) and (pointer: fine) { .login-station:hover { background: var(--soft); } }
+@media (hover: hover) and (pointer: fine) { .login-station:hover { border-color: #b9cbd3; } }
 
-/* Phones: the hero on top, the form as a sheet rising from the bottom. */
+/* Phones: brand, the scene as a wide window, then the panel. The main button stays above the fold. */
 @media (max-width: 900px) {
-  .login { display: flex; flex-direction: column; gap: 0; padding: 0; }
-  .login::before { -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 45%); mask-image: linear-gradient(180deg, #000 0%, transparent 45%); }
-  /* Compact hero: the main button must be visible without scrolling, even on small phones. */
-  .login-hero { padding: max(16px, env(safe-area-inset-top)) 22px 0; }
-  .login-hero .brand { font-size: 24px; }
-  .login-hero .brand-mark { width: 34px; height: 34px; }
-  .login-hero-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 16px; margin: 0; padding: 22px 0 26px; }
-  .login-hero h1 { font-size: clamp(30px, 8.6vw, 40px); }
-  .login-hero-body > p { display: none; }
-  .login-perks, .login-orbit:not(.compact) { display: none; }
-  .login-sheet { flex: 1; align-self: stretch; padding: 30px 22px max(18px, env(safe-area-inset-bottom)); border-radius: 28px 28px 0 0; box-shadow: 0 -20px 50px -30px #04161d; }
-  .login-sheet::before { content: ''; position: absolute; top: 10px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--line); }
-  @starting-style { .login-sheet { opacity: 0; transform: translateY(32px); } }
-  .login-key { width: 46px; height: 46px; margin-bottom: 14px; border-radius: 14px; }
-  .login-key svg { width: 24px; height: 24px; }
-  .login-sheet h2 { font-size: 28px; }
-  .login-lead { font-size: 15px; }
-  .login-sheet form { margin-top: 20px; }
+  .login { display: flex; flex-direction: column; }
+  .login-top { padding: max(14px, env(safe-area-inset-top)) 20px 10px; }
+  .login-top .brand { font-size: 24px; }
+  .login-top .brand-mark { width: 34px; height: 34px; }
+  .login-scene { flex: none; height: clamp(190px, 32dvh, 300px); margin: 0 12px; border-radius: 26px; }
+  .login-panel { align-self: stretch; max-width: none; padding: 22px 22px max(20px, env(safe-area-inset-bottom)); }
+  .login-when { margin-bottom: 12px; }
+  .login-panel h2 { font-size: clamp(34px, 10vw, 44px); }
+  .login-lead { margin-top: 10px; font-size: 15.5px; }
+  .login-panel form { margin-top: 20px; }
+  .login-cta { min-height: 56px; }
+}
+/* Short phones (iPhone SE and similar). */
+@media (max-width: 900px) and (max-height: 620px) {
+  .login-scene { height: 160px; }
+  .login-when span { display: none; }
+  .login-panel { padding-top: 16px; }
+  .login-panel h2 { font-size: 32px; }
+  .login-panel form { margin-top: 16px; }
 }
 
+/* Reduced motion: no drift, no drop, no shake; state still shows through the lamp's color. */
 @media (prefers-reduced-motion: reduce) {
-  .login-hero-body > *, .login-perks, .login-orbit { transition: opacity 200ms ease; transition-delay: 0ms; }
-  @starting-style { .login-hero-body > *, .login-perks { transform: none; } }
-  .login-sheet { transition: opacity 200ms ease; }
-  @starting-style { .login-sheet { transform: none; } }
-}
-
-/* Switching mode (Ingresar, Activar, Ayuda): the new content fades in (160 ms, enter only). */
-.login-mode { transition: opacity 160ms var(--ease-out-strong); }
-@starting-style { .login-mode { opacity: 0; } }
-
-/* The access orbit (computers): rings of neighbours turning slowly around the Zentry code.
-   Constant motion is linear; the pulse is a strong ease-out; entrances are transitions
-   (@starting-style), never keyframes, so nothing jumps if it is interrupted. */
-.login-orbit { position: relative; align-self: center; width: clamp(280px, 26vw, 400px); aspect-ratio: 1; transition: opacity 600ms var(--ease-out-strong), transform 600ms var(--ease-out-strong); transition-delay: 200ms; }
-@starting-style { .login-orbit { opacity: 0; transform: scale(.94); } }
-.orbit-ring { position: absolute; border-radius: 50%; border: 1px solid #ffffff1c; animation: orbit-spin 70s linear infinite; }
-.orbit-ring.r1 { inset: 20%; border-style: dashed; border-color: #ffffff2e; }
-.orbit-ring.r2 { inset: 2%; animation-duration: 110s; animation-direction: reverse; }
-@keyframes orbit-spin { to { transform: rotate(360deg); } }
-/* Each face sits on its ring and turns the other way, so it travels without tipping over. */
-.orbit-seat { position: absolute; width: 0; height: 0; }
-.orbit-face { position: absolute; left: -20px; top: -20px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--person-bg); color: var(--person); font-size: 13px; font-weight: 750; box-shadow: 0 0 0 3px #123c4a, 0 10px 20px -8px #04161d; animation: orbit-spin 70s linear infinite reverse; }
-.orbit-ring.r2 .orbit-face { animation-duration: 110s; animation-direction: normal; }
-/* The scan: a sun ring leaves the code every 3.2 s (a second, fainter one half a beat later). */
-.orbit-pulse { position: absolute; inset: 34%; border-radius: 34%; border: 2px solid #e6b85c; opacity: 0; animation: orbit-pulse 3.2s cubic-bezier(.23, 1, .32, 1) infinite; }
-.orbit-pulse.late { animation-delay: .35s; border-width: 1px; }
-@keyframes orbit-pulse { 0% { transform: scale(.85); opacity: .75; } 70%, 100% { transform: scale(2.3); opacity: 0; } }
-.orbit-core { position: absolute; inset: 33%; display: grid; place-items: center; border-radius: 30%; background: linear-gradient(155deg, #24647b 0%, #143f4d 100%); box-shadow: inset 0 1px 0 #ffffff26, 0 24px 50px -18px #04161d; }
-.orbit-core .zentry-code { width: 62%; height: 62%; }
-/* What just happened, in sync with the pulse: a crossfade, exit (180 ms) faster than enter (360 ms),
-   with a 2 px blur so the eye reads one change instead of two cards swapping. */
-.orbit-moments { position: absolute; right: -14%; top: 4%; display: grid; }
-.orbit-moment { grid-area: 1 / 1; justify-self: end; display: flex; align-items: center; gap: 10px; padding: 9px 14px 9px 9px; border-radius: 14px; background: #fff; color: var(--ink); box-shadow: 0 18px 40px -16px #04161dcc; white-space: nowrap; opacity: 0; transform: translateY(-6px) scale(.97); filter: blur(2px); transition: opacity 180ms var(--ease-out-strong), transform 180ms var(--ease-out-strong), filter 180ms var(--ease-out-strong); }
-.orbit-moment.on { opacity: 1; transform: none; filter: blur(0); transition-duration: 360ms; transition-delay: 90ms; }
-.orbit-moment:not(.on) { transform: translateY(-6px) scale(.97); }
-.orbit-moment > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; }
-.orbit-moment div { display: flex; flex-direction: column; }
-.orbit-moment strong { font-size: 13.5px; }
-.orbit-moment small { color: var(--muted); font-size: 12px; }
-.orbit-moment.ok > span { background: var(--tone-entry-bg); color: var(--tone-entry); }
-.orbit-moment.pass > span { background: var(--tone-pass-bg); color: var(--tone-pass); }
-.orbit-moment.wait > span { background: var(--tone-walkin-bg); color: var(--tone-walkin); }
-.orbit-moment.notice > span { background: var(--tone-notice-bg); color: var(--tone-notice); }
-/* Narrower computers: the orbit goes under the text. */
-@media (max-width: 1300px) and (min-width: 901px) {
-  .login-hero { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; }
-  .login-hero-body { padding: 28px 0 8px; }
-  .login-orbit { justify-self: center; width: clamp(240px, 24vw, 300px); margin-right: 12%; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .orbit-ring, .orbit-face, .orbit-pulse { animation: none; }
-  .orbit-moment, .orbit-moment.on { transition: none; filter: none; }
-}
-/* Wide computers: text and orbit side by side, sized together so the title keeps two or three lines. */
-@media (min-width: 1301px) {
-  .login-hero h1 { font-size: clamp(42px, 3.7vw, 64px); max-width: 12ch; }
-  .login-orbit { width: clamp(260px, 21vw, 380px); }
-}
-
-/* Phones: a small orbit in the header and the notices as a ticker under the title.
-   Same motion as on computers, sized so the main button still shows without scrolling. */
-@media (max-width: 900px) {
-  .login-hero-body h1 { grid-column: 1; grid-row: 1; }
-  .login-orbit.compact { grid-column: 2; grid-row: 1; align-self: center; width: 104px; margin: 0 -6px 0 0; transition-delay: 120ms; }
-  .login-orbit.compact .orbit-ring.r1 { inset: 24%; }
-  .login-orbit.compact .orbit-ring.r2 { inset: 4%; }
-  .login-orbit.compact .orbit-face { left: -13px; top: -13px; width: 26px; height: 26px; font-size: 9.5px; box-shadow: 0 0 0 2px #123c4a, 0 6px 12px -6px #04161d; }
-  .login-orbit.compact .orbit-core { inset: 29%; border-radius: 28%; }
-  .login-orbit.compact .orbit-pulse { inset: 31%; border-width: 1.5px; }
-  .login-ticker { grid-column: 1 / -1; grid-row: 2; display: grid; justify-self: start; margin-top: 2px; }
-  .login-ticker .orbit-moment { justify-self: start; padding: 7px 12px 7px 7px; border-radius: 12px; }
-  .login-ticker .orbit-moment > span { width: 26px; height: 26px; border-radius: 8px; }
-  .login-ticker .orbit-moment strong { font-size: 13px; }
-  .login-ticker .orbit-moment small { font-size: 11.5px; }
-}
-/* Short phones (iPhone SE and similar): tighter, so «Ingresar con mi llave» stays above the fold.
-   The fingerprint tile goes; the button already carries it. */
-@media (max-width: 900px) and (max-height: 700px) {
-  .login-hero-body { padding: 14px 0 18px; }
-  .login-hero h1 { font-size: 28px; }
-  .login-orbit.compact { width: 92px; }
-  .login-sheet { padding-top: 26px; }
-  .login-key { display: none; }
-  .login-sheet h2 { font-size: 26px; }
-  .login-sheet form { margin-top: 16px; }
+  .gs-cloud, .gate-scene.waiting .gs-lamp-glow, .gate-scene.denied .gs-arm { animation: none; }
+  .gs-arm, .gate-scene.open .gs-arm { transition: none; }
+  @starting-style { .gs-arm { transform: rotate(0deg); } .login-scene { transform: none; } .login-mode > * { transform: none; } }
+  .login-scene, .login-mode > * { transition: opacity 200ms ease; transition-delay: 0ms; }
+  .gate-open .login-panel { transition-delay: 0ms; }
 }
