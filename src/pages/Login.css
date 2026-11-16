@@ -3,13 +3,18 @@
    identity and the barrier arm is the feedback. Motion follows Emil Kowalski's rules: transform
    and opacity only, strong ease-out for what enters, transitions (not keyframes) for state,
    linear for constant drift, and delight only where it is rare (the arm lifting on access). */
-.login { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(400px, 560px); grid-template-rows: auto 1fr; grid-template-areas: 'scene top' 'scene panel'; min-height: 100dvh; background: var(--canvas); color: var(--ink); }
+.login { position: relative; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(400px, 560px); grid-template-rows: auto 1fr; grid-template-areas: 'scene top' 'scene panel'; min-height: 100dvh; background: var(--canvas); color: var(--ink); }
 .login-top { grid-area: top; padding: 30px clamp(28px, 4vw, 64px) 0; }
 
-/* The scene: a rounded window onto the entrance. */
-.login-scene { grid-area: scene; position: relative; margin: 14px; border-radius: 34px; overflow: hidden; background: #cfe6ee; transition: opacity 500ms var(--ease-out-strong), transform 500ms var(--ease-out-strong); }
-@starting-style { .login-scene { opacity: 0; transform: scale(.985); } }
-.gate-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+/* The scene. .login-scene only reserves the window's place in the layout; the drawing itself is
+   .login-stage, full-screen and clipped to that window (see Login.tsx). */
+.login-scene { grid-area: scene; margin: 14px; border-radius: 34px; }
+.login-stage { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; overflow: hidden; pointer-events: none; transition: opacity 500ms var(--ease-out-strong); }
+@starting-style { .login-stage { opacity: 0; } }
+.login-top, .login-panel { position: relative; }
+/* overflow: visible, because the window can need parts of the drawing (more sky, more street)
+   that the full-screen framing leaves outside the SVG's own box; the stage's clip does the cutting. */
+.gate-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; transform-origin: 0 0;
   --sun: #e6b85c; --lamp: #e6b85c; --stars: 0; --cloud: #ffffff; --trunk: #6f5a44; --door: #123c4a; --roof-sun: #e6b85c; }
 /* Four palettes, one per moment of the day. */
 .gate-scene.day { --sky-1: #bfdfea; --sky-2: #f2f6ee; --orb: #f0c66a; --orb-glow: #f0c66a55; --hill-1: #b4d2c9; --hill-2: #8fbcae; --ground: #dce8da; --road: #c5d0cd; --wall: #ffffff; --roof: #123c4a; --roof-2: #1f6a7c; --win: #a9cbd6; --tree: #2f7f6b; }
@@ -45,8 +50,19 @@
 
 /* The panel: big plain type on the canvas. */
 .login-panel { grid-area: panel; align-self: center; width: 100%; max-width: 520px; padding: 24px clamp(28px, 4vw, 64px) 34px; transition: opacity 260ms var(--ease-out-strong), transform 260ms var(--ease-out-strong); }
-/* Access granted: the panel steps back (dimmed, never blank if the server is slow) while the arm lifts. */
-.gate-open .login-panel { opacity: .4; transition-delay: 120ms; }
+/* Access granted: you are the car. Brand, panel and buttons step aside, the window opens to the
+   whole screen and the camera drives through the gate (transform and clip-path only); at the end
+   the app's own background covers the street. Seen once per login, so it can take 1.6 s. */
+.gate-open .login-panel, .gate-open .login-top { opacity: 0; pointer-events: none; transition: opacity 220ms var(--ease-out-strong); }
+.driving .login-stage { z-index: 5; transition: clip-path 560ms var(--ease-out-strong); }
+.driving .gate-scene { transition: transform 1250ms cubic-bezier(.7, 0, .3, 1); }
+.driving .gs-road-line { animation: gs-road 260ms linear infinite; }
+@keyframes gs-road { to { stroke-dashoffset: -30; } }
+.login-veil { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; background: var(--canvas); opacity: 0; pointer-events: none; }
+.driving .login-veil { opacity: 1; transition: opacity 380ms var(--ease-out-strong) 870ms; }
+/* Only if the server is slow to answer after the drive: the mark, so the screen is never blank. */
+.login-veil .brand { opacity: 0; }
+.driving .login-veil .brand { opacity: 1; transition: opacity 300ms ease 1900ms; }
 /* The content arrives as one movement, 45 ms apart; also when switching Ingresar / Activar / Ayuda. */
 .login-mode > * { transition: opacity 280ms var(--ease-out-strong), transform 280ms var(--ease-out-strong); transition-delay: calc(var(--n, 0) * 45ms + 80ms); }
 @starting-style { .login-mode > * { opacity: 0; transform: translateY(10px); } }
@@ -104,7 +120,6 @@
 @media (prefers-reduced-motion: reduce) {
   .gs-cloud, .gate-scene.waiting .gs-lamp-glow, .gate-scene.denied .gs-arm { animation: none; }
   .gs-arm, .gate-scene.open .gs-arm { transition: none; }
-  @starting-style { .gs-arm { transform: rotate(0deg); } .login-scene { transform: none; } .login-mode > * { transform: none; } }
-  .login-scene, .login-mode > * { transition: opacity 200ms ease; transition-delay: 0ms; }
-  .gate-open .login-panel { transition-delay: 0ms; }
+  @starting-style { .gs-arm { transform: rotate(0deg); } .login-mode > * { transform: none; } }
+  .login-stage, .login-mode > * { transition: opacity 200ms ease; transition-delay: 0ms; }
 }
