@@ -22,15 +22,17 @@ function orbPosition(at: Date) {
 
 const STARS: [number, number, number][] = [[150, 150, 1.6], [230, 240, 1.1], [300, 130, 1.3], [380, 215, 1], [455, 140, 1.7], [520, 260, 1.1], [590, 190, 1.4], [650, 250, 1], [270, 290, 1], [420, 300, 1.2], [560, 120, 1], [200, 110, 1.1], [340, 330, 1], [610, 320, 1.2], [180, 310, 1]];
 // The neighbourhood: [x, width, wall height, roof height, roof color var, window columns].
-const HOUSES: [number, number, number, number, string, number][] = [[176, 62, 44, 26, '--roof', 2], [246, 50, 58, 22, '--roof-2', 1], [304, 70, 40, 28, '--roof-sun', 2], [382, 54, 62, 24, '--roof', 1], [444, 60, 46, 26, '--roof-2', 2]];
-const TREES: [number, number, number][] = [[150, 438, 15], [236, 440, 11], [372, 440, 12], [508, 438, 14], [640, 446, 17], [118, 452, 12]];
+const HOUSES: [number, number, number, number, string, number][] = [[150, 62, 44, 26, '--roof', 2], [220, 50, 58, 22, '--roof-2', 1], [278, 70, 40, 28, '--roof-sun', 2], [356, 54, 62, 24, '--roof', 1], [418, 58, 46, 26, '--roof-2', 2]];
+const TREES: [number, number, number][] = [[124, 438, 15], [210, 440, 11], [346, 440, 12], [600, 440, 14], [668, 446, 17], [92, 452, 12]];
 
 /**
  * The entrance of the fraccionamiento, drawn flat: sky with the sun or moon where the clock says,
  * hills, houses (windows lit at night), the caseta and its barrier arm.
  *
- * The scene answers what the person does: waiting for the passkey blinks the caseta's lamp amber,
- * a granted access turns it green and lifts the arm, a failure turns it red and the arm shakes.
+ * The scene tells the login as a small story, seen from behind a car: asking for the passkey
+ * brings the car up the road to stop at the barrier (brake lights on, the caseta's lamp blinking
+ * amber); a granted access turns the lamp green, lifts the arm and the car drives through into
+ * the street; a failure turns the lamp red, shakes the arm and the car backs away.
  * On computers the layers drift a few pixels after the pointer (a spring, decorative only).
  */
 export function GateScene({ now, gate }: { now: Date; gate: GateState }) {
@@ -56,10 +58,10 @@ export function GateScene({ now, gate }: { now: Date; gate: GateState }) {
     return () => { window.removeEventListener('pointermove', move); cancelAnimationFrame(frame); };
   }, []);
 
-  return <svg ref={root} className={`gate-scene ${phase} ${gate}`} viewBox="0 0 800 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  return <svg ref={root} className={`gate-scene ${phase} ${gate}`} viewBox="0 0 800 560" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <defs>
       <linearGradient id="gs-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--sky-1)"/><stop offset="1" stopColor="var(--sky-2)"/></linearGradient>
-      <clipPath id="gs-arm-clip"><rect x="262" y="446" width="262" height="12" rx="6"/></clipPath>
+      <clipPath id="gs-arm-clip"><rect x="292" y="446" width="204" height="12" rx="6"/></clipPath>
     </defs>
     <rect width="800" height="600" fill="url(#gs-sky)"/>
 
@@ -93,19 +95,34 @@ export function GateScene({ now, gate }: { now: Date; gate: GateState }) {
       <path fill="var(--road)" d="M318 470 H482 L610 600 H190 Z"/>
       <path className="gs-road-line" d="M400 482 V600"/>
       {/* The caseta. */}
-      <rect x="524" y="392" width="78" height="80" rx="4" fill="var(--wall)"/>
-      <rect x="516" y="382" width="94" height="14" rx="4" fill="var(--roof)"/>
-      <rect className="gs-window" x="538" y="408" width="34" height="26" rx="3"/>
-      <rect x="580" y="430" width="14" height="42" rx="2" fill="var(--door)"/>
-      <circle className="gs-lamp-glow" cx="563" cy="374" r="20"/>
-      <circle className="gs-lamp" cx="563" cy="374" r="7"/>
+      <rect x="496" y="392" width="78" height="80" rx="4" fill="var(--wall)"/>
+      <rect x="488" y="382" width="94" height="14" rx="4" fill="var(--roof)"/>
+      <rect className="gs-window" x="510" y="408" width="34" height="26" rx="3"/>
+      <rect x="552" y="430" width="14" height="42" rx="2" fill="var(--door)"/>
+      <circle className="gs-lamp-glow" cx="535" cy="374" r="20"/>
+      <circle className="gs-lamp" cx="535" cy="374" r="7"/>
       {/* The barrier: post, counterweight and the striped arm that lifts from its hinge. */}
-      <rect x="514" y="432" width="14" height="40" rx="3" fill="var(--roof)"/>
+      <rect x="485" y="432" width="14" height="40" rx="3" fill="var(--roof)"/>
       <g className="gs-arm">
-        <rect x="518" y="443" width="26" height="18" rx="4" fill="var(--roof)"/>
-        <rect x="262" y="446" width="262" height="12" rx="6" fill="#fff"/>
-        <g clipPath="url(#gs-arm-clip)" fill="var(--sun)">{Array.from({ length: 7 }, (_, i) => <path key={i} d={`M${276 + i * 38} 446 h18 l-10 12 h-18 Z`}/>)}</g>
-        <circle cx="521" cy="452" r="5" fill="var(--sun)"/>
+        <rect x="489" y="443" width="26" height="18" rx="4" fill="var(--roof)"/>
+        <rect x="292" y="446" width="204" height="12" rx="6" fill="#fff"/>
+        <g clipPath="url(#gs-arm-clip)" fill="var(--sun)">{Array.from({ length: 5 }, (_, i) => <path key={i} d={`M${310 + i * 38} 446 h18 l-10 12 h-18 Z`}/>)}</g>
+        <circle cx="492" cy="452" r="5" fill="var(--sun)"/>
+      </g>
+      {/* The car, seen from behind. Its place on the road and its size come from CSS, per state. */}
+      <g className="gs-car">
+        <ellipse cx="0" cy="3" rx="82" ry="9" fill="#00000026"/>
+        <rect x="-68" y="-22" width="24" height="24" rx="6" fill="#16181a"/>
+        <rect x="44" y="-22" width="24" height="24" rx="6" fill="#16181a"/>
+        <path d="M-52 -60 L-40 -100 H40 L52 -60 Z" fill="var(--car-top)"/>
+        <path d="M-41 -64 L-33 -93 H33 L41 -64 Z" fill="var(--car-glass)"/>
+        <rect x="-74" y="-64" width="148" height="50" rx="16" fill="var(--car)"/>
+        <rect x="-74" y="-26" width="148" height="14" rx="6" fill="var(--car-top)"/>
+        <rect x="-17" y="-40" width="34" height="11" rx="2" fill="#f4f5f1"/>
+        <circle className="gs-brake-glow" cx="-56" cy="-46" r="20"/>
+        <circle className="gs-brake-glow" cx="56" cy="-46" r="20"/>
+        <rect className="gs-brake" x="-68" y="-52" width="24" height="11" rx="4"/>
+        <rect className="gs-brake" x="44" y="-52" width="24" height="11" rx="4"/>
       </g>
     </g>
   </svg>;

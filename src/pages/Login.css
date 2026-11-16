@@ -1,40 +1,37 @@
-/* Login: the caseta. A flat illustrated entrance that lives on the person's clock, next to big
-   plain type on the app's warm canvas. No floating card, no gradient hero: the scene is the
-   identity and the barrier arm is the feedback. Motion follows Emil Kowalski's rules: transform
-   and opacity only, strong ease-out for what enters, transitions (not keyframes) for state,
-   linear for constant drift, and delight only where it is rare (the arm lifting on access). */
-.login { position: relative; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(400px, 560px); grid-template-rows: auto 1fr; grid-template-areas: 'scene top' 'scene panel'; min-height: 100dvh; background: var(--canvas); color: var(--ink); }
-.login-top { grid-area: top; padding: 30px clamp(28px, 4vw, 64px) 0; }
+/* Login: the caseta. The illustrated entrance fills the screen and lives on the person's clock;
+   the form is a glass card over its sky, so the caseta and the road stay in view below it.
+   The scene tells the login as a story (a car comes to the barrier, waits, drives through or
+   backs away). Motion follows Emil Kowalski's rules: transform and opacity only, transitions
+   (interruptible) for every state change, strong ease-out for what arrives, ease-in-out for what
+   travels across the screen, and delight only where it is rare: the moment access is granted. */
+.login { position: relative; min-height: 100dvh; color: var(--ink); background: #cfe6ee; }
+.login.night { background: #0c2b36; }
 
-/* The scene. .login-scene only reserves the window's place in the layout; the drawing itself is
-   .login-stage, full-screen and clipped to that window (see Login.tsx). */
-.login-scene { grid-area: scene; margin: 14px; border-radius: 34px; }
-.login-stage { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; overflow: hidden; pointer-events: none; transition: opacity 500ms var(--ease-out-strong); }
+/* The scene: fixed behind everything, covering the screen. */
+.login-stage { position: fixed; inset: 0; overflow: hidden; transition: opacity 500ms var(--ease-out-strong); }
 @starting-style { .login-stage { opacity: 0; } }
-.login-top, .login-panel { position: relative; }
-/* overflow: visible, because the window can need parts of the drawing (more sky, more street)
-   that the full-screen framing leaves outside the SVG's own box; the stage's clip does the cutting. */
-.gate-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; transform-origin: 0 0;
-  --sun: #e6b85c; --lamp: #e6b85c; --stars: 0; --cloud: #ffffff; --trunk: #6f5a44; --door: #123c4a; --roof-sun: #e6b85c; }
+.gate-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  --sun: #e6b85c; --lamp: #e6b85c; --stars: 0; --cloud: #ffffff; --trunk: #6f5a44; --door: #123c4a; --roof-sun: #e6b85c;
+  --car: #1f6a7c; --car-top: #164e5d; --car-glass: #c3e2eb; }
 /* Four palettes, one per moment of the day. */
 .gate-scene.day { --sky-1: #bfdfea; --sky-2: #f2f6ee; --orb: #f0c66a; --orb-glow: #f0c66a55; --hill-1: #b4d2c9; --hill-2: #8fbcae; --ground: #dce8da; --road: #c5d0cd; --wall: #ffffff; --roof: #123c4a; --roof-2: #1f6a7c; --win: #a9cbd6; --tree: #2f7f6b; }
 .gate-scene.dawn { --sky-1: #f4c9a4; --sky-2: #f7efdf; --orb: #f3a85f; --orb-glow: #f3a85f66; --hill-1: #c9c2ae; --hill-2: #9db7a4; --ground: #e4e2cd; --road: #cfcabb; --wall: #fffaf2; --roof: #123c4a; --roof-2: #2b6f7c; --win: #f3cf86; --tree: #3d8068; --cloud: #fff4e6; }
-.gate-scene.dusk { --sky-1: #e58f63; --sky-2: #f6d9b6; --orb: #e8703a; --orb-glow: #e8703a66; --hill-1: #9a8f9a; --hill-2: #567a83; --ground: #c9bba6; --road: #a99f92; --wall: #fbeede; --roof: #123c4a; --roof-2: #24586a; --win: #f3cf86; --tree: #2a6259; --cloud: #fbd9bf; }
-.gate-scene.night { --sky-1: #081d25; --sky-2: #1a4d5f; --orb: #eef4f6; --orb-glow: #eef4f62e; --hill-1: #15404e; --hill-2: #0f3440; --ground: #0c2a34; --road: #143f4c; --wall: #2c5b6b; --roof: #071a21; --roof-2: #0c2c37; --win: #f3cf86; --tree: #0f3a41; --trunk: #0a262d; --door: #071a21; --stars: 1; --cloud: #ffffff12; --roof-sun: #a8842f; }
+.gate-scene.dusk { --sky-1: #e58f63; --sky-2: #f6d9b6; --orb: #e8703a; --orb-glow: #e8703a66; --hill-1: #9a8f9a; --hill-2: #567a83; --ground: #c9bba6; --road: #a99f92; --wall: #fbeede; --roof: #123c4a; --roof-2: #24586a; --win: #f3cf86; --tree: #2a6259; --cloud: #fbd9bf; --car: #1b5c6c; --car-top: #123f4c; --car-glass: #f1c9a5; }
+.gate-scene.night { --sky-1: #081d25; --sky-2: #1a4d5f; --orb: #eef4f6; --orb-glow: #eef4f62e; --hill-1: #15404e; --hill-2: #0f3440; --ground: #0c2a34; --road: #143f4c; --wall: #2c5b6b; --roof: #071a21; --roof-2: #0c2c37; --win: #f3cf86; --tree: #0f3a41; --trunk: #0a262d; --door: #071a21; --stars: 1; --cloud: #ffffff12; --roof-sun: #a8842f; --car: #1d5a6b; --car-top: #0f3a47; --car-glass: #1f4b59; }
 .gs-orb { fill: var(--orb); }
 .gs-orb-glow { fill: var(--orb-glow); }
 .gs-stars { fill: #eef4f6; opacity: var(--stars); }
-.gs-cloud { fill: var(--cloud); animation: gs-drift 70s linear infinite alternate; }
-.gs-cloud.slow { animation-duration: 110s; animation-direction: alternate-reverse; }
-@keyframes gs-drift { to { transform: translateX(70px); } }
+/* Clouds stand still: they sit behind the glass card, and anything moving there would make the
+   browser blur the backdrop again on every frame. */
+.gs-cloud { fill: var(--cloud); }
 .gs-window { fill: var(--win); }
 .gs-road-line { fill: none; stroke: #ffffff8c; stroke-width: 4; stroke-dasharray: 16 14; }
 
 /* The barrier arm, hinged at the post. It drops into place when the login appears, lifts when
    access is granted (a small overshoot: it is a physical arm) and shakes its head on a failure. */
-.gs-arm { transform-box: view-box; transform-origin: 521px 452px; transform: rotate(0deg); transition: transform 560ms cubic-bezier(.32, .72, 0, 1) 260ms; }
+.gs-arm { transform-box: view-box; transform-origin: 492px 452px; transform: rotate(0deg); transition: transform 560ms cubic-bezier(.32, .72, 0, 1) 260ms; }
 @starting-style { .gs-arm { transform: rotate(74deg); } }
-.gate-scene.open .gs-arm { transform: rotate(76deg); transition: transform 640ms cubic-bezier(.34, 1.3, .64, 1); }
+.gate-scene.open .gs-arm { transform: rotate(76deg); transition: transform 600ms cubic-bezier(.34, 1.3, .64, 1); }
 .gate-scene.denied .gs-arm { animation: gs-deny 440ms cubic-bezier(.45, 0, .55, 1); }
 @keyframes gs-deny { 20% { transform: rotate(5deg); } 45% { transform: rotate(-2deg); } 70% { transform: rotate(3deg); } }
 /* The caseta's lamp says the state: amber steady, amber blinking while the phone asks for the
@@ -48,78 +45,101 @@
 .gate-scene.denied { --lamp: #d9534f; }
 .gate-scene.denied .gs-lamp-glow { opacity: .5; }
 
-/* The panel: big plain type on the canvas. */
-.login-panel { grid-area: panel; align-self: center; width: 100%; max-width: 520px; padding: 24px clamp(28px, 4vw, 64px) 34px; transition: opacity 260ms var(--ease-out-strong), transform 260ms var(--ease-out-strong); }
-/* Access granted: you are the car. Brand, panel and buttons step aside, the window opens to the
-   whole screen and the camera drives through the gate (transform and clip-path only); at the end
-   the app's own background covers the street. Seen once per login, so it can take 1.6 s. */
-.gate-open .login-panel, .gate-open .login-top { opacity: 0; pointer-events: none; transition: opacity 220ms var(--ease-out-strong); }
-.driving .login-stage { z-index: 5; transition: clip-path 560ms var(--ease-out-strong); }
-.driving .gate-scene { transition: transform 1250ms cubic-bezier(.7, 0, .3, 1); }
-.driving .gs-road-line { animation: gs-road 260ms linear infinite; }
-@keyframes gs-road { to { stroke-dashoffset: -30; } }
-.login-veil { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; background: var(--canvas); opacity: 0; pointer-events: none; }
-.driving .login-veil { opacity: 1; transition: opacity 380ms var(--ease-out-strong) 870ms; }
-/* Only if the server is slow to answer after the drive: the mark, so the screen is never blank. */
-.login-veil .brand { opacity: 0; }
-.driving .login-veil .brand { opacity: 1; transition: opacity 300ms ease 1900ms; }
+/* The car (seen from behind). Each state is one position on the road, and the size follows the
+   road's perspective; transitions between them can be interrupted at any point.
+   Out of sight below the screen → stopped at the barrier → through the gate and gone.
+   The base rule is also the way back: on a failure the car reverses out the way it came. */
+.gs-car { transform-box: view-box; transform-origin: 0 0; transform: translate(400px, 780px) scale(1.7); transition: transform 820ms cubic-bezier(.7, 0, .3, 1) 320ms, opacity 200ms ease; }
+.gate-scene.waiting .gs-car { transform: translate(400px, 512px) scale(.7); transition: transform 1050ms var(--ease-out-strong); }
+.gate-scene.open .gs-car { transform: translate(400px, 461px) scale(.36); opacity: 0; transition: transform 900ms cubic-bezier(.7, 0, .3, 1) 360ms, opacity 240ms ease 1080ms; }
+/* Brake lights: on once the car has stopped at the barrier, off when it moves again. */
+.gs-brake { fill: #a8403b; transition: fill 160ms ease; }
+.gs-brake-glow { fill: #ff5a4f; opacity: 0; transition: opacity 160ms ease; }
+.gate-scene.waiting .gs-brake { fill: #ff4b3e; transition-delay: 700ms; }
+.gate-scene.waiting .gs-brake-glow { opacity: .4; transition-delay: 700ms; }
+
+.login-top { position: absolute; top: 0; left: 0; z-index: 2; padding: max(20px, env(safe-area-inset-top)) 26px 0; transition: opacity 220ms var(--ease-out-strong); }
+.login.night .login-top .brand { color: #fff; }
+
+/* The sky: the area above the houses, where the card sits. Its height is what the scene's
+   framing leaves above the rooftops (the drawing is 800×560 and anchored to the bottom). */
+.login-sky { position: relative; z-index: 1; display: grid; place-items: center; min-height: calc(100dvh - max(22.5vw, 32.1dvh)); padding: 76px 16px 12px; }
+
+/* The glass card. */
+.login-card { width: min(430px, 100%); padding: 26px 26px 14px; border-radius: 28px; background: #ffffffa8; -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); border: 1px solid #ffffffbf; box-shadow: 0 30px 70px -32px #081d258c, inset 0 1px 0 #ffffffcc; transition: opacity 360ms var(--ease-out-strong), transform 360ms var(--ease-out-strong), visibility 0s; }
+@starting-style { .login-card { opacity: 0; transform: translateY(14px) scale(.98); } }
+.login.night .login-card { background: #f4f5f1c7; border-color: #ffffff66; }
+.login.dusk .login-card { background: #ffffffb8; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .login-card { background: #fffffff2; } }
+/* Access granted: the card and the logo step aside (faster than they came) so the car is seen. */
+.gate-open .login-card { opacity: 0; transform: scale(.97); visibility: hidden; pointer-events: none; transition: opacity 220ms var(--ease-out-strong), transform 220ms var(--ease-out-strong), visibility 0s linear 220ms; }
+.gate-open .login-top { opacity: 0; }
+
 /* The content arrives as one movement, 45 ms apart; also when switching Ingresar / Activar / Ayuda. */
-.login-mode > * { transition: opacity 280ms var(--ease-out-strong), transform 280ms var(--ease-out-strong); transition-delay: calc(var(--n, 0) * 45ms + 80ms); }
-@starting-style { .login-mode > * { opacity: 0; transform: translateY(10px); } }
-.login-mode > :nth-child(2) { --n: 1; } .login-mode > :nth-child(3) { --n: 2; } .login-mode > :nth-child(4) { --n: 3; } .login-mode > :nth-child(5) { --n: 4; } .login-mode > :nth-child(n + 6) { --n: 5; }
+.login-mode > * { transition: opacity 280ms var(--ease-out-strong), transform 280ms var(--ease-out-strong); transition-delay: calc(var(--n, 0) * 45ms + 120ms); }
+@starting-style { .login-mode > * { opacity: 0; transform: translateY(8px); } }
+.login-mode > :nth-child(2) { --n: 1; } .login-mode > :nth-child(3) { --n: 2; } .login-mode > :nth-child(4) { --n: 3; } .login-mode > :nth-child(n + 5) { --n: 4; }
 
-.login-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 18px; max-width: none; font-size: 14px; color: var(--muted); }
-.login-when strong { position: relative; isolation: isolate; color: var(--brand); font-family: var(--display); font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.login-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 12px; max-width: none; font-size: 13px; color: var(--muted); }
+.login-when strong { position: relative; isolation: isolate; color: var(--brand); font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
 /* A hand-drawn-feeling underline in sun, not a pill. */
-.login-when strong::after { content: ''; position: absolute; left: -2px; right: -2px; bottom: -3px; height: 6px; border-radius: 3px; background: var(--sun); opacity: .55; transform: rotate(-.6deg); z-index: -1; }
+.login-when strong::after { content: ''; position: absolute; left: -2px; right: -2px; bottom: -3px; height: 6px; border-radius: 3px; background: var(--sun); opacity: .6; transform: rotate(-.6deg); z-index: -1; }
 .login-when span::first-letter { text-transform: uppercase; }
-.login-panel h2 { margin: 0; font-family: var(--display); font-size: clamp(44px, 4.6vw, 68px); font-weight: 600; letter-spacing: -.045em; line-height: 1; text-wrap: balance; }
-.login-lead { margin: 16px 0 0; max-width: 34ch; color: var(--muted); font-size: 17px; line-height: 1.55; }
-.login-panel form { margin-top: 30px; }
-.login-cta { min-height: 60px; border-radius: 18px; font-size: 17px; box-shadow: 0 14px 28px -16px #123c4acc; }
-.login-hint { margin: 14px 2px 0; max-width: none; color: var(--muted); font-size: 13px; line-height: 1.55; }
-.login-panel .login-switch { margin-top: 22px; text-align: left; }
-.login-panel .subtle-link { margin: 0; padding-left: 0; }
-.login-panel .help-card { background: var(--surface); }
-.login-panel .help-card svg { color: var(--brand); }
+.login-card h2 { margin: 0; font-family: var(--display); font-size: clamp(30px, 3.1vw, 40px); font-weight: 600; letter-spacing: -.04em; line-height: 1.05; text-wrap: balance; }
+.login-lead { margin: 10px 0 0; max-width: 36ch; color: #3f5560; font-size: 15.5px; line-height: 1.5; }
+.login-card form { margin-top: 20px; }
+.login-cta { min-height: 56px; border-radius: 18px; font-size: 16.5px; box-shadow: 0 14px 28px -16px #123c4acc; }
+.login-links { display: grid; justify-items: center; margin-top: 10px; }
+.login-card .login-switch { margin: 0; color: #3f5560; }
+.login-card .subtle-link { margin: -6px 0 0; }
+.login-card .help-card { background: #ffffffb3; border-color: #ffffffcc; margin: 12px 0; padding: 16px; }
+.login-card .help-card svg { color: var(--brand); }
+.login-card .help-card h3 { margin-top: 8px; }
+.login-card input, .login-card textarea { background: #ffffffd9; }
 
-/* Gate devices: a quiet row at the end. */
-.login-station { display: flex; align-items: center; gap: 12px; margin-top: 22px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; }
+/* Gate devices: a quiet row at the foot of the card. */
+.login-station { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 12px 2px 4px; border-top: 1px solid #123c4a1f; color: var(--ink); text-decoration: none; border-radius: 0 0 10px 10px; }
 .login-station > svg:first-child { flex: none; color: var(--brand); }
 .login-station span { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.login-station strong { font-size: 13.5px; }
-.login-station small { color: var(--muted); font-size: 12px; }
-.login-station > svg:last-child { color: var(--muted); }
-.login-station:active { background: var(--soft); }
-@media (hover: hover) and (pointer: fine) { .login-station:hover { border-color: #b9cbd3; } }
+.login-station strong { font-size: 13px; }
+.login-station small { color: #3f5560; font-size: 11.5px; }
+.login-station > svg:last-child { color: #3f5560; }
+.login-station:active { opacity: .6; }
 
-/* Phones: brand, the scene as a wide window, then the panel. The main button stays above the fold. */
-@media (max-width: 900px) {
-  .login { display: flex; flex-direction: column; }
-  .login-top { padding: max(14px, env(safe-area-inset-top)) 20px 10px; }
-  .login-top .brand { font-size: 24px; }
-  .login-top .brand-mark { width: 34px; height: 34px; }
-  .login-scene { flex: none; height: clamp(190px, 32dvh, 300px); margin: 0 12px; border-radius: 26px; }
-  .login-panel { align-self: stretch; max-width: none; padding: 22px 22px max(20px, env(safe-area-inset-bottom)); }
-  .login-when { margin-bottom: 12px; }
-  .login-panel h2 { font-size: clamp(34px, 10vw, 44px); }
-  .login-lead { margin-top: 10px; font-size: 15.5px; }
-  .login-panel form { margin-top: 20px; }
-  .login-cta { min-height: 56px; }
+/* The end: the app's own background covers the scene, then the app appears. The mark shows only
+   if the server is slow to answer, so the screen is never blank. */
+.login-veil { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; background: var(--canvas); opacity: 0; pointer-events: none; }
+.leaving .login-veil { opacity: 1; transition: opacity 320ms var(--ease-out-strong); }
+.login-veil .brand { opacity: 0; }
+.leaving .login-veil .brand { opacity: 1; transition: opacity 300ms ease 1100ms; }
+
+/* Phones. */
+@media (max-width: 700px) {
+  .login-top { padding-inline: 18px; }
+  .login-top .brand { font-size: 23px; }
+  .login-top .brand-mark { width: 32px; height: 32px; }
+  .login-sky { padding: 64px 12px 8px; }
+  .login-card { padding: 20px 20px 10px; border-radius: 24px; }
+  .login-card h2 { font-size: 30px; }
+  .login-lead { font-size: 15px; }
+  .login-card form { margin-top: 16px; }
+  .login-station small { display: none; }
 }
-/* Short phones (iPhone SE and similar). */
-@media (max-width: 900px) and (max-height: 620px) {
-  .login-scene { height: 160px; }
-  .login-when span { display: none; }
-  .login-panel { padding-top: 16px; }
-  .login-panel h2 { font-size: 32px; }
-  .login-panel form { margin-top: 16px; }
+/* Short phones (iPhone SE and similar): the essentials only. */
+@media (max-width: 700px) and (max-height: 620px) {
+  .login-sky { padding-top: 56px; }
+  .login-when span, .login-lead { display: none; }
+  .login-card h2 { font-size: 28px; }
+  .login-card form { margin-top: 14px; }
+  .login-cta { min-height: 52px; }
 }
 
-/* Reduced motion: no drift, no drop, no shake; state still shows through the lamp's color. */
+/* Reduced motion: no car, no drop, no shake; the state still shows through the lamp's color. */
 @media (prefers-reduced-motion: reduce) {
-  .gs-cloud, .gate-scene.waiting .gs-lamp-glow, .gate-scene.denied .gs-arm { animation: none; }
+  .gs-car { display: none; }
+  .gate-scene.waiting .gs-lamp-glow, .gate-scene.denied .gs-arm { animation: none; }
   .gs-arm, .gate-scene.open .gs-arm { transition: none; }
-  @starting-style { .gs-arm { transform: rotate(0deg); } .login-mode > * { transform: none; } }
-  .login-stage, .login-mode > * { transition: opacity 200ms ease; transition-delay: 0ms; }
+  @starting-style { .gs-arm { transform: rotate(0deg); } .login-card { transform: none; } .login-mode > * { transform: none; } }
+  .login-stage, .login-card, .login-mode > * { transition: opacity 200ms ease; transition-delay: 0ms; }
+  .gate-open .login-card { transform: none; }
 }
