@@ -10,17 +10,17 @@ import { AnimatedFingerprint } from '../components/icons/AnimatedIcons';
 import type { SessionResult } from '../types';
 import './Login.css';
 
-const PASS_MS = 1500;        // the arm lifts and the car drives through the gate into the street
+const PASS_MS = 1250;        // the arm lifts and you drive past the gate; the veil starts while still moving
 const VEIL_MS = 320;         // the app's background covers the scene before the app appears
-const GATE_DENIED_MS = 1700; // red lamp, a shake and the car backing away; then closed again
+const GATE_DENIED_MS = 1500; // red lamp and a shake of the arm; then closed again
 const greeting = (at: Date) => { const h = at.getHours(); return h >= 5 && h < 12 ? 'Buenos días' : h >= 12 && h < 19 ? 'Buenas tardes' : 'Buenas noches'; };
 const clock = (at: Date) => new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }).format(at);
 
 /**
- * The login is the caseta. The illustrated entrance fills the screen and lives on the person's
- * clock; the form is a glass card over its sky. The scene tells the login as a story: asking for
- * the passkey brings a car to the barrier, a granted access lifts the arm and the car drives
- * through (the card steps aside to let it be seen), a failure sends the car back.
+ * The login is the caseta, from the driver's seat: your hood, the barrier down in front of you,
+ * the street beyond. The scene lives on the person's clock and the form is a glass card over its
+ * sky. Asking for the passkey blinks the caseta's lamp; a granted access lifts the arm, the card
+ * steps aside and you drive in; a failure turns the lamp red and the arm shakes.
  */
 export function Login() {
   const [mode, setMode] = useState<'login' | 'register' | 'help'>(location.pathname === '/activar' ? 'register' : 'login');
@@ -36,7 +36,7 @@ export function Login() {
 
   async function submit(event: FormEvent) {
     event.preventDefault(); if (busy) return; setBusy(true); setError('');
-    // The car comes up the road and waits at the barrier while the phone asks for the passkey.
+    // You are at the barrier: the lamp blinks while the phone asks for the passkey.
     window.clearTimeout(denied.current); setGate('waiting');
     try {
       if (!window.isSecureContext || !browserSupportsWebAuthn()) throw new Error('Abre Zentry en un navegador compatible y con una conexión HTTPS para usar tu llave de acceso.');
@@ -51,7 +51,7 @@ export function Login() {
         const response = await startAuthentication({ optionsJSON: options.options });
         session = await api('/auth/login/verify', { method: 'POST', public: true, body: { challengeId: options.challengeId, response } });
       }
-      // Access granted: green lamp, the arm lifts, the card steps aside and the car drives in.
+      // Access granted: green lamp, the arm lifts, the card steps aside and you drive in.
       setGate('open');
       if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
         const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -62,7 +62,7 @@ export function Login() {
       }
       await auth.accept(session); history.replaceState(null, '', '/'); window.dispatchEvent(new PopStateEvent('popstate'));
     } catch (e) {
-      // Red lamp, the arm shakes and the car backs away.
+      // Red lamp and the arm shakes: you stay where you are.
       setError(errorText(e)); setGate('denied');
       denied.current = window.setTimeout(() => setGate('closed'), GATE_DENIED_MS);
     } finally { setBusy(false); }
@@ -90,7 +90,7 @@ export function Login() {
           {auth.expired && <div className="info-box">Tu sesión terminó. Ingresa de nuevo para continuar.</div>}
           <form onSubmit={submit}><fieldset disabled={busy || gate === 'open'}>{mode === 'register' ? <><label>Invitación de acceso<textarea required minLength={32} maxLength={256} autoComplete="off" value={invitation} onChange={e => setInvitation(e.target.value)} placeholder="Pega aquí tu invitación" rows={3}/></label><label>Nombre de este dispositivo<input required maxLength={100} value={label} onChange={e => setLabel(e.target.value)} placeholder="Por ejemplo: Mi teléfono"/></label></> : null}</fieldset>
             <ErrorBox message={error}/>
-            <Button busy={busy} disabled={gate === 'open'} type="submit" className="full login-cta"><AnimatedFingerprint size={20}/>{mode === 'register' ? 'Activar mi acceso' : 'Ingresar con mi llave'}<ArrowUpRight size={18}/></Button>
+            <Button busy={busy} disabled={gate === 'open'} type="submit" className="full login-cta"><AnimatedFingerprint size={20}/>{mode === 'register' ? 'Activar mi acceso' : 'Ingresar con mi llave'}<span className="login-cta-arrow"><ArrowUpRight size={17}/></span></Button>
           </form>
           <div className="login-links">
             <span className="login-switch">{mode === 'login' ? '¿Primera vez en Zentry?' : '¿Ya tienes una llave?'} <button disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Activar mi acceso' : 'Ingresar'}</button></span>

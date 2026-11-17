@@ -1,37 +1,48 @@
-/* Login: the caseta. The illustrated entrance fills the screen and lives on the person's clock;
-   the form is a glass card over its sky, so the caseta and the road stay in view below it.
-   The scene tells the login as a story (a car comes to the barrier, waits, drives through or
-   backs away). Motion follows Emil Kowalski's rules: transform and opacity only, transitions
-   (interruptible) for every state change, strong ease-out for what arrives, ease-in-out for what
-   travels across the screen, and delight only where it is rare: the moment access is granted. */
-.login { position: relative; min-height: 100dvh; color: var(--ink); background: #cfe6ee; }
+/* Login: the caseta, from the driver's seat. Your hood at the bottom, the barrier down in front of
+   you, the street going on between the houses; the form is a glass card over the sky.
+
+   Motion (Emil Kowalski's rules, Apple's depth, one choreographed camera move):
+   - transform and opacity only; every state change is a transition, so it can be interrupted;
+   - strong ease-out for what arrives, a strong ease-in-out for the camera travelling;
+   - the drive is ONE move: all depth layers start together and share the curve, and only the
+     amount differs per layer (near sweeps past, far barely grows). That is what reads as depth;
+   - delight only where it is rare: the moment access is granted. */
+.login { position: relative; min-height: 100dvh; color: var(--ink); background: #cfe6ee;
+  --drive-ease: cubic-bezier(.77, 0, .175, 1); --drive-delay: 380ms;
+  /* Where the street meets the horizon, in screen terms: the drawing is 800×560, anchored to the
+     bottom and scaled to cover, and its horizon sits 180 units above its bottom edge. */
+  --horizon: calc(100% - max(22.5vw, 32.143dvh)); }
 .login.night { background: #0c2b36; }
 
 /* The scene: fixed behind everything, covering the screen. */
 .login-stage { position: fixed; inset: 0; overflow: hidden; transition: opacity 500ms var(--ease-out-strong); }
 @starting-style { .login-stage { opacity: 0; } }
-.gate-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+.gate-scene { position: absolute; inset: 0;
   --sun: #e6b85c; --lamp: #e6b85c; --stars: 0; --cloud: #ffffff; --trunk: #6f5a44; --door: #123c4a; --roof-sun: #e6b85c;
-  --car: #1f6a7c; --car-top: #164e5d; --car-glass: #c3e2eb; }
+  --car: #1c5f70; --car-top: #123f4c; --car-light: #2c7f93; }
+.gs-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; transform-origin: 50% var(--horizon); }
 /* Four palettes, one per moment of the day. */
-.gate-scene.day { --sky-1: #bfdfea; --sky-2: #f2f6ee; --orb: #f0c66a; --orb-glow: #f0c66a55; --hill-1: #b4d2c9; --hill-2: #8fbcae; --ground: #dce8da; --road: #c5d0cd; --wall: #ffffff; --roof: #123c4a; --roof-2: #1f6a7c; --win: #a9cbd6; --tree: #2f7f6b; }
-.gate-scene.dawn { --sky-1: #f4c9a4; --sky-2: #f7efdf; --orb: #f3a85f; --orb-glow: #f3a85f66; --hill-1: #c9c2ae; --hill-2: #9db7a4; --ground: #e4e2cd; --road: #cfcabb; --wall: #fffaf2; --roof: #123c4a; --roof-2: #2b6f7c; --win: #f3cf86; --tree: #3d8068; --cloud: #fff4e6; }
-.gate-scene.dusk { --sky-1: #e58f63; --sky-2: #f6d9b6; --orb: #e8703a; --orb-glow: #e8703a66; --hill-1: #9a8f9a; --hill-2: #567a83; --ground: #c9bba6; --road: #a99f92; --wall: #fbeede; --roof: #123c4a; --roof-2: #24586a; --win: #f3cf86; --tree: #2a6259; --cloud: #fbd9bf; --car: #1b5c6c; --car-top: #123f4c; --car-glass: #f1c9a5; }
-.gate-scene.night { --sky-1: #081d25; --sky-2: #1a4d5f; --orb: #eef4f6; --orb-glow: #eef4f62e; --hill-1: #15404e; --hill-2: #0f3440; --ground: #0c2a34; --road: #143f4c; --wall: #2c5b6b; --roof: #071a21; --roof-2: #0c2c37; --win: #f3cf86; --tree: #0f3a41; --trunk: #0a262d; --door: #071a21; --stars: 1; --cloud: #ffffff12; --roof-sun: #a8842f; --car: #1d5a6b; --car-top: #0f3a47; --car-glass: #1f4b59; }
+.gate-scene.day { --sky-1: #b5d9e6; --sky-2: #eef5ee; --orb: #f0c66a; --orb-glow: #f0c66a55; --hill-1: #b4d2c9; --hill-2: #8fbcae; --ground: #d5e3d2; --road: #bcc8c5; --wall: #ffffff; --roof: #123c4a; --roof-2: #1f6a7c; --win: #a9cbd6; --tree: #2f7f6b; }
+.gate-scene.dawn { --sky-1: #f1c19a; --sky-2: #f7efdf; --orb: #f3a85f; --orb-glow: #f3a85f66; --hill-1: #c9c2ae; --hill-2: #9db7a4; --ground: #dfdcc5; --road: #c6c1b2; --wall: #fffaf2; --roof: #123c4a; --roof-2: #2b6f7c; --win: #f3cf86; --tree: #3d8068; --cloud: #fff4e6; }
+.gate-scene.dusk { --sky-1: #df8559; --sky-2: #f6d9b6; --orb: #e8703a; --orb-glow: #e8703a66; --hill-1: #9a8f9a; --hill-2: #567a83; --ground: #c2b39d; --road: #a0968a; --wall: #fbeede; --roof: #123c4a; --roof-2: #24586a; --win: #f3cf86; --tree: #2a6259; --cloud: #fbd9bf; --car: #1a5666; --car-top: #0f3944; --car-light: #2a7386; }
+.gate-scene.night { --sky-1: #071a22; --sky-2: #1a4d5f; --orb: #eef4f6; --orb-glow: #eef4f62e; --hill-1: #15404e; --hill-2: #0f3440; --ground: #0c2a34; --road: #143f4c; --wall: #2c5b6b; --roof: #071a21; --roof-2: #0c2c37; --win: #f3cf86; --tree: #0f3a41; --trunk: #0a262d; --door: #071a21; --stars: 1; --cloud: #ffffff12; --roof-sun: #a8842f; --car: #164c5a; --car-top: #0a2a33; --car-light: #226577; }
 .gs-orb { fill: var(--orb); }
 .gs-orb-glow { fill: var(--orb-glow); }
 .gs-stars { fill: #eef4f6; opacity: var(--stars); }
-/* Clouds stand still: they sit behind the glass card, and anything moving there would make the
-   browser blur the backdrop again on every frame. */
 .gs-cloud { fill: var(--cloud); }
 .gs-window { fill: var(--win); }
-.gs-road-line { fill: none; stroke: #ffffff8c; stroke-width: 4; stroke-dasharray: 16 14; }
+.gs-road-edge { fill: none; stroke: #ffffff40; stroke-width: 2.5; }
+.gs-road-line { fill: none; stroke: #ffffffa6; stroke-width: 5; stroke-dasharray: 20 18; }
+/* Your headlights on the road: only at night. */
+.gs-headlights { fill: #f3cf86; opacity: calc(var(--stars) * .2); }
+.gs-hood-shine { fill: none; stroke: #ffffff38; stroke-width: 3; stroke-linecap: round; }
+.gs-hood-crease { fill: none; stroke: #00000024; stroke-width: 2; }
 
 /* The barrier arm, hinged at the post. It drops into place when the login appears, lifts when
    access is granted (a small overshoot: it is a physical arm) and shakes its head on a failure. */
-.gs-arm { transform-box: view-box; transform-origin: 492px 452px; transform: rotate(0deg); transition: transform 560ms cubic-bezier(.32, .72, 0, 1) 260ms; }
+.gs-arm { transform-box: view-box; transform-origin: 490px 420px; transform: rotate(0deg); transition: transform 560ms cubic-bezier(.32, .72, 0, 1) 260ms; }
 @starting-style { .gs-arm { transform: rotate(74deg); } }
-.gate-scene.open .gs-arm { transform: rotate(76deg); transition: transform 600ms cubic-bezier(.34, 1.3, .64, 1); }
+.gate-scene.open .gs-arm { transform: rotate(78deg); transition: transform 560ms cubic-bezier(.34, 1.3, .64, 1); }
 .gate-scene.denied .gs-arm { animation: gs-deny 440ms cubic-bezier(.45, 0, .55, 1); }
 @keyframes gs-deny { 20% { transform: rotate(5deg); } 45% { transform: rotate(-2deg); } 70% { transform: rotate(3deg); } }
 /* The caseta's lamp says the state: amber steady, amber blinking while the phone asks for the
@@ -41,37 +52,43 @@
 .gate-scene.waiting .gs-lamp-glow { animation: gs-blink 760ms ease-in-out infinite alternate; }
 @keyframes gs-blink { from { opacity: .12; transform: scale(.8); } to { opacity: .6; transform: scale(1.25); } }
 .gate-scene.open { --lamp: #3fbf7f; }
-.gate-scene.open .gs-lamp-glow { opacity: .55; transform: scale(1.6); }
+/* Green glow while the arm lifts; it goes out as the car moves, so it does not sweep past as a blob. */
+.gate-scene.open .gs-lamp-glow { opacity: 0; transform: scale(1.6); animation: gs-glow-go var(--drive-delay) ease both; }
+@keyframes gs-glow-go { 0%, 70% { opacity: .55; } 100% { opacity: 0; } }
 .gate-scene.denied { --lamp: #d9534f; }
 .gate-scene.denied .gs-lamp-glow { opacity: .5; }
 
-/* The car (seen from behind). Each state is one position on the road, and the size follows the
-   road's perspective; transitions between them can be interrupted at any point.
-   Out of sight below the screen → stopped at the barrier → through the gate and gone.
-   The base rule is also the way back: on a failure the car reverses out the way it came. */
-.gs-car { transform-box: view-box; transform-origin: 0 0; transform: translate(400px, 780px) scale(1.7); transition: transform 820ms cubic-bezier(.7, 0, .3, 1) 320ms, opacity 200ms ease; }
-.gate-scene.waiting .gs-car { transform: translate(400px, 512px) scale(.7); transition: transform 1050ms var(--ease-out-strong); }
-.gate-scene.open .gs-car { transform: translate(400px, 461px) scale(.36); opacity: 0; transition: transform 900ms cubic-bezier(.7, 0, .3, 1) 360ms, opacity 240ms ease 1080ms; }
-/* Brake lights: on once the car has stopped at the barrier, off when it moves again. */
-.gs-brake { fill: #a8403b; transition: fill 160ms ease; }
-.gs-brake-glow { fill: #ff5a4f; opacity: 0; transition: opacity 160ms ease; }
-.gate-scene.waiting .gs-brake { fill: #ff4b3e; transition-delay: 700ms; }
-.gate-scene.waiting .gs-brake-glow { opacity: .4; transition-delay: 700ms; }
+/* The drive. Once the arm is on its way up, the camera moves forward: every layer scales from
+   the vanishing point, each by its own amount. The gate (nearest) sweeps past you and out of
+   frame, under the hood line; the houses beside the street part to the sides; the far end of
+   the street and the hills barely grow; the sky stays. The road is self-similar, so it only
+   needs its center line running toward you. The hood lifts a touch as the car pulls away. */
+.gate-scene.open .gs-layer { will-change: transform; }
+.gate-scene.open .gs-sky { transform: scale(1.04); transition: transform 1150ms var(--drive-ease) var(--drive-delay); }
+.gate-scene.open .gs-far { transform: scale(1.32); transition: transform 1150ms var(--drive-ease) var(--drive-delay); }
+.gate-scene.open .gs-mid { transform: scale(2.5); transition: transform 1150ms var(--drive-ease) var(--drive-delay); }
+.gate-scene.open .gs-gate { transform: scale(7); transition: transform 1000ms var(--drive-ease) var(--drive-delay); }
+.gate-scene.open .gs-hood { transform: translateY(-5px); transition: transform 520ms var(--ease-out-strong) var(--drive-delay); }
+.gate-scene.open .gs-road-line { animation: gs-road 620ms cubic-bezier(.5, 0, 1, .6) var(--drive-delay) 1 both, gs-road 150ms linear calc(var(--drive-delay) + 620ms) infinite; }
+@keyframes gs-road { to { stroke-dashoffset: -38; } }
 
 .login-top { position: absolute; top: 0; left: 0; z-index: 2; padding: max(20px, env(safe-area-inset-top)) 26px 0; transition: opacity 220ms var(--ease-out-strong); }
 .login.night .login-top .brand { color: #fff; }
 
-/* The sky: the area above the houses, where the card sits. Its height is what the scene's
-   framing leaves above the rooftops (the drawing is 800×560 and anchored to the bottom). */
-.login-sky { position: relative; z-index: 1; display: grid; place-items: center; min-height: calc(100dvh - max(22.5vw, 32.1dvh)); padding: 76px 16px 12px; }
+/* The sky: the area above the horizon, where the card sits. */
+.login-sky { position: relative; z-index: 1; display: grid; place-items: center; min-height: calc(100dvh - max(22.5vw, 32.143dvh)); padding: 76px 16px 12px; }
 
-/* The glass card. */
-.login-card { width: min(430px, 100%); padding: 26px 26px 14px; border-radius: 28px; background: #ffffffa8; -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); border: 1px solid #ffffffbf; box-shadow: 0 30px 70px -32px #081d258c, inset 0 1px 0 #ffffffcc; transition: opacity 360ms var(--ease-out-strong), transform 360ms var(--ease-out-strong), visibility 0s; }
+/* The glass card: a pane set in a thin translucent frame (two concentric edges), like a
+   machined part rather than a flat panel. It materializes: blur and scale arrive together. */
+.login-card { width: min(430px, 100%); padding: 26px 26px 14px; border-radius: 28px; background: #ffffffa8; -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); border: 1px solid #ffffffc7;
+  box-shadow: 0 0 0 6px #ffffff2e, 0 0 0 7px #ffffff47, 0 36px 80px -34px #081d2599, inset 0 1px 0 #ffffffd9;
+  transition: opacity 360ms var(--ease-out-strong), transform 360ms var(--ease-out-strong), visibility 0s; }
 @starting-style { .login-card { opacity: 0; transform: translateY(14px) scale(.98); } }
-.login.night .login-card { background: #f4f5f1c7; border-color: #ffffff66; }
+.login.night .login-card { background: #f4f5f1c7; border-color: #ffffff66; box-shadow: 0 0 0 6px #ffffff1a, 0 0 0 7px #ffffff29, 0 36px 80px -34px #000000b3, inset 0 1px 0 #ffffff99; }
 .login.dusk .login-card { background: #ffffffb8; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .login-card { background: #fffffff2; } }
-/* Access granted: the card and the logo step aside (faster than they came) so the car is seen. */
+@media (prefers-reduced-transparency: reduce) { .login-card { background: #fffffff5; -webkit-backdrop-filter: none; backdrop-filter: none; } }
+/* Access granted: the card and the logo step aside (faster than they came) so you see the road. */
 .gate-open .login-card { opacity: 0; transform: scale(.97); visibility: hidden; pointer-events: none; transition: opacity 220ms var(--ease-out-strong), transform 220ms var(--ease-out-strong), visibility 0s linear 220ms; }
 .gate-open .login-top { opacity: 0; }
 
@@ -80,7 +97,7 @@
 @starting-style { .login-mode > * { opacity: 0; transform: translateY(8px); } }
 .login-mode > :nth-child(2) { --n: 1; } .login-mode > :nth-child(3) { --n: 2; } .login-mode > :nth-child(4) { --n: 3; } .login-mode > :nth-child(n + 5) { --n: 4; }
 
-.login-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 12px; max-width: none; font-size: 13px; color: var(--muted); }
+.login-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 12px; max-width: none; font-size: 13px; color: #3f5560; }
 .login-when strong { position: relative; isolation: isolate; color: var(--brand); font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
 /* A hand-drawn-feeling underline in sun, not a pill. */
 .login-when strong::after { content: ''; position: absolute; left: -2px; right: -2px; bottom: -3px; height: 6px; border-radius: 3px; background: var(--sun); opacity: .6; transform: rotate(-.6deg); z-index: -1; }
@@ -88,7 +105,11 @@
 .login-card h2 { margin: 0; font-family: var(--display); font-size: clamp(30px, 3.1vw, 40px); font-weight: 600; letter-spacing: -.04em; line-height: 1.05; text-wrap: balance; }
 .login-lead { margin: 10px 0 0; max-width: 36ch; color: #3f5560; font-size: 15.5px; line-height: 1.5; }
 .login-card form { margin-top: 20px; }
-.login-cta { min-height: 56px; border-radius: 18px; font-size: 16.5px; box-shadow: 0 14px 28px -16px #123c4acc; }
+/* The main button: the arrow sits in its own circle, flush with the button's edge, and leans
+   forward on hover (mouse only). */
+.login-cta { position: relative; min-height: 58px; padding-right: 58px; border-radius: 999px; font-size: 16.5px; box-shadow: 0 14px 28px -16px #123c4acc, inset 0 1px 0 #ffffff26; }
+.login-cta-arrow { position: absolute; right: 8px; top: 50%; display: grid; place-items: center; width: 42px; height: 42px; margin-top: -21px; border-radius: 50%; background: #ffffff1f; transition: transform 200ms var(--ease-out-strong), background-color 200ms ease; }
+@media (hover: hover) and (pointer: fine) { .login-cta:hover:not(:disabled) .login-cta-arrow { transform: translate(2px, -2px) scale(1.05); background: #ffffff33; } }
 .login-links { display: grid; justify-items: center; margin-top: 10px; }
 .login-card .login-switch { margin: 0; color: #3f5560; }
 .login-card .subtle-link { margin: -6px 0 0; }
@@ -106,8 +127,8 @@
 .login-station > svg:last-child { color: #3f5560; }
 .login-station:active { opacity: .6; }
 
-/* The end: the app's own background covers the scene, then the app appears. The mark shows only
-   if the server is slow to answer, so the screen is never blank. */
+/* The end: the app's own background covers the scene while you are still moving (you never see
+   the car stop), then the app appears. The mark shows only if the server is slow to answer. */
 .login-veil { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; background: var(--canvas); opacity: 0; pointer-events: none; }
 .leaving .login-veil { opacity: 1; transition: opacity 320ms var(--ease-out-strong); }
 .login-veil .brand { opacity: 0; }
@@ -118,11 +139,12 @@
   .login-top { padding-inline: 18px; }
   .login-top .brand { font-size: 23px; }
   .login-top .brand-mark { width: 32px; height: 32px; }
-  .login-sky { padding: 64px 12px 8px; }
-  .login-card { padding: 20px 20px 10px; border-radius: 24px; }
+  .login-sky { padding: 64px 14px 8px; }
+  .login-card { padding: 20px 20px 10px; border-radius: 24px; box-shadow: 0 0 0 5px #ffffff2e, 0 0 0 6px #ffffff47, 0 30px 60px -30px #081d2599, inset 0 1px 0 #ffffffd9; }
   .login-card h2 { font-size: 30px; }
   .login-lead { font-size: 15px; }
   .login-card form { margin-top: 16px; }
+  .login-cta { min-height: 56px; }
   .login-station small { display: none; }
 }
 /* Short phones (iPhone SE and similar): the essentials only. */
@@ -132,12 +154,14 @@
   .login-card h2 { font-size: 28px; }
   .login-card form { margin-top: 14px; }
   .login-cta { min-height: 52px; }
+  .login-cta-arrow { width: 38px; height: 38px; margin-top: -19px; }
 }
 
-/* Reduced motion: no car, no drop, no shake; the state still shows through the lamp's color. */
+/* Reduced motion: no drive, no drop, no shake; the state still shows through the lamp's color. */
 @media (prefers-reduced-motion: reduce) {
-  .gs-car { display: none; }
-  .gate-scene.waiting .gs-lamp-glow, .gate-scene.denied .gs-arm { animation: none; }
+  .gate-scene.open .gs-layer { transform: none; transition: none; }
+  .gate-scene.open .gs-road-line, .gate-scene.waiting .gs-lamp-glow, .gate-scene.denied .gs-arm { animation: none; }
+  .gate-scene.open .gs-lamp-glow { animation: none; opacity: .55; }
   .gs-arm, .gate-scene.open .gs-arm { transition: none; }
   @starting-style { .gs-arm { transform: rotate(0deg); } .login-card { transform: none; } .login-mode > * { transform: none; } }
   .login-stage, .login-card, .login-mode > * { transition: opacity 200ms ease; transition-delay: 0ms; }
