@@ -167,3 +167,12 @@
   .login-stage, .login-card, .login-mode > * { transition: opacity 200ms ease; transition-delay: 0ms; }
   .gate-open .login-card { transform: none; }
 }
+
+/* «Volver»: a quiet pill at the top of the card, back to where you came from. */
+.login-back { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin: -6px 0 14px -8px; padding: 0 12px 0 8px; border: 0; border-radius: 999px; background: transparent; color: var(--brand); font-size: 14px; font-weight: 650; transition: background-color 150ms ease, transform 120ms var(--ease-out-strong); }
+.login-back:active { transform: scale(.97); background: #123c4a14; }
+@media (hover: hover) and (pointer: fine) { .login-back:hover { background: #123c4a12; } }
+
+/* The unpaired caseta covers the station page (its header and padding) with the login's scene. */
+.station-setup { position: fixed; inset: 0; z-index: 30; overflow-y: auto; }
+.station-setup .login-card form { margin-top: 18px; }

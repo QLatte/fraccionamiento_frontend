@@ -98,7 +98,7 @@ export function Login() {
           </div>
         </>}</div>
         {/* Gate devices use their own entry, without a personal account. */}
-        <a className="login-station" href="/caseta"><ScanLine size={17}/><span><strong>Acceso de caseta</strong><small>Abrir el escáner sin cuenta personal ni biometría</small></span><ArrowUpRight size={15}/></a>
+        <a className="login-station" href="/caseta" onClick={event => { event.preventDefault(); history.pushState(null, '', '/caseta'); window.dispatchEvent(new PopStateEvent('popstate')); }}><ScanLine size={17}/><span><strong>Acceso de caseta</strong><small>Abrir el escáner sin cuenta personal ni biometría</small></span><ArrowUpRight size={15}/></a>
       </section>
     </main>
     {/* The end: the app's own background covers the scene, then the app appears. */}

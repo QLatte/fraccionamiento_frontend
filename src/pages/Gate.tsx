@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
-import { ClipboardPaste, DoorOpen, History, ScanLine, UserPlus, ShieldCheck, LogIn, RotateCw } from 'lucide-react';
-import { Button, Empty, ErrorBox, Loading, PageHeader } from '../components/ui';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { ClipboardPaste, History, ScanLine, UserPlus, ShieldCheck, LogIn, RotateCw, ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { Brand, Button, Empty, ErrorBox, Loading, PageHeader } from '../components/ui';
+import { dayPhase, GateScene } from '../components/GateScene';
+// The unpaired screen shares the login's look: the entrance scene and a glass card.
+import './Login.css';
 import { dateText, extractToken, useMutation, useOnline } from '../hooks';
 import { api, ApiError, codeText, errorText } from '../api';
 import type { GateLog, GateStation, ScanResult } from '../types';
@@ -200,6 +203,13 @@ export function Gate() {
     return () => { window.clearInterval(interval); document.removeEventListener('visibilitychange', refresh); window.removeEventListener('online', refresh); };
   }, [refreshStation]);
 
+  // Back to the login. This device is not paired, so a stale «station mode» flag must not send
+  // it straight back here.
+  function backToLogin() {
+    try { localStorage.removeItem(stationModeKey); } catch { /* Optional browser storage. */ }
+    history.pushState(null, '', '/'); window.dispatchEvent(new PopStateEvent('popstate'));
+  }
+
   async function activate(event: FormEvent) {
     event.preventDefault();
     setStationError('');
@@ -262,17 +272,14 @@ export function Gate() {
   }
 
   return <div className={'gate-station' + (station ? ' has-nav' : '')}>
-    {(!station || view === 'log') && <PageHeader title={station ? 'Bitácora' : 'Caseta'} text={station ? 'Consulta las entradas de hoy y las lecturas recientes de este equipo.' : 'Vincula este equipo para escanear los pases de las visitas.'}/>}
-    {checking && !station ? <Loading/> : !station ? <section className="panel setup-panel">
-      <div className="setup-symbol"><DoorOpen size={31}/></div>
-      <h2>Vincula este equipo una sola vez</h2>
-      <p>Administración debe generar una clave para este equipo. Después, cualquier turno podrá usar el escáner sin iniciar sesión.</p>
+    {station && view === 'log' && <PageHeader title="Bitácora" text="Consulta las entradas de hoy y las lecturas recientes de este equipo."/>}
+    {checking && !station ? <Loading/> : !station ? <StationSetup onBack={backToLogin}>
       <form onSubmit={activate}>
         <label>Clave de vinculación<input required type="password" autoComplete="off" minLength={43} maxLength={43} value={pairToken} onChange={event => setPairToken(event.target.value)} placeholder="Pega la clave que entregó administración"/></label>
         <ErrorBox message={stationError || pair.error}/>
-        <Button className="full" type="submit" busy={pair.busy || confirming} disabled={!online}><ShieldCheck size={18}/> Vincular equipo</Button>
+        <Button className="full login-cta" type="submit" busy={pair.busy || confirming} disabled={!online}><ShieldCheck size={18}/> Vincular equipo<span className="login-cta-arrow"><ArrowUpRight size={17}/></span></Button>
       </form>
-    </section> : <>
+    </StationSetup> : <>
       <div className="gate-session compact">
         <div><span className={'connection-dot ' + (online ? '' : 'offline')}/><strong>{station.gate.label}</strong><span>{station.label} · {online ? 'Equipo autorizado' : 'Sin conexión'}</span></div>
       </div>
@@ -293,5 +300,29 @@ export function Gate() {
       </div>}
       </div>
     </>}
+  </div>;
+}
+
+/**
+ * The unpaired caseta: the same entrance scene and glass card as the login (so the two read as
+ * one place), covering the station page. «Volver» goes back to the login.
+ */
+function StationSetup({ onBack, children }: { onBack: () => void; children: ReactNode }) {
+  const now = new Date(), phase = dayPhase(now);
+  return <div className={`login station-setup ${phase} gate-closed`}>
+    <div className="login-stage"><GateScene now={now} gate="closed"/></div>
+    <header className="login-top"><Brand light={phase === 'night'}/></header>
+    {/* A div, not <main>: the station page already has one, and its padding rule would reach this. */}
+    <div className="login-sky">
+      <section className="login-card">
+        <div className="login-mode">
+          <button type="button" className="login-back" onClick={onBack}><ArrowLeft size={16}/> Volver</button>
+          <p className="login-when"><strong>Equipo de caseta</strong><span>Se vincula una sola vez</span></p>
+          <h2>Vincula este equipo.</h2>
+          <p className="login-lead">Administración genera una clave para este equipo. Después, cualquier turno usa el escáner sin iniciar sesión.</p>
+          {children}
+        </div>
+      </section>
+    </div>
   </div>;
 }
