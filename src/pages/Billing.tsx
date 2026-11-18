@@ -1,36 +1,40 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { AlertTriangle, ArrowLeft, Banknote, Check, ChevronRight, Home as HomeIcon, Landmark, Plus, Search, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Banknote, Check, ChevronRight, Home as HomeIcon, Landmark, Plus, Search, ShieldCheck } from 'lucide-react';
 import { FinancialBoundary } from '../components/FinancialBoundary';
 import { errorText } from '../api';
 import { useQuery } from '../hooks';
 import { Button, Empty, ErrorBox, Info, Loading, Modal, Success } from '../components/ui';
-import { ReasonDialog, Stat, TreasurySkeleton, currentMonth, dateTimeText, lastPayDay, money, monthName, pesos, toCents, useFinanceAction, useWide } from './financeUi';
-import { ManualPaymentDialog, PaymentList, Reconciliation, StripeAccountCard, reviewCount, scopedPath, useAdminPayments, type AdminData, type FinanceAction, type Scoped } from './Payments';
+import { ReasonDialog, Stat, TreasurySkeleton, currentMonth, money, monthName, pesos, toCents, useFinanceAction } from './financeUi';
+import { PaymentList, Reconciliation, StripeAccountCard, reviewCount, scopedPath, useAdminPayments, type AdminData, type FinanceAction, type Scoped } from './Payments';
 import './Billing.css';
 
-// Tesorería: what the fraccionamiento charges, what each home owes, the payments received and
-// whatever needs review. Split in tabs so daily work stays in front and setup stays aside.
+// Tesorería: what each privada or lote owes the fraccionamiento (never what a home owes), the
+// payments received and whatever needs review. Split in tabs so daily work stays in front and setup stays aside.
 
 export const mxn = (cents: string) => money(cents);
 
 type Concept = { id: string; conceptId: string; name: string; category: string; baseCents: string; effectiveMonth: string; active: boolean };
-type Account = { id: string; propertyId: string; payerId: string | null; balanceCents: string; overdueCents: string; property?: { street: string; houseNumber: string; cluster?: { id: string; name: string; type: string }; memberships: { userId: string; user: { fullName: string } }[] } };
+/** A home, only to name it and assign its titular: Tesorería never shows what a home owes. */
+type Account = { id: string; propertyId: string; payerId: string | null; property?: { street: string; houseNumber: string; cluster?: { id: string; name: string; type: string }; memberships: { userId: string; user: { fullName: string } }[] } };
+/** What one privada or lote owes the fraccionamiento. */
+type PrivadaDebt = {
+  clusterId: string; name: string; type: string; homes: number; billing: 'PRIVADA' | 'NONE' | 'HOMES';
+  owedCents: string; overdueCents: string; creditCents: string; pendingCents: string; previousCents: string;
+  currentDue: { homes: number; rateCents: string; amountCents: string } | null; withoutPayer: number;
+};
 type Fee = { accountId: string; conceptId: string; adjustmentCents: string; effectiveMonth: string };
-type Overview = { accounts: Account[]; concepts: Concept[]; fees: Fee[]; currentMonth: string };
-type Movement = { id: string; description: string; amountCents: string; effectiveAt: string; dueAt: string | null; kind: string; reversesId: string | null; reason: string; period: string | null };
-type Statement = { balanceCents: string; overdueCents: string; movements: Movement[] };
+type Overview = { accounts: Account[]; privadas: PrivadaDebt[]; privadaModel: boolean; concepts: Concept[]; fees: Fee[]; currentMonth: string };
 type Settings = { enabled: boolean; emissionEnabled: boolean; startMonth: string };
 type Access = { enabled: boolean; canManage: boolean; canResolve?: boolean; canConfigure: boolean };
-type Grants = { users: { id: string; fullName: string; active: boolean }[]; operators: { id: string; fullName: string }[] };
-type Tab = 'resumen' | 'viviendas' | 'pagos' | 'conciliacion' | 'configuracion';
+type Grants = { operators: { id: string; fullName: string }[] };
+type Tab = 'resumen' | 'privadas' | 'pagos' | 'conciliacion' | 'configuracion';
 
 const CATEGORY: Record<string, string> = { MAINTENANCE: 'Mantenimiento', EXTRAORDINARY: 'Cuota extraordinaria', RESERVE: 'Fondo de reserva', FINE: 'Multa', OTHER: 'Otro' };
 const homeLabel = (a?: Account) => a?.property ? `Casa ${a.property.houseNumber} · ${a.property.street}` : 'Casa';
-const payerName = (a: Account) => a.property?.memberships.find(m => m.userId === a.payerId)?.user.fullName;
 /** Newest version of each concept. */
 const latestConcepts = (concepts: Concept[]) => concepts.filter((c, i, all) => !all.slice(0, i).some(v => v.conceptId === c.conceptId));
-/** Versions in force for a month. */
-const conceptsFor = (concepts: Concept[], month: string) => concepts.filter((c, i, all) => c.effectiveMonth <= month && !all.slice(0, i).some(v => v.conceptId === c.conceptId && v.effectiveMonth <= month));
+const privadaName = (p: { name: string; type: string }) => p.type === 'PRIVADA' ? `Privada ${p.name}` : p.name;
+const owes = (p: PrivadaDebt) => BigInt(p.owedCents) > 0n;
 
 function BillingContent({ canConfigure = false, userId, communityId }: { canConfigure?: boolean; userId?: string; communityId?: string }) {
   const path = scopedPath(communityId);
@@ -40,11 +44,9 @@ function BillingContent({ canConfigure = false, userId, communityId }: { canConf
   const overview = useQuery<Overview>(a?.canManage ? path('/billing/overview') : null);
   const grants = useQuery<Grants>(canConfigure ? path('/billing/grants') : null);
   const payments = useAdminPayments(communityId, !!a?.canResolve);
-  const [selected, setSelected] = useState('');
-  const statement = useQuery<Statement>(selected && a?.canManage ? path(`/billing/accounts/${selected}/statement`) : null);
-  const action = useFinanceAction(() => { access.refresh(); settings.refresh(); overview.refresh(); grants.refresh(); payments.refresh(); statement.refresh(); });
+  const action = useFinanceAction(() => { access.refresh(); settings.refresh(); overview.refresh(); grants.refresh(); payments.refresh(); });
   const tabs: { id: Tab; label: string; badge?: number }[] = [
-    ...(a?.canManage ? [{ id: 'resumen' as const, label: 'Resumen' }, { id: 'viviendas' as const, label: 'Viviendas' }] : []),
+    ...(a?.canManage ? [{ id: 'resumen' as const, label: 'Resumen' }, { id: 'privadas' as const, label: 'Privadas' }] : []),
     ...(a?.canResolve ? [{ id: 'pagos' as const, label: 'Pagos' }, { id: 'conciliacion' as const, label: 'Pendientes', badge: reviewCount(payments.data) }] : []),
     ...(a?.canManage || canConfigure ? [{ id: 'configuracion' as const, label: 'Configuración' }] : []),
   ];
@@ -52,238 +54,113 @@ function BillingContent({ canConfigure = false, userId, communityId }: { canConf
   const tab = tabs.some(t => t.id === chosen) ? chosen! : tabs[0]?.id;
   const homes = (overview.data?.accounts ?? []).map(acc => ({ id: acc.id, label: homeLabel(acc) }));
   const homeName = (id: string) => homes.find(h => h.id === id)?.label;
-  function openHome(id: string) { setSelected(id); setChosen('viviendas'); }
 
   if (access.loading && !a) return <TreasurySkeleton/>;
   if (!a?.canManage && !a?.canResolve && !canConfigure) return <section className="panel"><ErrorBox message={access.error}/><Empty icon={<ShieldCheck/>} title="Cobranza no disponible" text="La cobranza no está habilitada o no tienes permiso financiero."/></section>;
   return <div className="fin">
-    <div className="fin-title"><div><h2>Tesorería</h2><p>Cuotas, saldos y pagos del fraccionamiento. Corte el día 1 · pago oportuno hasta el día 20 (hora de Ciudad de México).</p></div><span className="fin-flag"><ShieldCheck size={15}/> Stripe en modo de prueba</span></div>
+    <div className="fin-title"><div><h2>Tesorería</h2><p>Lo que cada privada y lote debe al fraccionamiento, y los pagos recibidos. Corte el día 1 · pago oportuno hasta el día 20 (hora de Ciudad de México).</p></div><span className="fin-flag"><ShieldCheck size={15}/> Stripe en modo de prueba</span></div>
     {tabs.length > 1 && <div className="fin-tabs" role="tablist" aria-label="Secciones de tesorería">{tabs.map(t => <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setChosen(t.id)}>{t.label}{!!t.badge && <span className="fin-tab-badge">{t.badge}</span>}</button>)}</div>}
     <ErrorBox message={access.error || overview.error || settings.error || grants.error || payments.error}/>
     {action.notice && <Success>{action.notice}</Success>}
-    {tab === 'resumen' && (overview.data ? <Summary overview={overview.data} settings={settings.data ?? null} payments={payments.data} canResolve={!!a?.canResolve} path={path} action={action} homeName={homeName} onGo={setChosen} onOpenHome={openHome}/> : <Loading variant="cards"/>)}
-    {tab === 'viviendas' && (overview.data ? <Homes overview={overview.data} selected={selected} onSelect={setSelected} statement={statement} payments={payments.data} enabled={!!a?.enabled} path={path} action={action} homeName={homeName}/> : <Loading rows={6}/>)}
-    {tab === 'pagos' && (payments.data ? <section className="panel fin-section"><div className="fin-section-head"><div><h3>Pagos recibidos</h3><p>Los de tarjeta y SPEI llegan solos; el efectivo y las transferencias directas se registran desde la casa, en Viviendas.</p></div></div><PaymentList payments={payments.data.payments} homeName={homeName} path={path} action={action} empty="Aún no hay pagos registrados."/></section> : <Loading/>)}
+    {tab === 'resumen' && (overview.data ? <Summary overview={overview.data} settings={settings.data ?? null} payments={payments.data} canResolve={!!a?.canResolve} path={path} action={action} homeName={homeName} onGo={setChosen}/> : <Loading variant="cards"/>)}
+    {tab === 'privadas' && (overview.data ? <Privadas overview={overview.data} path={path} action={action}/> : <Loading rows={6}/>)}
+    {tab === 'pagos' && (payments.data ? <section className="panel fin-section"><div className="fin-section-head"><div><h3>Pagos recibidos</h3><p>Los de tarjeta y SPEI llegan solos. Los depósitos de cada privada se confirman en Privadas, en el menú de Administración.</p></div></div><PaymentList payments={payments.data.payments} homeName={homeName} path={path} action={action} empty="Aún no hay pagos registrados."/></section> : <Loading/>)}
     {tab === 'conciliacion' && (payments.data ? <Reconciliation data={payments.data} path={path} action={action} homes={homes} onTaskCursor={payments.setTaskCursor} onEventCursor={payments.setEventCursor} onFirstPage={payments.firstPage} paged={payments.paged}/> : <Loading/>)}
     {tab === 'configuracion' && <Configuration canConfigure={canConfigure} canManage={!!a?.canManage} canResolve={!!a?.canResolve} enabled={!!a?.enabled} userId={userId} settings={settings.data ?? null} overview={overview.data} grants={grants.data} payments={payments.data} path={path} action={action}/>}
   </div>;
 }
 
-/** Totals, what is missing to start charging, and what needs attention today. */
-function Summary({ overview, settings, payments, canResolve, path, action, homeName, onGo, onOpenHome }: { overview: Overview; settings: Settings | null; payments?: AdminData; canResolve: boolean; path: Scoped; action: FinanceAction; homeName: (id: string) => string | undefined; onGo: (tab: Tab) => void; onOpenHome: (id: string) => void }) {
-  const accounts = overview.accounts;
-  const owed = accounts.reduce((s, x) => s + (BigInt(x.balanceCents) > 0n ? BigInt(x.balanceCents) : 0n), 0n);
-  const credit = accounts.reduce((s, x) => s + (BigInt(x.balanceCents) < 0n ? -BigInt(x.balanceCents) : 0n), 0n);
-  const overdue = accounts.reduce((s, x) => s + BigInt(x.overdueCents), 0n);
-  const current = accounts.filter(x => BigInt(x.balanceCents) <= 0n).length;
-  const withoutPayer = accounts.filter(x => !x.payerId).length;
-  const late = accounts.filter(x => BigInt(x.overdueCents) > 0n).sort((x, y) => (BigInt(y.overdueCents) > BigInt(x.overdueCents) ? 1 : -1)).slice(0, 5);
+/** Totals by privada, what is missing to start charging, and what needs attention today. */
+function Summary({ overview, settings, payments, canResolve, path, action, homeName, onGo }: { overview: Overview; settings: Settings | null; payments?: AdminData; canResolve: boolean; path: Scoped; action: FinanceAction; homeName: (id: string) => string | undefined; onGo: (tab: Tab) => void }) {
+  const privadas = overview.privadas.filter(p => p.homes > 0);
+  const sum = (key: 'owedCents' | 'overdueCents' | 'pendingCents' | 'creditCents') => privadas.reduce((s, p) => s + BigInt(p[key]), 0n);
+  const owed = sum('owedCents'), overdue = sum('overdueCents'), pendingDeposits = sum('pendingCents'), credit = sum('creditCents');
+  const current = privadas.filter(p => !owes(p)).length;
+  const withoutPayer = overview.privadas.reduce((s, p) => s + p.withoutPayer, 0);
+  const late = privadas.filter(p => BigInt(p.overdueCents) > 0n).sort((x, y) => (BigInt(y.overdueCents) > BigInt(x.overdueCents) ? 1 : -1)).slice(0, 5);
   const steps = [
     { done: !!settings?.enabled, title: 'Zentry activó la cobranza', text: 'La activa Plataforma para este fraccionamiento.', tab: 'configuracion' as Tab },
     ...(canResolve ? [{ done: !!payments?.destination, title: 'Cuenta de Stripe vinculada', text: 'Para recibir pagos con tarjeta y SPEI.', tab: 'configuracion' as Tab }] : []),
-    { done: latestConcepts(overview.concepts).some(c => c.active), title: 'Conceptos de cobro creados', text: 'Por ejemplo: Mantenimiento, $850 al mes.', tab: 'configuracion' as Tab },
-    { done: !withoutPayer, title: 'Titular asignado en cada casa', text: withoutPayer ? `Faltan ${withoutPayer} de ${accounts.length}. Solo el titular ve el saldo y paga.` : 'Todas las casas tienen titular.', tab: 'viviendas' as Tab },
-    { done: !!settings?.emissionEnabled, title: 'Emisión mensual activada', text: 'Genera la cuota de cada casa el día 1.', tab: 'configuracion' as Tab },
+    ...(overview.privadaModel ? [] : [{ done: latestConcepts(overview.concepts).some(c => c.active), title: 'Conceptos de cobro creados', text: 'Por ejemplo: Mantenimiento, $850 al mes.', tab: 'configuracion' as Tab }]),
+    { done: !withoutPayer, title: 'Titular asignado en cada casa', text: withoutPayer ? `Faltan ${withoutPayer} de ${overview.accounts.length}. Solo el titular ve el saldo de su casa y paga.` : 'Todas las casas tienen titular.', tab: 'privadas' as Tab },
+    { done: !!settings?.emissionEnabled, title: 'Emisión mensual activada', text: 'Genera los cargos de cada mes el día 1.', tab: 'configuracion' as Tab },
   ];
   const pending = reviewCount(payments);
   return <div className="fin-stack">
     {pending > 0 && <div className="fin-callout bad"><AlertTriangle size={20}/><div><strong>{pending === 1 ? 'Un pago requiere revisión' : `${pending} pagos requieren revisión`}</strong><span>Cada uno explica el motivo y qué hacer.</span></div><Button className="secondary small-button" onClick={() => onGo('conciliacion')}>Ver pendientes</Button></div>}
     <section className="fin-stats" aria-label="Totales">
-      <Stat label="Por cobrar" value={money(owed)} hint="Lo que deben las casas hoy" tone={owed > 0n ? 'accent' : ''}/>
+      <Stat label="Por cobrar" value={money(owed)} hint="Lo que deben las privadas y lotes" tone={owed > 0n ? 'accent' : ''}/>
       <Stat label="Vencido" value={money(overdue)} hint="No se pagó antes del día 21" tone={overdue > 0n ? 'bad' : ''}/>
-      <Stat label="Casas al corriente" value={`${current} de ${accounts.length}`} hint={accounts.length ? `${Math.round(current / accounts.length * 100)}% sin adeudo` : 'Sin casas'} tone="good"/>
-      <Stat label="Saldo a favor" value={money(credit)} hint="Se aplica solo a las próximas cuotas"/>
+      <Stat label="Privadas al corriente" value={`${current} de ${privadas.length}`} hint={privadas.length ? `${Math.round(current / privadas.length * 100)}% sin adeudo` : 'Sin privadas'} tone="good"/>
+      {overview.privadaModel ? <Stat label="Depósitos por confirmar" value={money(pendingDeposits)} hint="Se confirman en Privadas"/> : <Stat label="Saldo a favor" value={money(credit)} hint="Se aplica solo a los próximos cargos"/>}
     </section>
     {steps.some(s => !s.done) && <section className="panel fin-section"><h3>Para empezar a cobrar</h3><ol className="fin-steps">{steps.map((s, i) => <li key={s.title} className={s.done ? 'done' : ''}>
       <span className="fin-step-mark" aria-hidden="true">{s.done ? <Check size={15}/> : i + 1}</span><div><strong>{s.title}</strong><small>{s.text}</small></div>
       {!s.done && s.title !== 'Zentry activó la cobranza' && <button type="button" className="fin-link" onClick={() => onGo(s.tab)}>Ir <ChevronRight size={15}/></button>}</li>)}</ol></section>}
     <div className="fin-two">
-      <section className="panel fin-section"><h3>Casas con adeudo vencido</h3>{!late.length ? <p className="muted">Ninguna casa tiene cuotas vencidas.</p> :
-        <ul className="fin-rows">{late.map(x => <li key={x.id}><button type="button" className="fin-row fin-row-button" onClick={() => onOpenHome(x.id)}><div className="fin-row-main"><strong>{homeLabel(x)}</strong><small>{payerName(x) ?? 'Sin titular'}</small></div><div className="fin-row-side"><strong className="fin-amount bad">{money(x.overdueCents)}</strong><ChevronRight size={16}/></div></button></li>)}</ul>}</section>
+      <section className="panel fin-section"><h3>Privadas con adeudo vencido</h3>{!late.length ? <p className="muted">Ninguna privada tiene adeudo vencido.</p> :
+        <ul className="fin-rows">{late.map(p => <li key={p.clusterId}><button type="button" className="fin-row fin-row-button" onClick={() => onGo('privadas')}><span className="fin-row-icon"><Landmark size={17}/></span><div className="fin-row-main"><strong>{privadaName(p)}</strong><small>{p.homes} {p.homes === 1 ? 'casa' : 'casas'}</small></div><div className="fin-row-side"><strong className="fin-amount bad">{money(p.overdueCents)}</strong><ChevronRight size={16}/></div></button></li>)}</ul>}</section>
       {canResolve && <section className="panel fin-section"><div className="fin-section-head"><h3>Últimos pagos</h3>{!!payments?.payments.length && <button type="button" className="fin-link" onClick={() => onGo('pagos')}>Ver todos <ChevronRight size={15}/></button>}</div>
         {payments ? <PaymentList payments={payments.payments.slice(0, 5)} homeName={homeName} path={path} action={action} empty="Aún no hay pagos."/> : <Loading/>}</section>}
     </div>
   </div>;
 }
 
-type HomeFilter = 'all' | 'owe' | 'late' | 'nopayer' | 'credit';
-const HOME_FILTERS: { id: HomeFilter; label: string; test: (a: Account) => boolean }[] = [
-  { id: 'all', label: 'Todas', test: () => true },
-  { id: 'owe', label: 'Con adeudo', test: a => BigInt(a.balanceCents) > 0n },
-  { id: 'late', label: 'Vencidas', test: a => BigInt(a.overdueCents) > 0n },
-  { id: 'nopayer', label: 'Sin titular', test: a => !a.payerId },
-  { id: 'credit', label: 'Saldo a favor', test: a => BigInt(a.balanceCents) < 0n },
-];
-
-/** A privada (or lote) and its homes, as Tesorería groups them. */
-type Group = { id: string; name: string; accounts: Account[] };
-const NO_GROUP = 'sin-privada';
-const groupName = (c?: { name: string; type: string }) => c ? (c.type === 'PRIVADA' ? `Privada ${c.name}` : c.name) : 'Sin privada';
-/** What a home is charged this month: each concept in force, plus its own adjustment. */
-function monthlyFee(overview: Overview, accountId: string, month: string) {
-  return conceptsFor(overview.concepts, month).filter(c => c.active).reduce((sum, c) => {
-    const fee = overview.fees.find(f => f.accountId === accountId && f.conceptId === c.conceptId && f.effectiveMonth <= month);
-    return sum + BigInt(c.baseCents) + BigInt(fee?.adjustmentCents ?? '0');
-  }, 0n);
-}
-
 /**
- * Viviendas, by privada: first each privada with how its homes stand, then its homes with their
- * monthly fee and balance. Searching finds a home in any privada.
+ * Privadas: what each privada or lote owes the fraccionamiento, and nothing about what a home owes.
+ * The homes appear only to assign their titular.
  */
-function Homes({ overview, selected, onSelect, statement, payments, enabled, path, action, homeName }: { overview: Overview; selected: string; onSelect: (id: string) => void; statement: ReturnType<typeof useQuery<Statement>>; payments?: AdminData; enabled: boolean; path: Scoped; action: FinanceAction; homeName: (id: string) => string | undefined }) {
-  void homeName;
-  const byNumber = useMemo(() => new Intl.Collator('es', { numeric: true }), []);
-  const month = currentMonth();
-  const groups = useMemo(() => {
-    const map = new Map<string, Group>();
-    for (const a of overview.accounts) {
-      const id = a.property?.cluster?.id ?? NO_GROUP;
-      if (!map.has(id)) map.set(id, { id, name: groupName(a.property?.cluster), accounts: [] });
-      map.get(id)!.accounts.push(a);
-    }
-    return [...map.values()].sort((x, y) => (x.id === NO_GROUP ? 1 : y.id === NO_GROUP ? -1 : byNumber.compare(x.name, y.name)));
-  }, [overview.accounts, byNumber]);
-  const groupOf = (accountId: string) => { const a = overview.accounts.find(x => x.id === accountId); return a ? a.property?.cluster?.id ?? NO_GROUP : null; };
-  // Opening a home from Resumen lands inside its privada.
-  const [open, setOpen] = useState<string | null>(() => (selected ? groupOf(selected) : null));
-  const [q, setQ] = useState('');
+function Privadas({ overview, path, action }: { overview: Overview; path: Scoped; action: FinanceAction }) {
+  const byName = useMemo(() => new Intl.Collator('es', { numeric: true }), []);
+  const [q, setQ] = useState(''), [titulares, setTitulares] = useState<PrivadaDebt | null>(null);
   const term = q.trim().toLowerCase();
-  const found = term ? overview.accounts.filter(x => homeLabel(x).toLowerCase().includes(term) || (payerName(x) ?? '').toLowerCase().includes(term) || groupName(x.property?.cluster).toLowerCase().includes(term)).sort((x, y) => byNumber.compare(homeLabel(x), homeLabel(y))) : [];
-  const group = groups.find(g => g.id === open);
-  if (group) return <GroupHomes key={group.id} group={group} overview={overview} month={month} selected={selected} onSelect={onSelect} onBack={() => { onSelect(''); setOpen(null); }} statement={statement} payments={payments} enabled={enabled} path={path} action={action}/>;
+  const list = overview.privadas.filter(p => !term || privadaName(p).toLowerCase().includes(term)).sort((x, y) => (owes(y) ? 1 : 0) - (owes(x) ? 1 : 0) || byName.compare(x.name, y.name));
+  const how = (p: PrivadaDebt) => p.billing === 'PRIVADA' ? (p.currentDue ? `${p.currentDue.homes} ${p.currentDue.homes === 1 ? 'casa' : 'casas'} × ${money(p.currentDue.rateCents)} este mes` : `${p.homes} ${p.homes === 1 ? 'casa' : 'casas'} · cuota por casa`)
+    : p.billing === 'HOMES' ? `${p.homes} ${p.homes === 1 ? 'casa' : 'casas'} · cobro directo a las casas` : `${p.homes} ${p.homes === 1 ? 'casa' : 'casas'} · cobro por privada sin activar`;
   return <section className="panel fin-section">
-    <div className="fin-toolbar"><div><h3>Viviendas por privada</h3><p className="small muted">{overview.accounts.length} {overview.accounts.length === 1 ? 'casa' : 'casas'} en {groups.length} {groups.length === 1 ? 'privada' : 'privadas'}</p></div>
-      <label className="fin-search"><Search size={16}/><input aria-label="Buscar casa, titular o privada" placeholder="Casa, titular o privada" value={q} onChange={e => setQ(e.target.value)}/></label></div>
-    {term ? <ul className="fin-rows">{!found.length ? <li><p className="muted">Ninguna casa coincide con «{q.trim()}».</p></li> : found.map(x => <li key={x.id}>
-      <button type="button" className="fin-row fin-row-button" onClick={() => { setOpen(x.property?.cluster?.id ?? NO_GROUP); onSelect(x.id); }}>
-        <span className="fin-row-icon"><HomeIcon size={17}/></span>
-        <div className="fin-row-main"><strong>{homeLabel(x)}</strong><small>{groupName(x.property?.cluster)} · {payerName(x) ?? 'Sin titular'}</small></div>
-        <HomeBalance account={x}/><ChevronRight size={16}/>
-      </button></li>)}</ul> :
-    !groups.length ? <Empty icon={<Landmark/>} title="Aún no hay viviendas" text="Las cuentas de las casas se abren al activar la cobranza."/> :
-    <div className="fin-groups">{groups.map(g => {
-      const owed = g.accounts.reduce((s, a) => s + (BigInt(a.balanceCents) > 0n ? BigInt(a.balanceCents) : 0n), 0n);
-      const late = g.accounts.filter(a => BigInt(a.overdueCents) > 0n).length, current = g.accounts.filter(a => BigInt(a.balanceCents) <= 0n).length;
-      const monthly = g.accounts.reduce((s, a) => s + monthlyFee(overview, a.id, month), 0n);
-      return <button key={g.id} type="button" className="fin-group" onClick={() => setOpen(g.id)}>
-        <div className="fin-group-head"><span className="fin-row-icon"><Landmark size={17}/></span><div><strong>{g.name}</strong><small>{g.accounts.length} {g.accounts.length === 1 ? 'casa' : 'casas'} · cuotas del mes {money(monthly)}</small></div><ChevronRight size={18}/></div>
+    <div className="fin-toolbar"><div><h3>Lo que debe cada privada al fraccionamiento</h3><p className="small muted">{overview.privadaModel ? 'Cada privada cobra a sus casas y deposita al fraccionamiento la cuota por casa.' : 'Suma de lo que deben las casas de cada privada o lote.'}</p></div>
+      {overview.privadas.length > 6 && <label className="fin-search"><Search size={16}/><input aria-label="Buscar privada" placeholder="Privada o lote" value={q} onChange={e => setQ(e.target.value)}/></label>}</div>
+    {!overview.privadas.length ? <Empty icon={<Landmark/>} title="Aún no hay privadas" text="Zentry carga las privadas y lotes del fraccionamiento."/> :
+    !list.length ? <p className="muted">Ninguna privada coincide con «{q.trim()}».</p> :
+    <div className="fin-groups">{list.map(p => { const owed = BigInt(p.owedCents), late = BigInt(p.overdueCents), pending = BigInt(p.pendingCents), credit = BigInt(p.creditCents);
+      return <article key={p.clusterId} className="fin-group fin-group-static" aria-label={privadaName(p)}>
+        <div className="fin-group-head"><span className="fin-row-icon"><Landmark size={17}/></span><div><strong>{privadaName(p)}</strong><small>{how(p)}</small></div>
+          {owed > 0n ? late > 0n ? <span className="badge revoked"><span/>Vencido</span> : <span className="badge expired"><span/>Por pagar</span> : <span className="badge active"><span/>Al corriente</span>}</div>
         <dl className="fin-group-stats">
-          <div><dt>Por cobrar</dt><dd className={owed > 0n ? 'accent' : ''}>{money(owed)}</dd></div>
-          <div><dt>Vencidas</dt><dd className={late ? 'bad' : ''}>{late}</dd></div>
-          <div><dt>Al corriente</dt><dd className="good">{current} de {g.accounts.length}</dd></div>
+          <div><dt>Debe</dt><dd className={owed > 0n ? 'accent' : 'good'}>{money(owed)}</dd></div>
+          <div><dt>Vencido</dt><dd className={late > 0n ? 'bad' : ''}>{money(late)}</dd></div>
+          {pending > 0n || p.billing === 'PRIVADA' ? <div><dt>Por confirmar</dt><dd>{money(pending)}</dd></div> : <div><dt>A favor</dt><dd className={credit > 0n ? 'good' : ''}>{money(credit)}</dd></div>}
         </dl>
-        <span className="fin-group-bar" aria-hidden="true"><span style={{ width: `${g.accounts.length ? Math.round(current / g.accounts.length * 100) : 0}%` }}/></span>
-      </button>; })}</div>}
+        {BigInt(p.previousCents) > 0n && <small className="fin-group-note">Incluye {money(p.previousCents)} de cuotas anteriores al cobro por privada.</small>}
+        <button type="button" className="fin-link fin-group-link" onClick={() => { action.clear(); setTitulares(p); }}>Titulares de las casas{p.withoutPayer > 0 && <span className="fin-tab-badge" title="Casas sin titular">{p.withoutPayer}</span>}<ChevronRight size={15}/></button>
+      </article>; })}</div>}
+    {titulares && <Modal title={`Titulares · ${privadaName(titulares)}`} onClose={() => { if (!action.busy) setTitulares(null); }}>
+      <p className="small muted">El titular es quien ve el saldo de su casa y paga desde su app. Aquí solo se asigna; Tesorería no muestra lo que debe cada casa.</p>
+      <ErrorBox message={action.error}/>
+      <ul className="fin-rows">{overview.accounts.filter(acc => acc.property?.cluster?.id === titulares.clusterId).sort((x, y) => byName.compare(x.property?.houseNumber ?? '', y.property?.houseNumber ?? '')).map(acc => <TitularRow key={acc.id} account={acc} path={path} action={action}/>)}</ul>
+    </Modal>}
   </section>;
 }
 
-function HomeBalance({ account }: { account: Account }) {
-  const balance = BigInt(account.balanceCents), late = BigInt(account.overdueCents) > 0n;
-  return <div className="fin-row-side"><strong className={`fin-amount ${late ? 'bad' : balance < 0n ? 'good' : ''}`}>{balance < 0n ? `A favor ${money(-balance)}` : money(balance)}</strong>{late ? <span className="badge revoked"><span/>Vencido {money(account.overdueCents)}</span> : balance <= 0n ? <span className="badge"><span/>Al corriente</span> : <span className="badge expired"><span/>Por pagar</span>}</div>;
-}
-
-/** One privada's homes: each with its fee this month and its balance; the selected home's detail beside. */
-function GroupHomes({ group, overview, month, selected, onSelect, onBack, statement, payments, enabled, path, action }: { group: Group; overview: Overview; month: string; selected: string; onSelect: (id: string) => void; onBack: () => void; statement: ReturnType<typeof useQuery<Statement>>; payments?: AdminData; enabled: boolean; path: Scoped; action: FinanceAction }) {
-  const [q, setQ] = useState(''), [filter, setFilter] = useState<HomeFilter>('all');
-  const wide = useWide();
-  const byNumber = useMemo(() => new Intl.Collator('es', { numeric: true }), []);
-  const term = q.trim().toLowerCase();
-  const list = group.accounts.filter(HOME_FILTERS.find(f => f.id === filter)!.test).filter(x => !term || homeLabel(x).toLowerCase().includes(term) || (payerName(x) ?? '').toLowerCase().includes(term))
-    .sort((x, y) => byNumber.compare(homeLabel(x), homeLabel(y)));
-  const current = group.accounts.find(x => x.id === selected);
-  const owed = group.accounts.reduce((s, a) => s + (BigInt(a.balanceCents) > 0n ? BigInt(a.balanceCents) : 0n), 0n);
-  const monthly = group.accounts.reduce((s, a) => s + monthlyFee(overview, a.id, month), 0n);
-  const detail = current && <HomeDetail key={current.id} account={current} overview={overview} statement={statement} payments={payments?.payments.filter(p => p.accountId === current.id)} enabled={enabled} path={path} action={action}/>;
-  return <section className="panel fin-section">
-    <button type="button" className="fin-back" onClick={onBack}><ArrowLeft size={17}/> Todas las privadas</button>
-    <div className="fin-toolbar"><div><h3>{group.name}</h3><p className="small muted">{group.accounts.length} {group.accounts.length === 1 ? 'casa' : 'casas'} · cuotas de {monthName(month)}: <strong>{money(monthly)}</strong> · por cobrar: <strong>{money(owed)}</strong></p></div>
-      <label className="fin-search"><Search size={16}/><input aria-label="Buscar casa o titular" placeholder="Casa o titular" value={q} onChange={e => setQ(e.target.value)}/></label></div>
-    <div className="fin-chips" role="group" aria-label="Filtrar viviendas">{HOME_FILTERS.map(f => <button key={f.id} type="button" aria-pressed={filter === f.id} className={filter === f.id ? 'active' : ''} onClick={() => setFilter(f.id)}>{f.label} <span>{group.accounts.filter(f.test).length}</span></button>)}</div>
-    <div className="fin-split">
-      <ul className="fin-rows fin-list">{!list.length ? <li><p className="muted">Ninguna casa con este filtro.</p></li> : list.map(x => { const fee = monthlyFee(overview, x.id, month), adjusted = overview.fees.some(f => f.accountId === x.id && f.effectiveMonth <= month && f.adjustmentCents !== '0');
-        return <li key={x.id}><button type="button" className={`fin-row fin-row-button${x.id === selected ? ' selected' : ''}`} aria-pressed={x.id === selected} onClick={() => onSelect(x.id)}>
-          <span className="fin-row-icon"><HomeIcon size={17}/></span>
-          <div className="fin-row-main"><strong>{x.property ? `Casa ${x.property.houseNumber}` : homeLabel(x)}</strong><small>{payerName(x) ?? <span className="fin-note">Sin titular</span>}</small><small className="fin-fee">Cuota {money(fee)}{adjusted ? ' · con ajuste' : ''}</small></div>
-          <HomeBalance account={x}/>
-        </button></li>; })}</ul>
-      {wide && <aside className="fin-detail" aria-label="Detalle de la vivienda">{detail ?? <Empty icon={<HomeIcon/>} title="Elige una casa" text="Verás su saldo, su titular, sus cuotas y sus pagos."/>}</aside>}
-    </div>
-    {!wide && current && <Modal title={homeLabel(current)} onClose={() => onSelect('')}>{detail}</Modal>}
-  </section>;
-}
-
-function HomeDetail({ account, overview, statement, payments, enabled, path, action }: { account: Account; overview: Overview; statement: ReturnType<typeof useQuery<Statement>>; payments?: AdminData['payments']; enabled: boolean; path: Scoped; action: FinanceAction }) {
-  const [payer, setPayer] = useState(account.payerId ?? ''), [manual, setManual] = useState(false), [adjust, setAdjust] = useState(false), [reverse, setReverse] = useState<Movement | null>(null);
-  const month = currentMonth();
-  const s = statement.data;
-  const reversed = new Set((s?.movements ?? []).map(m => m.reversesId).filter(Boolean));
-  const movements = [...(s?.movements ?? [])].sort((x, y) => y.effectiveAt.localeCompare(x.effectiveAt));
-  const fees = conceptsFor(overview.concepts, month).filter(c => c.active).map(c => { const fee = overview.fees.find(f => f.accountId === account.id && f.conceptId === c.conceptId && f.effectiveMonth <= month); return { concept: c, adjustment: fee?.adjustmentCents ?? '0' }; });
-  const balance = BigInt(s?.balanceCents ?? account.balanceCents);
-  return <div className="fin-stack">
-    <div className="fin-detail-head"><div><h3>{homeLabel(account)}</h3><p>{payerName(account) ? `Titular: ${payerName(account)}` : 'Sin titular financiero'}</p></div></div>
-    <div className="fin-stats compact">
-      <Stat label={balance < 0n ? 'Saldo a favor' : 'Saldo'} value={money(balance < 0n ? -balance : balance)} tone={balance > 0n ? 'accent' : 'good'}/>
-      <Stat label="Vencido" value={money(s?.overdueCents ?? account.overdueCents)} tone={BigInt(s?.overdueCents ?? account.overdueCents) > 0n ? 'bad' : ''}/>
-    </div>
-    {enabled && <Button onClick={() => { action.clear(); setManual(true); }}><Banknote size={17}/> Registrar pago en efectivo o transferencia</Button>}
-
-    <div className="fin-block"><h4>Titular financiero</h4><p className="small muted">Solo esta persona ve el saldo de la casa y paga desde su app.</p>
-      <div className="fin-inline"><select aria-label="Titular financiero" value={payer} disabled={action.busy} onChange={e => setPayer(e.target.value)}><option value="">Sin titular asignado</option>{account.property?.memberships.map(m => <option key={m.userId} value={m.userId}>{m.user.fullName}</option>)}</select>
-        {payer !== (account.payerId ?? '') && <Button className="small-button" busy={action.busy} onClick={() => void action.run(path(`/billing/accounts/${account.id}/payer`), { payerId: payer || null, reason: 'Actualización del titular financiero' }, 'Titular actualizado.')}>Guardar</Button>}</div></div>
-
-    <div className="fin-block"><div className="fin-section-head"><h4>Cuota mensual ({monthName(month)})</h4><button type="button" className="fin-link" onClick={() => { action.clear(); setAdjust(true); }}>Ajustar cuota</button></div>
-      {!fees.length ? <p className="small muted">Aún no hay conceptos de cobro. Créalos en Configuración.</p> : <ul className="fin-plain">{fees.map(f => { const total = BigInt(f.concept.baseCents) + BigInt(f.adjustment);
-        return <li key={f.concept.id}><span>{f.concept.name}</span><strong>{money(total)}</strong>{f.adjustment !== '0' && <small>Base {money(f.concept.baseCents)} {BigInt(f.adjustment) > 0n ? '+' : '−'} ajuste {money(BigInt(f.adjustment) < 0n ? -BigInt(f.adjustment) : BigInt(f.adjustment))}</small>}</li>; })}</ul>}</div>
-
-    <div className="fin-block"><h4>Estado de cuenta</h4><ErrorBox message={statement.error}/>
-      {statement.loading && !s ? <Loading/> : !movements.length ? <p className="small muted">Sin movimientos todavía. La casa empezó con saldo en cero.</p> :
-        <ul className="fin-rows">{movements.map(m => { const amount = BigInt(m.amountCents), cancelled = reversed.has(m.id);
-          return <li key={m.id} className="fin-row fin-row-wrap"><div className="fin-row-main"><strong className={cancelled ? 'fin-struck' : ''}>{m.description}</strong>
-            <small>{m.period ? monthName(m.period) : dateTimeText(m.effectiveAt)}{m.kind === 'CHARGE' && m.dueAt && !cancelled ? ` · fecha límite ${lastPayDay(m.dueAt)}` : ''}{cancelled ? ' · anulado con reverso' : ''}</small><small className="muted">{m.reason}</small></div>
-            <div className="fin-row-side"><strong className={`fin-amount ${amount < 0n ? 'good' : ''}`}>{amount < 0n ? `−${money(-amount)}` : money(amount)}</strong>
-              {m.kind === 'CHARGE' && !cancelled && <button type="button" className="fin-link" onClick={() => { action.clear(); setReverse(m); }}>Corregir con reverso</button>}</div></li>; })}</ul>}</div>
-
-    {payments && <div className="fin-block"><h4>Pagos de esta casa</h4><PaymentList payments={payments} path={path} action={action} empty="Esta casa aún no tiene pagos."/></div>}
-
-    {manual && <ManualPaymentDialog accountId={account.id} home={homeLabel(account)} path={path} action={action} onClose={() => setManual(false)}/>}
-    {adjust && <AdjustDialog account={account} overview={overview} path={path} action={action} onClose={() => setAdjust(false)}/>}
-    {reverse && <ReasonDialog title="Corregir con reverso" confirm="Confirmar reverso" danger busy={action.busy} error={action.error} onClose={() => setReverse(null)}
-      text={<p>Se anulará <strong>{reverse.description} ({money(reverse.amountCents)})</strong> con un movimiento contrario. El original queda en el historial; nada se borra.</p>}
-      onConfirm={reason => action.run(path(`/billing/movements/${reverse.id}/reverse`), { reason }, 'Cargo anulado.')}/>}
-  </div>;
-}
-
-function AdjustDialog({ account, overview, path, action, onClose }: { account: Account; overview: Overview; path: Scoped; action: FinanceAction; onClose: () => void }) {
-  const concepts = latestConcepts(overview.concepts).filter(c => c.active);
-  const [concept, setConcept] = useState(concepts[0]?.conceptId ?? ''), [adjustment, setAdjustment] = useState('0'), [month, setMonth] = useState(currentMonth());
-  const base = concepts.find(c => c.conceptId === concept)?.baseCents;
-  let preview = ''; try { if (base) preview = money(BigInt(base) + BigInt(toCents(adjustment || '0', true))); } catch { preview = ''; }
-  return <ReasonDialog title={`Ajustar cuota · ${homeLabel(account)}`} confirm="Guardar ajuste" busy={action.busy} error={action.error} onClose={onClose} ready={!!concept}
-    text={<p>Para una casa que paga distinto, por ejemplo un lote más grande. El ajuste se suma (o resta, con signo menos) a la cuota base desde el mes que elijas.</p>}
-    onConfirm={async reason => { try { return await action.run(path('/billing/fees'), { accountId: account.id, conceptId: concept, adjustmentCents: toCents(adjustment, true), effectiveMonth: month, reason }, 'Ajuste guardado.'); } catch (e) { action.setError(errorText(e)); return false; } }}>
-    <label>Concepto<select required value={concept} onChange={e => setConcept(e.target.value)}>{concepts.map(c => <option key={c.conceptId} value={c.conceptId}>{c.name} · base {money(c.baseCents)}</option>)}</select></label>
-    <div className="fin-fields"><label>Ajuste en MXN<div className="fin-money-input"><span>$</span><input required inputMode="decimal" value={adjustment} onChange={e => setAdjustment(e.target.value)}/></div><small>Usa −100 para descontar.</small></label>
-      <label>Desde el mes<input type="month" required value={month} min={currentMonth()} onChange={e => setMonth(e.target.value)}/></label></div>
-    {preview && <p className="fin-preview">Cuota resultante: <strong>{preview}</strong></p>}
-  </ReasonDialog>;
+function TitularRow({ account, path, action }: { account: Account; path: Scoped; action: FinanceAction }) {
+  const [payer, setPayer] = useState(account.payerId ?? '');
+  const changed = payer !== (account.payerId ?? '');
+  return <li className="fin-row fin-row-wrap"><span className="fin-row-icon"><HomeIcon size={17}/></span>
+    <div className="fin-row-main"><strong>Casa {account.property?.houseNumber ?? ''}</strong>{!account.payerId && <small className="fin-note">Sin titular</small>}</div>
+    <div className="fin-inline"><select aria-label={`Titular de la casa ${account.property?.houseNumber ?? ''}`} value={payer} disabled={action.busy} onChange={e => setPayer(e.target.value)}><option value="">Sin titular asignado</option>{account.property?.memberships.map(m => <option key={m.userId} value={m.userId}>{m.user.fullName}</option>)}</select>
+      {changed && <Button className="small-button" busy={action.busy} onClick={() => void action.run(path(`/billing/accounts/${account.id}/payer`), { payerId: payer || null, reason: 'Actualización del titular financiero' }, 'Titular actualizado.')}>Guardar</Button>}</div></li>;
 }
 
 function Configuration({ canConfigure, canManage, canResolve, enabled, userId, settings, overview, grants, payments, path, action }: { canConfigure: boolean; canManage: boolean; canResolve: boolean; enabled: boolean; userId?: string; settings: Settings | null; overview?: Overview; grants?: Grants; payments?: AdminData; path: Scoped; action: FinanceAction }) {
   const [concept, setConcept] = useState<Concept | 'new' | null>(null), [archive, setArchive] = useState<Concept | null>(null), [toggle, setToggle] = useState<'billing' | 'emission' | null>(null);
   const [startMonth, setStartMonth] = useState(currentMonth()), [archiveMonth, setArchiveMonth] = useState(currentMonth());
-  const [treasurer, setTreasurer] = useState(''), [operator, setOperator] = useState(''), [operatorDialog, setOperatorDialog] = useState<boolean | null>(null);
+  const [operator, setOperator] = useState(''), [operatorDialog, setOperatorDialog] = useState<boolean | null>(null);
   const concepts = latestConcepts(overview?.concepts ?? []);
   return <div className="fin-stack">
-    {canConfigure && <section className="panel fin-section"><div className="fin-section-head"><div><h3>Activación (Plataforma)</h3><p>Solo Plataforma activa la cobranza de un fraccionamiento y asigna tesoreros.</p></div>{settings?.enabled ? <span className="badge"><span/>Activa</span> : <span className="badge pending"><span/>Inactiva</span>}</div>
+    {canConfigure && <section className="panel fin-section"><div className="fin-section-head"><div><h3>Activación (Plataforma)</h3><p>Solo Plataforma activa la cobranza de un fraccionamiento. Las finanzas las ve y opera la administración del fraccionamiento.</p></div>{settings?.enabled ? <span className="badge"><span/>Activa</span> : <span className="badge pending"><span/>Inactiva</span>}</div>
       <div className="fin-inline"><label>Primer mes de cobro<input type="month" value={settings?.startMonth ?? startMonth} min={currentMonth()} disabled={!!settings} onChange={e => setStartMonth(e.target.value)}/></label>
         <Button className={settings?.enabled ? 'secondary' : ''} disabled={action.busy} onClick={() => { action.clear(); setToggle('billing'); }}>{settings?.enabled ? 'Desactivar cobranza' : 'Activar cobranza'}</Button></div>
       {settings && <p className="small muted">El primer mes ({monthName(settings.startMonth)}) ya no se puede cambiar, para no duplicar ni perder cargos.</p>}
-      <div className="fin-block"><h4>Tesorero</h4><p className="small muted">Un residente que maneja las finanzas sin ser administrador.</p>
-        <div className="fin-inline"><select aria-label="Persona responsable de tesorería" value={treasurer} onChange={e => setTreasurer(e.target.value)}><option value="">Selecciona una persona</option>{grants?.users.filter(u => u.id !== userId).map(u => <option key={u.id} value={u.id}>{u.fullName}{u.active ? ' · tesorero activo' : ''}</option>)}</select>
-          <Button className="small-button" disabled={action.busy || !treasurer} onClick={() => void action.run(path('/billing/grants'), { userId: treasurer, role: 'TREASURER', active: true, reason: 'Asignación de tesorería' }, 'Tesorero asignado.')}>Asignar</Button>
-          <Button className="secondary small-button" disabled={action.busy || !treasurer} onClick={() => void action.run(path('/billing/grants'), { userId: treasurer, role: 'TREASURER', active: false, reason: 'Revocación de tesorería' }, 'Tesorero revocado.')}>Revocar</Button></div></div>
       <div className="fin-block"><h4>Soporte financiero</h4><p className="small muted">Permite que otra persona de Plataforma opere las finanzas de este fraccionamiento. Nadie se lo aprueba a sí mismo.</p>
         <div className="fin-inline"><select aria-label="Persona de plataforma" value={operator} onChange={e => setOperator(e.target.value)}><option value="">Selecciona a otra persona</option>{grants?.operators.filter(u => u.id !== userId).map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}</select>
           <Button className="small-button" disabled={action.busy || !operator} onClick={() => { action.clear(); setOperatorDialog(true); }}>Aprobar</Button>

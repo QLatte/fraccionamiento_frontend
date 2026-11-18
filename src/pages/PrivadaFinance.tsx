@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { AlertTriangle, Banknote, Check, ChevronRight, FileText, Home as HomeIcon, Landmark, Plus, Receipt, Search, Wallet } from 'lucide-react';
+import { AlertTriangle, Banknote, Check, ChevronRight, FileText, Gavel, Home as HomeIcon, Landmark, Plus, Receipt, Search, Wallet } from 'lucide-react';
 import { apiFile, errorText } from '../api';
 import { compressPhoto } from '../chat';
 import { useQuery } from '../hooks';
@@ -19,22 +19,35 @@ type HomeRow = { accountId: string; propertyId: string; home: string; houseNumbe
 type Due = { id: string; period: string; homes: number; rateCents: string; amountCents: string };
 type Deposit = { id: string; amountCents: string; depositedAt: string; reference: string; status: 'PENDING' | 'CONFIRMED' | 'REJECTED'; reviewedAt: string | null; reviewReason: string | null; createdAt: string };
 type Expense = { id: string; spentAt: string; category: string; description: string; amountCents: string; receipt: { mime: string; size: number } | null; voided: boolean; voidReason: string | null };
+type ChargeCategory = 'FINE' | 'SURCHARGE' | 'EXTRAORDINARY' | 'ORDINARY' | 'AMENITIES' | 'OTHER';
+type Charge = { id: string; batchId: string; accountId: string; houseNumber: string; payer: string | null; category: ChargeCategory; concept: string; amountCents: string; remainingCents: string; dueAt: string | null; status: 'PENDING' | 'OVERDUE' | 'PAID' | 'CANCELLED'; note: string; createdAt: string };
 export type PrivadaSummary = {
   privada: { id: string; name: string; type: string }; role: 'ADMIN' | 'REPRESENTATIVE'; model: boolean; enabled: boolean; startMonth: string | null; configured: boolean; representatives: { userId: string; name: string }[]; currentMonth: string;
   cash: { collectedCents: string; spentCents: string; depositedCents: string; pendingDepositsCents: string; balanceCents: string; receivableCents: string };
   fraccionamiento: { owedCents: string; paidCents: string; pendingCents: string; balanceCents: string };
   concepts: Concept[]; fees: Fee[]; homes: HomeRow[]; dues: Due[]; deposits: Deposit[]; expenses: Expense[];
+  /** Recargos y multas, and whether this viewer (the privada's own administrator) may apply them. */
+  charges?: Charge[]; canCharge?: boolean;
   online?: Online;
   /** The viewer is this privada's administrator (resident profile): they fill in Stripe's form. */
   canOnboard?: boolean;
 };
 type Movement = { id: string; description: string; amountCents: string; effectiveAt: string; dueAt: string | null; kind: string; reversesId: string | null; reason: string; period: string | null };
 type Statement = { balanceCents: string; overdueCents: string; movements: Movement[] };
-type Tab = 'resumen' | 'casas' | 'cuotas' | 'gastos' | 'depositos';
+type Tab = 'resumen' | 'casas' | 'cuotas' | 'recargos' | 'gastos' | 'depositos';
 type Action = ReturnType<typeof useFinanceAction>;
 
 const CATEGORY: Record<string, string> = { MAINTENANCE: 'Mantenimiento', EXTRAORDINARY: 'Cuota extraordinaria', RESERVE: 'Fondo de reserva', FINE: 'Multa', OTHER: 'Otro' };
 export const EXPENSE: Record<string, string> = { AMENITIES: 'Amenidades', MAINTENANCE: 'Mantenimiento', SECURITY: 'Vigilancia', UTILITIES: 'Servicios (luz, agua)', CLEANING: 'Limpieza y jardinería', OTHER: 'Otro' };
+export const CHARGE: Record<ChargeCategory, { label: string; placeholder: string }> = {
+  FINE: { label: 'Multa', placeholder: 'Por ejemplo: ruido después de las 11 p. m.' },
+  SURCHARGE: { label: 'Recargo', placeholder: 'Por ejemplo: pago tardío de octubre' },
+  EXTRAORDINARY: { label: 'Cuota extraordinaria', placeholder: 'Por ejemplo: pintura de la barda' },
+  ORDINARY: { label: 'Cuota ordinaria', placeholder: 'Por ejemplo: diferencia de mantenimiento' },
+  AMENITIES: { label: 'Amenidades', placeholder: 'Por ejemplo: renta de la palapa' },
+  OTHER: { label: 'Otros', placeholder: 'Escribe el concepto' },
+};
+const CHARGE_STATUS: Record<Charge['status'], { label: string; badge: string }> = { PENDING: { label: 'Por pagar', badge: 'expired' }, OVERDUE: { label: 'Vencido', badge: 'revoked' }, PAID: { label: 'Pagado', badge: 'active' }, CANCELLED: { label: 'Cancelado', badge: 'pending' } };
 const DEPOSIT: Record<Deposit['status'], { label: string; badge: string }> = { PENDING: { label: 'Por confirmar', badge: 'expired' }, CONFIRMED: { label: 'Confirmado', badge: 'active' }, REJECTED: { label: 'Rechazado', badge: 'revoked' } };
 const latest = (concepts: Concept[]) => concepts.filter((c, i, all) => !all.slice(0, i).some(v => v.conceptId === c.conceptId));
 const inForce = (concepts: Concept[], month: string) => concepts.filter((c, i, all) => c.effectiveMonth <= month && !all.slice(0, i).some(v => v.conceptId === c.conceptId && v.effectiveMonth <= month));
@@ -47,6 +60,7 @@ function dayInstant(day: string) {
   return day === today ? new Date().toISOString() : new Date(`${day}T12:00:00`).toISOString();
 }
 const todayInput = () => new Date().toLocaleDateString('en-CA');
+const inDays = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return d.toLocaleDateString('en-CA'); };
 async function toBase64(blob: Blob) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
   let text = '';
@@ -74,7 +88,8 @@ export function PrivadaContent({ clusterId }: { clusterId: string }) {
   if (summary.loading && !s) return <TreasurySkeleton/>;
   if (!s) return <section className="panel"><ErrorBox message={summary.error} retry={summary.refresh}/></section>;
   const tabs: { id: Tab; label: string; badge?: number }[] = [
-    { id: 'resumen', label: 'Resumen' }, { id: 'casas', label: 'Casas' }, { id: 'cuotas', label: 'Cuotas' }, { id: 'gastos', label: 'Gastos' },
+    { id: 'resumen', label: 'Resumen' }, { id: 'casas', label: 'Casas' }, { id: 'cuotas', label: 'Cuotas' },
+    { id: 'recargos', label: 'Recargos y multas', badge: (s.charges ?? []).filter(c => c.status === 'OVERDUE').length || undefined }, { id: 'gastos', label: 'Gastos' },
     { id: 'depositos', label: 'Depósitos', badge: s.deposits.filter(d => d.status === 'PENDING').length || undefined },
   ];
   const go = (t: Tab) => { action.clear(); setTab(t); };
@@ -87,6 +102,7 @@ export function PrivadaContent({ clusterId }: { clusterId: string }) {
     {tab === 'resumen' && <Overview s={s} clusterId={clusterId} action={action} onChanged={summary.refresh} onGo={go} onOpenHome={id => { setSelected(id); go('casas'); }}/>}
     {tab === 'casas' && <Homes s={s} clusterId={clusterId} selected={selected} onSelect={setSelected} statement={statement} action={action}/>}
     {tab === 'cuotas' && <Concepts s={s} clusterId={clusterId} action={action}/>}
+    {tab === 'recargos' && <Charges s={s} clusterId={clusterId} action={action}/>}
     {tab === 'gastos' && <Expenses s={s} clusterId={clusterId} action={action}/>}
     {tab === 'depositos' && <Deposits s={s} clusterId={clusterId} action={action}/>}
   </div>;
@@ -163,7 +179,7 @@ function Homes({ s, clusterId, selected, onSelect, statement, action }: { s: Pri
 }
 
 function HomeDetail({ home, s, clusterId, statement, action }: { home: HomeRow; s: PrivadaSummary; clusterId: string; statement: ReturnType<typeof useQuery<Statement>>; action: Action }) {
-  const [pay, setPay] = useState(false), [adjust, setAdjust] = useState(false);
+  const [pay, setPay] = useState(false), [adjust, setAdjust] = useState(false), [charge, setCharge] = useState(false);
   const month = currentMonth();
   const st = statement.data;
   const reversed = new Set((st?.movements ?? []).map(m => m.reversesId).filter(Boolean));
@@ -176,6 +192,7 @@ function HomeDetail({ home, s, clusterId, statement, action }: { home: HomeRow; 
       <Stat label="Vencido" value={money(home.overdueCents)} tone={BigInt(home.overdueCents) > 0n ? 'bad' : ''}/>
     </div>
     <Button onClick={() => { action.clear(); setPay(true); }}><Banknote size={17}/> Registrar pago en efectivo o transferencia</Button>
+    {s.canCharge && s.configured && <Button className="secondary" onClick={() => { action.clear(); setCharge(true); }}><Gavel size={17}/> Aplicar recargo o multa</Button>}
 
     <div className="fin-block"><div className="fin-section-head"><h4>Cuota de {monthName(month)}</h4>{fees.length > 0 && <button type="button" className="fin-link" onClick={() => { action.clear(); setAdjust(true); }}>Ajustar para esta casa</button>}</div>
       {!fees.length ? <p className="small muted">Aún no hay cuotas en la privada. Créalas en Cuotas.</p> : <ul className="fin-plain">{fees.map(f => { const total = BigInt(f.concept.baseCents) + BigInt(f.adjustment);
@@ -190,6 +207,7 @@ function HomeDetail({ home, s, clusterId, statement, action }: { home: HomeRow; 
 
     {pay && <PaymentDialog home={home} clusterId={clusterId} action={action} onClose={() => setPay(false)}/>}
     {adjust && <AdjustDialog home={home} s={s} clusterId={clusterId} action={action} onClose={() => setAdjust(false)}/>}
+    {charge && <ChargeDialog s={s} clusterId={clusterId} action={action} initial={[home.accountId]} onClose={() => setCharge(false)}/>}
   </div>;
 }
 
@@ -267,6 +285,83 @@ function EndDialog({ concept, clusterId, action, onClose }: { concept: Concept; 
     onConfirm={reason => action.run(`/privadas/${clusterId}/concepts`, { conceptId: concept.conceptId, name: concept.name, category: concept.category, baseCents: concept.baseCents, effectiveMonth: month, active: false, reason }, 'Cuota terminada.')}>
     <label>Desde el mes<input type="month" required value={month} min={currentMonth()} onChange={e => setMonth(e.target.value)}/></label>
   </ReasonDialog>;
+}
+
+/**
+ * Recargos y multas: one-off charges to some homes (a fine, a late surcharge, an extraordinary fee,
+ * amenities…). Only the privada's own administrator applies or cancels them; administración only sees them.
+ */
+function Charges({ s, clusterId, action }: { s: PrivadaSummary; clusterId: string; action: Action }) {
+  const [adding, setAdding] = useState(false), [cancelling, setCancelling] = useState<Charge | null>(null), [filter, setFilter] = useState<ChargeCategory | 'all'>('all');
+  const charges = s.charges ?? [];
+  const live = charges.filter(c => c.status !== 'CANCELLED');
+  const owed = live.reduce((t, c) => t + BigInt(c.remainingCents), 0n);
+  const paid = live.reduce((t, c) => t + BigInt(c.amountCents) - BigInt(c.remainingCents), 0n);
+  const late = charges.filter(c => c.status === 'OVERDUE').length;
+  const list = charges.filter(c => filter === 'all' || c.category === filter);
+  const used = (Object.keys(CHARGE) as ChargeCategory[]).filter(k => charges.some(c => c.category === k));
+  return <div className="fin-stack">
+    <section className="fin-stats" aria-label="Totales de recargos y multas">
+      <Stat label="Por cobrar" value={money(owed)} hint="Lo que falta pagar de recargos y multas" tone={owed > 0n ? 'accent' : ''}/>
+      <Stat label="Vencidos" value={String(late)} hint={late === 1 ? 'Pasó su fecha límite' : 'Pasaron su fecha límite'} tone={late ? 'bad' : 'good'}/>
+      <Stat label="Cobrado" value={money(paid)} hint="Ya entra en la caja de la privada"/>
+    </section>
+    <section className="panel fin-section">
+      <div className="fin-section-head"><div><h3>Recargos y multas</h3><p>Cargos sueltos a una o varias casas: multas, recargos, cuotas extraordinarias, amenidades… Aparecen en el estado de cuenta de cada casa y se pagan como cualquier cuota.</p></div>
+        {s.canCharge && s.configured && <Button onClick={() => { action.clear(); setAdding(true); }}><Plus size={17}/> Aplicar recargo o multa</Button>}</div>
+      {!s.canCharge && <Info>Solo el administrador de la privada aplica o cancela recargos y multas.</Info>}
+      {s.canCharge && !s.configured && <Info>Podrás aplicar recargos y multas cuando la administración active el cobro de la privada.</Info>}
+      <ErrorBox message={!adding && !cancelling ? action.error : ''}/>
+      {used.length > 1 && <div className="fin-chips" role="group" aria-label="Filtrar por tipo">
+        <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Todos <span>{charges.length}</span></button>
+        {used.map(k => <button key={k} type="button" aria-pressed={filter === k} className={filter === k ? 'active' : ''} onClick={() => setFilter(k)}>{CHARGE[k].label} <span>{charges.filter(c => c.category === k).length}</span></button>)}</div>}
+      {!charges.length ? <Empty icon={<Gavel/>} title="Aún no hay recargos ni multas" text={s.canCharge ? 'Cuando apliques uno, aquí verás a qué casa, por cuánto y si ya se pagó.' : 'Aquí aparecerán los que aplique el administrador de la privada.'}/> :
+        <ul className="fin-rows">{list.map(c => { const st = CHARGE_STATUS[c.status], cancelled = c.status === 'CANCELLED', partial = c.status !== 'PAID' && !cancelled && c.remainingCents !== c.amountCents;
+          return <li key={c.id} className="fin-row fin-row-wrap"><span className="fin-row-icon"><Gavel size={17}/></span>
+            <div className="fin-row-main"><strong className={cancelled ? 'fin-struck' : ''}>{c.concept}</strong>
+              <small>Casa {c.houseNumber}{c.payer ? ` · ${c.payer}` : ''} · {CHARGE[c.category]?.label ?? c.category}{c.dueAt && !cancelled && c.status !== 'PAID' ? ` · fecha límite ${lastPayDay(c.dueAt)}` : ` · ${dayText(c.createdAt)}`}</small>
+              {c.note && c.note !== c.concept && <small className="muted">{c.note}</small>}</div>
+            <div className="fin-row-side"><strong className={`fin-amount ${c.status === 'OVERDUE' ? 'bad' : ''}`}>{money(c.amountCents)}</strong>
+              <span className={`badge ${st.badge}`}><span/>{partial ? `Faltan ${money(c.remainingCents)}` : st.label}</span>
+              {s.canCharge && !cancelled && <button type="button" className="fin-link danger-text" onClick={() => { action.clear(); setCancelling(c); }}>Cancelar</button>}</div></li>; })}</ul>}
+    </section>
+    {adding && <ChargeDialog s={s} clusterId={clusterId} action={action} initial={[]} onClose={() => setAdding(false)}/>}
+    {cancelling && <ReasonDialog title="Cancelar recargo" confirm="Cancelar recargo" danger busy={action.busy} error={action.error} onClose={() => setCancelling(null)} placeholder="Por ejemplo: se aclaró con el vecino"
+      text={<p><strong>{cancelling.concept} · Casa {cancelling.houseNumber} ({money(cancelling.amountCents)})</strong> deja de cobrarse. Si ya se había pagado algo, vuelve a la casa como saldo a favor. Queda en el historial como cancelado.</p>}
+      onConfirm={reason => action.run(`/privadas/${clusterId}/charges/${cancelling.id}/cancel`, { reason }, 'Recargo cancelado.')}/>}
+  </div>;
+}
+
+/** Apply one recargo or multa to one, several or all homes of the privada. */
+function ChargeDialog({ s, clusterId, action, initial, onClose }: { s: PrivadaSummary; clusterId: string; action: Action; initial: string[]; onClose: () => void }) {
+  const homes = useMemo(() => s.homes.filter(h => h.active).sort((a, b) => a.houseNumber.localeCompare(b.houseNumber, 'es', { numeric: true })), [s.homes]);
+  const [category, setCategory] = useState<ChargeCategory>('FINE'), [concept, setConcept] = useState(''), [amount, setAmount] = useState(''), [due, setDue] = useState(inDays(15)), [note, setNote] = useState('');
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(initial)), [q, setQ] = useState('');
+  const term = q.trim().toLowerCase();
+  const shown = homes.filter(h => !term || homeTitle(h).toLowerCase().includes(term) || (h.payer ?? '').toLowerCase().includes(term));
+  const all = homes.length > 0 && homes.every(h => picked.has(h.accountId));
+  let each = 0n; try { each = amount ? BigInt(toCents(amount)) : 0n; } catch { each = 0n; }
+  function toggle(id: string) { setPicked(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); }
+  async function submit(e: FormEvent) {
+    e.preventDefault(); action.clear();
+    try {
+      const ok = await action.run(`/privadas/${clusterId}/charges`, { accountIds: homes.filter(h => picked.has(h.accountId)).map(h => h.accountId), category, concept: concept.trim(), amountCents: toCents(amount), dueDate: due, ...(note.trim().length >= 3 ? { note: note.trim() } : {}) }, picked.size === 1 ? 'Recargo aplicado.' : `Recargo aplicado a ${picked.size} casas.`);
+      if (ok) onClose();
+    } catch (err) { action.setError(errorText(err)); }
+  }
+  return <Modal title="Aplicar recargo o multa" onClose={() => { if (!action.busy) onClose(); }}><form onSubmit={submit}><fieldset disabled={action.busy}>
+    <div className="pf-kind" role="radiogroup" aria-label="Tipo de cargo">{(Object.keys(CHARGE) as ChargeCategory[]).map(k => <button key={k} type="button" role="radio" aria-checked={category === k} className={category === k ? 'active' : ''} onClick={() => setCategory(k)}>{CHARGE[k].label}</button>)}</div>
+    <label>Concepto<input required minLength={2} maxLength={100} value={concept} onChange={e => setConcept(e.target.value)} placeholder={CHARGE[category].placeholder}/><small>Así lo verá el vecino en su estado de cuenta{category !== 'OTHER' ? `: «${CHARGE[category].label}: ${concept.trim() || '…'}»` : ''}.</small></label>
+    <div className="fin-fields"><label>Monto por casa en MXN<div className="fin-money-input"><span>$</span><input required inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></div></label>
+      <label>Fecha límite de pago<input type="date" required value={due} min={todayInput()} max={inDays(365)} onChange={e => setDue(e.target.value)}/></label></div>
+    <div className="pf-pick">
+      <div className="pf-pick-head"><strong>Casas</strong><label className="pf-pick-all"><input type="checkbox" checked={all} onChange={() => setPicked(all ? new Set() : new Set(homes.map(h => h.accountId)))}/> Todas ({homes.length})</label></div>
+      {homes.length > 8 && <label className="fin-search"><Search size={16}/><input aria-label="Buscar casa" placeholder="Casa o titular" value={q} onChange={e => setQ(e.target.value)}/></label>}
+      <ul>{shown.map(h => <li key={h.accountId}><label><input type="checkbox" checked={picked.has(h.accountId)} onChange={() => toggle(h.accountId)}/><span>{homeTitle(h)}</span><small>{h.payer ?? 'Sin titular'}</small></label></li>)}</ul>
+    </div>
+    <label>Nota (opcional)<input maxLength={300} value={note} onChange={e => setNote(e.target.value)} placeholder="Por ejemplo: reporte de vigilancia del 12 de noviembre"/><small>Queda en el historial y la puede ver el titular de la casa.</small></label>
+    {picked.size > 0 && each > 0n && <p className="fin-preview">Se cobrará <strong>{money(each)}</strong> a {picked.size === 1 ? '1 casa' : `${picked.size} casas`}{picked.size > 1 ? <> · total <strong>{money(each * BigInt(picked.size))}</strong></> : null}. Si la casa tiene saldo a favor, se paga con él.</p>}
+  </fieldset><ErrorBox message={action.error}/><div className="modal-actions"><Button className="secondary" disabled={action.busy} onClick={onClose}>Cancelar</Button><Button type="submit" busy={action.busy} disabled={!picked.size || concept.trim().length < 2 || !amount}>Aplicar</Button></div></form></Modal>;
 }
 
 /** The privada's expenses, each with its receipt when there is one. */

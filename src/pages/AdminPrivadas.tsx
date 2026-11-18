@@ -45,7 +45,7 @@ export function AdminPrivadas() {
     {action.notice && <Success>{action.notice}</Success>}
     {f ? <FinanceSettings f={f} action={action}/> : finance.loading ? <Loading/> : <div className="fin-callout"><AlertTriangle size={20}/><div><strong>No se pudieron abrir las finanzas por privada</strong>
       <span>{finance.error || 'El servidor no respondió.'}</span>
-      <span>Se necesitan la cobranza del fraccionamiento activa (Plataforma la activa en Tesorería) y el perfil de Administración del fraccionamiento o un permiso de tesorería.</span></div></div>}
+      <span>Se necesitan la cobranza del fraccionamiento activa (Plataforma la activa en Tesorería) y el perfil de Administración del fraccionamiento.</span></div></div>}
     {f && f.pendingDeposits.length > 0 && <PendingDeposits deposits={f.pendingDeposits} action={action}/>}
     {reps.loading && !reps.data ? <Loading variant="cards"/> : !list.length ? <Empty icon={<Landmark/>} title="Aún no hay privadas" text="Cuando des de alta privadas y viviendas, aquí podrás asignar a su administrador."/> :
       <div className="ap-grid">{list.map(p => <PrivadaCard key={p.clusterId} privada={p} fin={f?.privadas.find(x => x.clusterId === p.clusterId)} model={!!f?.privadaModel} hasFinance={!!f} action={action} onChanged={reps.refresh} onOpen={() => { action.clear(); setOpen(p.clusterId); }}/>)}</div>}

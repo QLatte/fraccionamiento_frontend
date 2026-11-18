@@ -204,7 +204,7 @@
 /* Pagos: a home that pays its privada and the fraccionamiento, one tab each. */
 .fin-pay-tabs { margin-bottom: 16px; }
 
-/* Tesorería → Viviendas, by privada: one card per privada, then its homes. */
+/* Tesorería → Privadas: one card per privada or lote with what it owes the fraccionamiento. */
 .fin-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .fin-group { display: flex; flex-direction: column; gap: 14px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .16s ease, box-shadow .2s ease, transform .16s cubic-bezier(.23, 1, .32, 1); }
 .fin-group:active { transform: scale(.985); }
@@ -224,6 +224,10 @@
 .fin-group-stats dd.good { color: #1f6b44; }
 .fin-group-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--canvas); }
 .fin-group-bar span { display: block; height: 100%; border-radius: inherit; background: #2f8a5b; }
-.fin-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-bottom: 4px; padding: 4px 0; border: 0; background: none; color: var(--brand); font: inherit; font-weight: 700; cursor: pointer; }
-@media (hover: hover) { .fin-back:hover { text-decoration: underline; text-underline-offset: 3px; } }
-.fin-fee { color: var(--brand) !important; font-weight: 600; }
+.fin-group-static { cursor: default; }
+.fin-group-static:active { transform: none; }
+@media (hover: hover) { .fin-group-static:hover { border-color: var(--line); box-shadow: none; } }
+.fin-group-head > .badge { flex-shrink: 0; }
+.fin-group-note { color: var(--muted); font-size: 12.5px; }
+.fin-group-link { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; }
+.fin-group-link .fin-tab-badge { margin: 0; }

@@ -34,6 +34,20 @@
 .pf-checklist span { display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--muted); }
 .pf-checklist strong { color: var(--text); }
 
+/* Recargos y multas: the type as chips, then the homes it applies to. */
+.pf-kind { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.pf-kind button { min-height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #355967; font-weight: 600; font-size: 13.5px; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .1s ease; }
+.pf-kind button:active { transform: scale(.97); }
+.pf-kind button.active { border-color: var(--brand); background: var(--brand); color: #fff; }
+.pf-pick { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; }
+.pf-pick-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pf-pick-all { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; font-size: 14px; }
+.pf-pick ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; max-height: 220px; margin: 0; padding: 0; overflow-y: auto; }
+.pf-pick li label { display: flex; align-items: center; gap: 8px; min-height: 40px; margin: 0; padding: 6px 10px; border-radius: 10px; background: var(--canvas); font-size: 14px; cursor: pointer; }
+.pf-pick li label small { margin-left: auto; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.pf-pick input[type='checkbox'], .pf-pick-all input[type='checkbox'] { width: 18px; height: 18px; min-height: 0; flex-shrink: 0; accent-color: var(--brand); }
+@media (prefers-reduced-motion: reduce) { .pf-kind button { transition: none; } .pf-kind button:active { transform: none; } }
+
 @media (max-width: 700px) {
   .pf-online { padding: 18px; }
   .pf-online-actions { padding-left: 0; }
