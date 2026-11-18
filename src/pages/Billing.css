@@ -200,3 +200,6 @@
 @media print {
   .fin-receipt { color: #000; }
 }
+
+/* Pagos: a home that pays its privada and the fraccionamiento, one tab each. */
+.fin-pay-tabs { margin-bottom: 16px; }

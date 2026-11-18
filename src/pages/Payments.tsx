@@ -52,15 +52,19 @@ function Charges({ statement }: { statement: MyStatement }) {
   })}</ul></section>;
 }
 
-function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
+/** Who the home pays on this tab: the fraccionamiento, or its privada (finances by privada). */
+export type PayScope = { kind: 'fraccionamiento' } | { kind: 'privada'; name: string };
+const SCOPE_KEY = 'zentry:pay-scope';
+function ResidentPaymentsContent({ propertyId, scope = { kind: 'fraccionamiento' } }: { propertyId: string; scope?: PayScope }) {
+  const privada = scope.kind === 'privada', suffix = privada ? '&scope=privada' : '';
   // Back from Stripe: check often until the payment is confirmed.
   const [returned, setReturned] = useState(() => new URLSearchParams(location.search).get('resultado') === 'regreso');
   // While a CLABE or a Stripe link is being prepared, or a payment confirmed, check often for the
   // first 20 seconds (it usually takes a few), then calmly, so many waiting residents do not pile up.
   const [preparing, setPreparing] = useState(false), [fastUntil, setFastUntil] = useState(() => Date.now() + 20000);
   const waiting = preparing || returned, fast = waiting && Date.now() < fastUntil;
-  const data = useQuery<MyPayments>(`/billing/my-payments?propertyId=${propertyId}`, waiting ? (fast ? (preparing ? 1500 : 3000) : 5000) : 10000);
-  const statement = useQuery<MyStatement>(`/billing/my-statement?propertyId=${propertyId}`, returned ? (fast ? 3000 : 5000) : 10000);
+  const data = useQuery<MyPayments>(`/billing/my-payments?propertyId=${propertyId}${suffix}`, waiting ? (fast ? (preparing ? 1500 : 3000) : 5000) : 10000);
+  const statement = useQuery<MyStatement>(`/billing/my-statement?propertyId=${propertyId}${suffix}`, returned ? (fast ? 3000 : 5000) : 10000);
   const action = useFinanceAction(() => { data.refresh(); statement.refresh(); });
   const [amount, setAmount] = useState(''), [receipt, setReceipt] = useState<Receipt | null>(null), [copied, setCopied] = useState(false), [paid, setPaid] = useState<CheckoutTask | null>(null);
   const online = useOnline();
@@ -94,12 +98,11 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
   async function copy(clabe: string) { try { await navigator.clipboard.writeText(clabe); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch (e) { action.setError(errorText(e)); } }
 
   return <div className="fin">
-    <PageHeader title="Pagos" text="Las cuotas de tu vivienda y cómo pagarlas." action={<span className="fin-flag"><ShieldCheck size={15}/> Modo de prueba de Stripe</span>}/>
     <ErrorBox message={data.error || statement.error || action.error}/>
     {(data.loading && !d) || (statement.loading && !s) ? <ResidentSkeleton/> : <>
       {s && <BalanceCard statement={s}/>}
       {returned && !checkout?.paid && <p className="fin-waiting"><Clock size={16}/> Estamos confirmando tu pago con Stripe. Tarda unos segundos; no cierres esta pantalla.</p>}
-      {d && !d.destination ? <Info>Administración aún no activa los pagos en línea. Mientras tanto, paga como de costumbre en administración.</Info> : d && <div className="fin-methods">
+      {d && !d.destination ? <Info>{privada ? `${scope.name} aún no activa los pagos en línea. Mientras tanto, paga al administrador de tu privada.` : 'Administración aún no activa los pagos en línea. Mientras tanto, paga como de costumbre en administración.'}</Info> : d && <div className="fin-methods">
         <section className="panel fin-method">
           <div className="fin-method-head"><span className="fin-method-icon"><Landmark size={20}/></span><div><h3>Transferencia SPEI</h3><p>Desde la app de tu banco. Se acredita sola en cuanto llega.</p></div></div>
           {!d.instructions ? <>{preparingClabe ? <Preparing title="Generando tu CLABE…"/> : <p className="small muted">Tu casa tendrá una CLABE propia; la usas siempre que pagues.</p>}
@@ -107,13 +110,13 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
             <div className="fin-clabe"><span>CLABE de tu casa</span><strong className="fin-mono">{d.instructions.clabe.replace(/(\d{4})(?=\d)/g, '$1 ')}</strong></div>
             <dl className="fin-facts"><dt>Banco</dt><dd>{d.instructions.bank}</dd><dt>Beneficiario</dt><dd>{d.instructions.beneficiary}</dd></dl>
             <Button className="secondary" onClick={() => void copy(d.instructions!.clabe)}>{copied ? <><Check size={16}/> CLABE copiada</> : <><Copy size={16}/> Copiar CLABE</>}</Button>
-            <p className="small muted">Esta CLABE es solo de tu casa. Puedes transferir cualquier monto.</p></>}
+            <p className="small muted">{privada ? `Esta CLABE es solo de tu casa y llega a la cuenta de ${scope.name}.` : 'Esta CLABE es solo de tu casa.'} Puedes transferir cualquier monto.</p></>}
         </section>
         <section className="panel fin-method">
           <div className="fin-method-head"><span className="fin-method-icon"><CreditCard size={20}/></span><div><h3>Tarjeta de crédito o débito</h3><p>En la página segura de Stripe. Zentry nunca ve los datos de tu tarjeta.</p></div></div>
           {!d.instructions ? <p className="small muted">Primero solicita tus datos SPEI: con ellos se identifica tu casa en Stripe.</p> :
             checkout?.status === 'PENDING' ? <Preparing title="Preparando tu pago seguro…"/> : <>
-              {checkout?.status === 'DONE' && !checkout.paid && !checkout.expired && checkout.result?.url && new URL(checkout.result.url).origin === 'https://checkout.stripe.com' && <div className="fin-ready"><Success>Tu pago está listo.</Success><a className="button" href={checkout.result.url} rel="noreferrer">Continuar en Stripe <ExternalLink size={16}/></a><small>Volver de Stripe no confirma el pago; el recibo aparece cuando Stripe lo confirme.</small></div>}
+              {checkout?.status === 'DONE' && !checkout.paid && !checkout.expired && checkout.result?.url && new URL(checkout.result.url).origin === 'https://checkout.stripe.com' && <div className="fin-ready"><Success>Tu pago está listo.</Success><a className="button" href={checkout.result.url} rel="noreferrer" onClick={() => { try { sessionStorage.setItem(SCOPE_KEY, scope.kind); } catch { /* only a convenience */ } }}>Continuar en Stripe <ExternalLink size={16}/></a><small>Volver de Stripe no confirma el pago; el recibo aparece cuando Stripe lo confirme.</small></div>}
               {checkout?.status === 'REVIEW' && <p className="fin-alert">No se pudo preparar tu último pago. Administración ya ve el motivo para resolverlo; no hace falta volver a intentarlo.</p>}
               <form onSubmit={e => { e.preventDefault(); void request('CHECKOUT'); }}>
                 <label>Importe a pagar en MXN<div className="fin-money-input"><span>$</span><input required inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></div></label>
@@ -128,7 +131,7 @@ function ResidentPaymentsContent({ propertyId }: { propertyId: string }) {
         <ul className="fin-rows">{d.payments.map(p => { const Icon = METHOD_ICON[p.method] ?? ReceiptIcon; return <li key={p.id} className="fin-row">
           <span className="fin-row-icon"><Icon size={18}/></span><div className="fin-row-main"><strong>{METHOD[p.method] ?? p.method}</strong>{p.createdAt && <small>{dateTimeText(p.createdAt)}</small>}</div>
           <div className="fin-row-side"><strong className="fin-amount">{money(p.amountCents)}</strong><Button className="secondary small-button" onClick={() => void action.read<Receipt>(`/billing/payments/${p.id}/receipt?communityId=${d.communityId}`, setReceipt)}>Ver recibo</Button></div></li>; })}</ul>}
-        <p className="small muted">El fraccionamiento absorbe las comisiones de tarjeta y SPEI. Zentry no cobra comisión.</p></section>
+        <p className="small muted">{privada ? 'La privada absorbe' : 'El fraccionamiento absorbe'} las comisiones de tarjeta y SPEI. Zentry no cobra comisión.</p></section>
     </>}
     {paid && <Modal title="Pago realizado" onClose={() => setPaid(null)}><div className="fin-paid" role="status">
       <span className="fin-paid-icon"><CircleCheck size={40}/></span>
@@ -333,8 +336,26 @@ function AdminPaymentsContent({ communityId, accountId, enabled, refresh }: { co
   </>}{manual && accountId && <ManualPaymentDialog accountId={accountId} home="vivienda seleccionada" path={data.path} action={action} onClose={() => setManual(false)}/>}</div>;
 }
 
-export function ResidentPayments(props: { propertyId: string }) {
-  return <FinancialBoundary scope={props.propertyId}><ResidentPaymentsContent {...props}/></FinancialBoundary>;
+/**
+ * Pagos: what the home owes and how to pay it. A home in a privada that bills by itself pays its
+ * privada (its own account) and may still owe the fraccionamiento: one tab each.
+ */
+export function ResidentPayments({ propertyId, canPay = true, privada }: { propertyId: string; canPay?: boolean; privada?: { name: string; type: string } | null }) {
+  const label = privada ? `${privada.type === 'PRIVADA' ? 'Privada ' : ''}${privada.name}` : '';
+  const [tab, setTab] = useState<'privada' | 'fraccionamiento'>(() => {
+    let saved: string | null = null; try { saved = sessionStorage.getItem(SCOPE_KEY); } catch { /* only a convenience */ }
+    return privada && (saved !== 'fraccionamiento' || !canPay) ? 'privada' : 'fraccionamiento';
+  });
+  const current = privada && (tab === 'privada' || !canPay) ? 'privada' : 'fraccionamiento';
+  function choose(next: 'privada' | 'fraccionamiento') { setTab(next); try { sessionStorage.setItem(SCOPE_KEY, next); } catch { /* only a convenience */ } }
+  return <>
+    <PageHeader title="Pagos" text={privada ? 'Tus cuotas y cómo pagarlas: a tu privada y al fraccionamiento.' : 'Las cuotas de tu vivienda y cómo pagarlas.'} action={<span className="fin-flag"><ShieldCheck size={15}/> Modo de prueba de Stripe</span>}/>
+    {privada && canPay && <div className="fin-tabs fin-pay-tabs" role="tablist" aria-label="A quién pagas">
+      <button type="button" role="tab" aria-selected={current === 'privada'} className={current === 'privada' ? 'active' : ''} onClick={() => choose('privada')}>{label}</button>
+      <button type="button" role="tab" aria-selected={current === 'fraccionamiento'} className={current === 'fraccionamiento' ? 'active' : ''} onClick={() => choose('fraccionamiento')}>Fraccionamiento</button>
+    </div>}
+    <FinancialBoundary key={current} scope={`${propertyId}:${current}`}><ResidentPaymentsContent propertyId={propertyId} scope={current === 'privada' ? { kind: 'privada', name: label } : { kind: 'fraccionamiento' }}/></FinancialBoundary>
+  </>;
 }
 export function AdminPayments(props: { communityId?: string; accountId?: string; enabled: boolean; refresh: () => void }) {
   return <FinancialBoundary scope={`${props.communityId}:${props.accountId}`}><AdminPaymentsContent {...props}/></FinancialBoundary>;

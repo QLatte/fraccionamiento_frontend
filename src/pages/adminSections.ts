@@ -1,4 +1,4 @@
-import { Megaphone, MessagesSquare, Wallet } from 'lucide-react';
+import { Landmark, Megaphone, Wallet } from 'lucide-react';
 import AnimatedHome from '../components/icons/AnimatedHome';
 import AnimatedPhoneVolume from '../components/icons/AnimatedPhoneVolume';
 import AnimatedRefresh from '../components/icons/AnimatedRefresh';
@@ -10,7 +10,7 @@ export const adminSections = [
   { path: '/admin/movimientos', label: 'Movimientos', Icon: AnimatedHistoryCircle },
   { path: '/admin/viviendas', label: 'Viviendas', Icon: AnimatedHome },
   { path: '/admin/comunicados', label: 'Comunicados', Icon: Megaphone },
-  { path: '/admin/representantes', label: 'Representantes', Icon: MessagesSquare },
+  { path: '/admin/representantes', label: 'Privadas', Icon: Landmark },
   { path: '/admin/cobranza', label: 'Cobranza', Icon: Wallet },
   { path: '/admin/dispositivos', label: 'Casetas', Icon: AnimatedPhoneVolume },
   { path: '/admin/telefonos', label: 'Teléfonos de apoyo', Icon: Phone },

@@ -1,0 +1,43 @@
+/* Mi privada: built on Tesorería's pieces (Billing.css). Only what is particular to a privada. */
+
+/* The cash box: the number the administrator lives by, and how it is made up. */
+.pf-cash { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; padding: 22px 24px; border-radius: var(--radius); background: radial-gradient(120% 140% at 100% 0%, #24627a 0%, var(--brand) 55%, #0c2c37 100%); color: #fff; box-shadow: 0 18px 40px -26px #0c2c37b3; }
+.pf-cash > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pf-cash > div span { font-size: 14px; font-weight: 600; opacity: .85; }
+.pf-cash > div strong { font-family: var(--display); font-size: clamp(32px, 5vw, 44px); font-weight: 600; line-height: 1.05; letter-spacing: -.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pf-cash > div small { color: #cfe2e9; font-size: 13px; }
+.pf-cash ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.pf-cash li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid #ffffff26; font-size: 14px; }
+.pf-cash li:last-child { padding-bottom: 0; border-bottom: 0; }
+.pf-cash li span { color: #d6e7ed; }
+.pf-cash li strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.fin-flag.warn { background: #fbefd3; color: #7a5712; }
+
+.pf-switch { display: flex; align-items: center; gap: 10px; max-width: 360px; margin-bottom: 14px; font-weight: 600; }
+.pf-switch select { flex: 1; }
+
+/* Pagos en línea: one card, one next step. */
+.pf-online { display: flex; flex-direction: column; gap: 14px; padding: 20px 22px; }
+.pf-online-head { display: flex; align-items: flex-start; gap: 14px; }
+.pf-online-head h3 { margin: 0 0 4px; font-size: 17px; }
+.pf-online-head p { margin: 0; max-width: 68ch; color: var(--muted); }
+.pf-online-icon { display: grid; flex-shrink: 0; place-items: center; width: 42px; height: 42px; border-radius: 14px; background: var(--canvas); color: var(--brand); }
+.pf-online-icon.good { background: #e3f2ea; color: #1f6b44; }
+.pf-online-icon.warn { background: #fbefd3; color: #7a5712; }
+.pf-online-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding-left: 56px; }
+.pf-online-actions small { color: var(--muted); }
+.pf-online-note { display: flex; align-items: center; gap: 6px; margin: 0; color: #1f6b44; font-size: 13px; font-weight: 600; }
+.pf-checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0 14px; padding: 0; }
+.pf-checklist li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--canvas); }
+.pf-checklist li svg { flex-shrink: 0; margin-top: 2px; color: var(--brand); }
+.pf-checklist span { display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--muted); }
+.pf-checklist strong { color: var(--text); }
+
+@media (max-width: 700px) {
+  .pf-online { padding: 18px; }
+  .pf-online-actions { padding-left: 0; }
+  .pf-cash { grid-template-columns: 1fr; padding: 20px; }
+  /* Totals one per row on phones: amounts stay on one line. */
+  .pf .fin-stats:not(.compact) { grid-template-columns: 1fr; }
+}

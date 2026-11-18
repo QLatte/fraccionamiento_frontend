@@ -1,0 +1,41 @@
+/* Privadas (administration): built on Tesorería (Billing.css) and the chat representatives cards (Chat.css). */
+.ap-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 22px; }
+.ap-head h2 { margin: 0 0 4px; }
+.ap-head p { margin: 0; max-width: 70ch; color: var(--muted); }
+
+.ap-settings { display: flex; flex-direction: column; }
+.ap-setting { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+.ap-setting:first-child { border-top: 0; padding-top: 0; }
+.ap-setting:last-child { padding-bottom: 0; }
+.ap-setting h3 { margin: 0 0 2px; font-size: 16px; }
+.ap-setting p { margin: 0; color: var(--muted); font-size: 14px; }
+.ap-setting p strong { color: var(--text); }
+.ap-dot { width: 12px; height: 12px; margin: 0 6px; border-radius: 50%; background: #c3c8c6; box-shadow: 0 0 0 4px #c3c8c633; }
+.ap-dot.on { background: #2f8a5b; box-shadow: 0 0 0 4px #2f8a5b2e; }
+.ap-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: var(--canvas); color: var(--brand); }
+
+.ap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.ap-card { gap: 14px; }
+.ap-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.ap-card-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.ap-status { flex-shrink: 0; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; background: var(--canvas); color: var(--muted); }
+.ap-status.good { background: #e3f2ea; color: #1f6b44; }
+.ap-status.warn { background: #fbefd3; color: #7a5712; }
+.ap-block { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.ap-block h4 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.ap-block p { margin: 0; }
+.ap-owed { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.ap-owed div { padding: 10px 12px; border-radius: 12px; background: var(--canvas); }
+.ap-owed dt { color: var(--muted); font-size: 12px; }
+.ap-owed dd { margin: 2px 0 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ap-owed dd.warn { color: #8a5a00; }
+.ap-online { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ap-open, .ap-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 6px 0; border: 0; background: none; color: var(--brand); font: inherit; font-weight: 700; cursor: pointer; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.ap-open:active, .ap-back:active { transform: scale(.97); }
+@media (hover: hover) { .ap-open:hover, .ap-back:hover { text-decoration: underline; text-underline-offset: 3px; } }
+
+@media (max-width: 700px) {
+  .ap-setting { grid-template-columns: auto minmax(0, 1fr); }
+  .ap-setting > button { grid-column: 2; justify-self: start; }
+  .ap-grid { grid-template-columns: 1fr; }
+}
