@@ -33,7 +33,9 @@ for (const width of [390, 1440]) test(`monthly ledger, retry and reversal at ${w
   await expect.poll(() => posts.length).toBe(1);
   expect(posts[0].body.baseCents).toBe('123450'); expect(posts[0].key).toBeTruthy();
   await page.getByRole('tab', { name: 'Viviendas' }).click();
-  await page.getByRole('button', { name: /Casa 12 · Privada de prueba/ }).click();
+  // Viviendas groups homes by privada: open the privada first, then the home.
+  await page.locator('.fin-group').first().click();
+  await page.getByRole('button', { name: /Casa 12/ }).click();
   await expect(page.getByText('$1,234.50 MXN').first()).toBeVisible();
   await page.getByRole('button', { name: 'Corregir con reverso' }).click();
   await page.getByRole('textbox', { name: /^Motivo/ }).fill('Cargo incorrecto');

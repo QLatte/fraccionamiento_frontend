@@ -203,3 +203,27 @@
 
 /* Pagos: a home that pays its privada and the fraccionamiento, one tab each. */
 .fin-pay-tabs { margin-bottom: 16px; }
+
+/* Tesorería → Viviendas, by privada: one card per privada, then its homes. */
+.fin-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.fin-group { display: flex; flex-direction: column; gap: 14px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .16s ease, box-shadow .2s ease, transform .16s cubic-bezier(.23, 1, .32, 1); }
+.fin-group:active { transform: scale(.985); }
+@media (hover: hover) { .fin-group:hover { border-color: #b9ccd3; box-shadow: 0 10px 24px -18px #0c2c3780; } }
+.fin-group:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.fin-group-head { display: flex; align-items: center; gap: 12px; }
+.fin-group-head > div { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.fin-group-head strong { font-size: 16px; }
+.fin-group-head small { color: var(--muted); font-size: 13px; }
+.fin-group-head > svg { flex-shrink: 0; color: var(--muted); }
+.fin-group-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.fin-group-stats div { min-width: 0; padding: 8px 10px; border-radius: 12px; background: var(--canvas); }
+.fin-group-stats dt { color: var(--muted); font-size: 12px; }
+.fin-group-stats dd { margin: 2px 0 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fin-group-stats dd.accent { color: var(--brand); }
+.fin-group-stats dd.bad { color: #a3262a; }
+.fin-group-stats dd.good { color: #1f6b44; }
+.fin-group-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--canvas); }
+.fin-group-bar span { display: block; height: 100%; border-radius: inherit; background: #2f8a5b; }
+.fin-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-bottom: 4px; padding: 4px 0; border: 0; background: none; color: var(--brand); font: inherit; font-weight: 700; cursor: pointer; }
+@media (hover: hover) { .fin-back:hover { text-decoration: underline; text-underline-offset: 3px; } }
+.fin-fee { color: var(--brand) !important; font-weight: 600; }

@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { AlertTriangle, Banknote, Check, ChevronRight, Home as HomeIcon, Plus, Search, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Banknote, Check, ChevronRight, Home as HomeIcon, Landmark, Plus, Search, ShieldCheck } from 'lucide-react';
 import { FinancialBoundary } from '../components/FinancialBoundary';
 import { errorText } from '../api';
 import { useQuery } from '../hooks';
@@ -14,7 +14,7 @@ import './Billing.css';
 export const mxn = (cents: string) => money(cents);
 
 type Concept = { id: string; conceptId: string; name: string; category: string; baseCents: string; effectiveMonth: string; active: boolean };
-type Account = { id: string; propertyId: string; payerId: string | null; balanceCents: string; overdueCents: string; property?: { street: string; houseNumber: string; memberships: { userId: string; user: { fullName: string } }[] } };
+type Account = { id: string; propertyId: string; payerId: string | null; balanceCents: string; overdueCents: string; property?: { street: string; houseNumber: string; cluster?: { id: string; name: string; type: string }; memberships: { userId: string; user: { fullName: string } }[] } };
 type Fee = { accountId: string; conceptId: string; adjustmentCents: string; effectiveMonth: string };
 type Overview = { accounts: Account[]; concepts: Concept[]; fees: Fee[]; currentMonth: string };
 type Movement = { id: string; description: string; amountCents: string; effectiveAt: string; dueAt: string | null; kind: string; reversesId: string | null; reason: string; period: string | null };
@@ -115,24 +115,97 @@ const HOME_FILTERS: { id: HomeFilter; label: string; test: (a: Account) => boole
   { id: 'credit', label: 'Saldo a favor', test: a => BigInt(a.balanceCents) < 0n },
 ];
 
+/** A privada (or lote) and its homes, as Tesorería groups them. */
+type Group = { id: string; name: string; accounts: Account[] };
+const NO_GROUP = 'sin-privada';
+const groupName = (c?: { name: string; type: string }) => c ? (c.type === 'PRIVADA' ? `Privada ${c.name}` : c.name) : 'Sin privada';
+/** What a home is charged this month: each concept in force, plus its own adjustment. */
+function monthlyFee(overview: Overview, accountId: string, month: string) {
+  return conceptsFor(overview.concepts, month).filter(c => c.active).reduce((sum, c) => {
+    const fee = overview.fees.find(f => f.accountId === accountId && f.conceptId === c.conceptId && f.effectiveMonth <= month);
+    return sum + BigInt(c.baseCents) + BigInt(fee?.adjustmentCents ?? '0');
+  }, 0n);
+}
+
+/**
+ * Viviendas, by privada: first each privada with how its homes stand, then its homes with their
+ * monthly fee and balance. Searching finds a home in any privada.
+ */
 function Homes({ overview, selected, onSelect, statement, payments, enabled, path, action, homeName }: { overview: Overview; selected: string; onSelect: (id: string) => void; statement: ReturnType<typeof useQuery<Statement>>; payments?: AdminData; enabled: boolean; path: Scoped; action: FinanceAction; homeName: (id: string) => string | undefined }) {
+  void homeName;
+  const byNumber = useMemo(() => new Intl.Collator('es', { numeric: true }), []);
+  const month = currentMonth();
+  const groups = useMemo(() => {
+    const map = new Map<string, Group>();
+    for (const a of overview.accounts) {
+      const id = a.property?.cluster?.id ?? NO_GROUP;
+      if (!map.has(id)) map.set(id, { id, name: groupName(a.property?.cluster), accounts: [] });
+      map.get(id)!.accounts.push(a);
+    }
+    return [...map.values()].sort((x, y) => (x.id === NO_GROUP ? 1 : y.id === NO_GROUP ? -1 : byNumber.compare(x.name, y.name)));
+  }, [overview.accounts, byNumber]);
+  const groupOf = (accountId: string) => { const a = overview.accounts.find(x => x.id === accountId); return a ? a.property?.cluster?.id ?? NO_GROUP : null; };
+  // Opening a home from Resumen lands inside its privada.
+  const [open, setOpen] = useState<string | null>(() => (selected ? groupOf(selected) : null));
+  const [q, setQ] = useState('');
+  const term = q.trim().toLowerCase();
+  const found = term ? overview.accounts.filter(x => homeLabel(x).toLowerCase().includes(term) || (payerName(x) ?? '').toLowerCase().includes(term) || groupName(x.property?.cluster).toLowerCase().includes(term)).sort((x, y) => byNumber.compare(homeLabel(x), homeLabel(y))) : [];
+  const group = groups.find(g => g.id === open);
+  if (group) return <GroupHomes key={group.id} group={group} overview={overview} month={month} selected={selected} onSelect={onSelect} onBack={() => { onSelect(''); setOpen(null); }} statement={statement} payments={payments} enabled={enabled} path={path} action={action}/>;
+  return <section className="panel fin-section">
+    <div className="fin-toolbar"><div><h3>Viviendas por privada</h3><p className="small muted">{overview.accounts.length} {overview.accounts.length === 1 ? 'casa' : 'casas'} en {groups.length} {groups.length === 1 ? 'privada' : 'privadas'}</p></div>
+      <label className="fin-search"><Search size={16}/><input aria-label="Buscar casa, titular o privada" placeholder="Casa, titular o privada" value={q} onChange={e => setQ(e.target.value)}/></label></div>
+    {term ? <ul className="fin-rows">{!found.length ? <li><p className="muted">Ninguna casa coincide con «{q.trim()}».</p></li> : found.map(x => <li key={x.id}>
+      <button type="button" className="fin-row fin-row-button" onClick={() => { setOpen(x.property?.cluster?.id ?? NO_GROUP); onSelect(x.id); }}>
+        <span className="fin-row-icon"><HomeIcon size={17}/></span>
+        <div className="fin-row-main"><strong>{homeLabel(x)}</strong><small>{groupName(x.property?.cluster)} · {payerName(x) ?? 'Sin titular'}</small></div>
+        <HomeBalance account={x}/><ChevronRight size={16}/>
+      </button></li>)}</ul> :
+    !groups.length ? <Empty icon={<Landmark/>} title="Aún no hay viviendas" text="Las cuentas de las casas se abren al activar la cobranza."/> :
+    <div className="fin-groups">{groups.map(g => {
+      const owed = g.accounts.reduce((s, a) => s + (BigInt(a.balanceCents) > 0n ? BigInt(a.balanceCents) : 0n), 0n);
+      const late = g.accounts.filter(a => BigInt(a.overdueCents) > 0n).length, current = g.accounts.filter(a => BigInt(a.balanceCents) <= 0n).length;
+      const monthly = g.accounts.reduce((s, a) => s + monthlyFee(overview, a.id, month), 0n);
+      return <button key={g.id} type="button" className="fin-group" onClick={() => setOpen(g.id)}>
+        <div className="fin-group-head"><span className="fin-row-icon"><Landmark size={17}/></span><div><strong>{g.name}</strong><small>{g.accounts.length} {g.accounts.length === 1 ? 'casa' : 'casas'} · cuotas del mes {money(monthly)}</small></div><ChevronRight size={18}/></div>
+        <dl className="fin-group-stats">
+          <div><dt>Por cobrar</dt><dd className={owed > 0n ? 'accent' : ''}>{money(owed)}</dd></div>
+          <div><dt>Vencidas</dt><dd className={late ? 'bad' : ''}>{late}</dd></div>
+          <div><dt>Al corriente</dt><dd className="good">{current} de {g.accounts.length}</dd></div>
+        </dl>
+        <span className="fin-group-bar" aria-hidden="true"><span style={{ width: `${g.accounts.length ? Math.round(current / g.accounts.length * 100) : 0}%` }}/></span>
+      </button>; })}</div>}
+  </section>;
+}
+
+function HomeBalance({ account }: { account: Account }) {
+  const balance = BigInt(account.balanceCents), late = BigInt(account.overdueCents) > 0n;
+  return <div className="fin-row-side"><strong className={`fin-amount ${late ? 'bad' : balance < 0n ? 'good' : ''}`}>{balance < 0n ? `A favor ${money(-balance)}` : money(balance)}</strong>{late ? <span className="badge revoked"><span/>Vencido {money(account.overdueCents)}</span> : balance <= 0n ? <span className="badge"><span/>Al corriente</span> : <span className="badge expired"><span/>Por pagar</span>}</div>;
+}
+
+/** One privada's homes: each with its fee this month and its balance; the selected home's detail beside. */
+function GroupHomes({ group, overview, month, selected, onSelect, onBack, statement, payments, enabled, path, action }: { group: Group; overview: Overview; month: string; selected: string; onSelect: (id: string) => void; onBack: () => void; statement: ReturnType<typeof useQuery<Statement>>; payments?: AdminData; enabled: boolean; path: Scoped; action: FinanceAction }) {
   const [q, setQ] = useState(''), [filter, setFilter] = useState<HomeFilter>('all');
   const wide = useWide();
   const byNumber = useMemo(() => new Intl.Collator('es', { numeric: true }), []);
   const term = q.trim().toLowerCase();
-  const list = overview.accounts.filter(HOME_FILTERS.find(f => f.id === filter)!.test).filter(x => !term || homeLabel(x).toLowerCase().includes(term) || (payerName(x) ?? '').toLowerCase().includes(term))
+  const list = group.accounts.filter(HOME_FILTERS.find(f => f.id === filter)!.test).filter(x => !term || homeLabel(x).toLowerCase().includes(term) || (payerName(x) ?? '').toLowerCase().includes(term))
     .sort((x, y) => byNumber.compare(homeLabel(x), homeLabel(y)));
-  const current = overview.accounts.find(x => x.id === selected);
+  const current = group.accounts.find(x => x.id === selected);
+  const owed = group.accounts.reduce((s, a) => s + (BigInt(a.balanceCents) > 0n ? BigInt(a.balanceCents) : 0n), 0n);
+  const monthly = group.accounts.reduce((s, a) => s + monthlyFee(overview, a.id, month), 0n);
   const detail = current && <HomeDetail key={current.id} account={current} overview={overview} statement={statement} payments={payments?.payments.filter(p => p.accountId === current.id)} enabled={enabled} path={path} action={action}/>;
   return <section className="panel fin-section">
-    <div className="fin-toolbar"><h3>Viviendas</h3><label className="fin-search"><Search size={16}/><input aria-label="Buscar casa o titular" placeholder="Casa o titular" value={q} onChange={e => setQ(e.target.value)}/></label></div>
-    <div className="fin-chips" role="group" aria-label="Filtrar viviendas">{HOME_FILTERS.map(f => <button key={f.id} type="button" aria-pressed={filter === f.id} className={filter === f.id ? 'active' : ''} onClick={() => setFilter(f.id)}>{f.label} <span>{overview.accounts.filter(f.test).length}</span></button>)}</div>
+    <button type="button" className="fin-back" onClick={onBack}><ArrowLeft size={17}/> Todas las privadas</button>
+    <div className="fin-toolbar"><div><h3>{group.name}</h3><p className="small muted">{group.accounts.length} {group.accounts.length === 1 ? 'casa' : 'casas'} · cuotas de {monthName(month)}: <strong>{money(monthly)}</strong> · por cobrar: <strong>{money(owed)}</strong></p></div>
+      <label className="fin-search"><Search size={16}/><input aria-label="Buscar casa o titular" placeholder="Casa o titular" value={q} onChange={e => setQ(e.target.value)}/></label></div>
+    <div className="fin-chips" role="group" aria-label="Filtrar viviendas">{HOME_FILTERS.map(f => <button key={f.id} type="button" aria-pressed={filter === f.id} className={filter === f.id ? 'active' : ''} onClick={() => setFilter(f.id)}>{f.label} <span>{group.accounts.filter(f.test).length}</span></button>)}</div>
     <div className="fin-split">
-      <ul className="fin-rows fin-list">{!list.length ? <li><p className="muted">Ninguna casa con este filtro.</p></li> : list.map(x => { const balance = BigInt(x.balanceCents), late = BigInt(x.overdueCents) > 0n;
+      <ul className="fin-rows fin-list">{!list.length ? <li><p className="muted">Ninguna casa con este filtro.</p></li> : list.map(x => { const fee = monthlyFee(overview, x.id, month), adjusted = overview.fees.some(f => f.accountId === x.id && f.effectiveMonth <= month && f.adjustmentCents !== '0');
         return <li key={x.id}><button type="button" className={`fin-row fin-row-button${x.id === selected ? ' selected' : ''}`} aria-pressed={x.id === selected} onClick={() => onSelect(x.id)}>
           <span className="fin-row-icon"><HomeIcon size={17}/></span>
-          <div className="fin-row-main"><strong>{homeLabel(x)}</strong><small>{payerName(x) ?? <span className="fin-note">Sin titular</span>}</small></div>
-          <div className="fin-row-side"><strong className={`fin-amount ${late ? 'bad' : balance < 0n ? 'good' : ''}`}>{balance < 0n ? `A favor ${money(-balance)}` : money(balance)}</strong>{late ? <span className="badge revoked"><span/>Vencido {money(x.overdueCents)}</span> : balance <= 0n ? <span className="badge"><span/>Al corriente</span> : <span className="badge expired"><span/>Por pagar</span>}</div>
+          <div className="fin-row-main"><strong>{x.property ? `Casa ${x.property.houseNumber}` : homeLabel(x)}</strong><small>{payerName(x) ?? <span className="fin-note">Sin titular</span>}</small><small className="fin-fee">Cuota {money(fee)}{adjusted ? ' · con ajuste' : ''}</small></div>
+          <HomeBalance account={x}/>
         </button></li>; })}</ul>
       {wide && <aside className="fin-detail" aria-label="Detalle de la vivienda">{detail ?? <Empty icon={<HomeIcon/>} title="Elige una casa" text="Verás su saldo, su titular, sus cuotas y sus pagos."/>}</aside>}
     </div>
