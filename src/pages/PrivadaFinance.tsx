@@ -25,6 +25,8 @@ export type PrivadaSummary = {
   fraccionamiento: { owedCents: string; paidCents: string; pendingCents: string; balanceCents: string };
   concepts: Concept[]; fees: Fee[]; homes: HomeRow[]; dues: Due[]; deposits: Deposit[]; expenses: Expense[];
   online?: Online;
+  /** The viewer is this privada's administrator (resident profile): they fill in Stripe's form. */
+  canOnboard?: boolean;
 };
 type Movement = { id: string; description: string; amountCents: string; effectiveAt: string; dueAt: string | null; kind: string; reversesId: string | null; reason: string; period: string | null };
 type Statement = { balanceCents: string; overdueCents: string; movements: Movement[] };
@@ -103,7 +105,7 @@ function Overview({ s, clusterId, action, onChanged, onGo, onOpenHome }: { s: Pr
   ].filter(Boolean) as string[];
   return <div className="fin-stack">
     {missing.length > 0 && <div className="fin-callout"><AlertTriangle size={20}/><div><strong>{s.configured ? 'Falta un paso para cobrar' : 'El cobro de la privada aún no empieza'}</strong>{missing.map(m => <span key={m}>{m}</span>)}</div>{s.configured && <Button className="small-button" onClick={() => onGo('cuotas')}>Ir a Cuotas</Button>}</div>}
-    {s.model && s.enabled && s.online && <OnlinePayments clusterId={clusterId} online={s.online} admin={s.role === 'ADMIN'} action={action} onChanged={onChanged}/>}
+    {s.model && s.enabled && s.online && <OnlinePayments clusterId={clusterId} online={s.online} admin={!s.canOnboard} action={action} onChanged={onChanged}/>}
     <section className="pf-cash" aria-label="Caja de la privada">
       <div><span>Caja de la privada</span><strong>{money(s.cash.balanceCents)}</strong><small>Cobrado menos gastos y depósitos al fraccionamiento</small></div>
       <ul>
