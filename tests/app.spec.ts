@@ -16,7 +16,10 @@ test('complete real WebAuthn, resident, gate, admin and offline PWA journeys', a
   await page.screenshot({ path: 'test-results/dashboard-desktop.png', fullPage: true });
   await page.getByRole('button', { name: 'Crear pase', exact: true }).click();
   await page.getByLabel('Nombre del visitante').fill('Valeria Pérez');
-  await page.getByLabel('Placas del vehículo').fill('VAL-123');
+  // The car is mandatory: plates, color and model.
+  await page.getByLabel('Placas', { exact: true }).fill('val-123');
+  await page.getByLabel('Color', { exact: true }).fill('Gris');
+  await page.getByLabel('Marca y modelo', { exact: true }).fill('Nissan Versa');
   await page.getByRole('button', { name: 'Revisar pase' }).click();
   await page.getByRole('button', { name: 'Crear pase', exact: true }).last().click();
   await expect(page.getByRole('dialog', { name: 'Tu pase está listo' })).toBeVisible();

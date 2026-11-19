@@ -896,6 +896,12 @@ button.stat-card[aria-pressed='true'] { background: var(--soft); }
 .scan-dialog-note strong { display: block; font-size: 13px; font-weight: 650; }
 .scan-dialog-note p { margin: 3px 0 0; color: #3d2b06; font-size: 17px; line-height: 1.45; overflow-wrap: anywhere; }
 textarea.pass-notes { min-height: 72px; resize: vertical; }
+/* Crear pase: the visitor's car (plates, color, model) as one group, all required. */
+.pass-vehicle { display: grid; gap: 14px; margin: 4px 0 18px; padding: 14px 16px 12px; border: 1px solid var(--line); border-radius: 16px; }
+.pass-vehicle legend { padding: 0 6px; margin-left: -6px; font-weight: 700; }
+.pass-vehicle label { margin: 0; }
+.pass-vehicle > small { color: var(--muted); font-size: 13px; }
+@media (max-width: 520px) { .pass-vehicle .field-grid { grid-template-columns: 1fr; gap: 14px; } }
 .scan-dialog-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; padding: 20px 24px 22px; }
 .scan-dialog-actions .button { width: 100%; min-height: 54px; font-size: 16px; }
 .scan-dialog.granted .scan-dialog-actions .button:not(.secondary) { background: var(--tone); border-color: var(--tone); }
