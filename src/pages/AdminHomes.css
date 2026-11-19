@@ -69,3 +69,19 @@
   .homes-state:empty, .homes-phones { display: none; }
   .homes-number { font-size: 18px; }
 }
+
+/* Agregar casa → nueva privada o lote; desactivar o eliminar una casa. */
+.homes-new-cluster { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; padding: 14px; border-radius: 14px; background: var(--canvas); }
+.homes-kind { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.homes-kind button { min-height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #355967; font-weight: 600; font-size: 13.5px; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .1s ease; }
+.homes-kind button:active { transform: scale(.97); }
+.homes-kind button.active { border-color: var(--brand); background: var(--brand); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .homes-kind button { transition: none; } .homes-kind button:active { transform: none; } }
+.homes-inactive { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 14px; background: #fbefd3; color: #7a5712; }
+.homes-inactive > svg { flex-shrink: 0; margin-top: 2px; }
+.homes-inactive > div { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.homes-inactive small { color: #7a5712; }
+.homes-manage { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.homes-link { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0; border: 0; background: transparent; font: inherit; font-weight: 600; font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.homes-effects { margin: 0 0 10px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { ChevronRight, Home as HomeIcon, KeyRound, Mail, Phone, Search, UserPlus } from 'lucide-react';
+import { ChevronRight, Home as HomeIcon, HousePlus, KeyRound, Mail, Phone, Power, Search, Trash2, UserPlus } from 'lucide-react';
 import { AnimatedSend } from '../components/icons/AnimatedIcons';
 import { dateText, useMutation, useQuery } from '../hooks';
 import { Button, Empty, ErrorBox, Info, Loading, Modal, Success } from '../components/ui';
@@ -9,8 +9,8 @@ import { phoneText } from './SupportPhones';
 import { accessLabel, needsInvite, type Home, type Member, type Section } from './platformTypes';
 import './AdminHomes.css';
 
-// Viviendas: the fraccionamiento's privadas and lotes with their homes. The admin adds people,
-// invites them, renews access and sets how many phones each home may register.
+// Viviendas: the fraccionamiento's privadas and lotes with their homes. The admin adds homes and
+// people, invites them, renews access and sets how many phones each home may register.
 type Homes = { emailEnabled: boolean; clusters: Section[] };
 type Filter = 'all' | 'missing' | 'sent' | 'active' | 'extra';
 type Grant = { channel: 'IN_PERSON'; enrollmentToken: string; expiresAt: string } | { channel: 'EMAIL'; sentTo: string; expiresAt: string };
@@ -44,7 +44,9 @@ export function AdminHomes() {
   const homes = useQuery<Homes>('/admin/homes');
   const invitations = useInvitationJob('/admin/invitations/status', homes.refresh);
   const [q, setQ] = useState(''); const [cluster, setCluster] = useState(''); const [filter, setFilter] = useState<Filter>('all');
-  const [selected, setSelected] = useState(''); const [adding, setAdding] = useState(false);
+  const [selected, setSelected] = useState(''); const [adding, setAdding] = useState(false); const [newHome, setNewHome] = useState(false);
+  // After creating a home, its residents form opens as soon as the home is in the list.
+  const [addTo, setAddTo] = useState('');
   const bulk = useMutation();
   const wide = useWide();
   const clusters = homes.data?.clusters ?? [];
@@ -59,12 +61,13 @@ export function AdminHomes() {
     && (!term || fold(home.houseNumber).includes(term) || people(home).some(m => fold(m.user.fullName).includes(term) || m.user.email.includes(term)))) })).filter(s => s.homes.length);
   const current = all.find(({ home }) => home.id === selected);
   const sending = !!invitations.job?.running;
+  useEffect(() => { if (addTo && current?.home.id === addTo) { setAddTo(''); setAdding(true); } }, [addTo, current?.home.id]);
 
   async function inviteAll() {
     if (await bulk.run('/admin/invitations', 'POST', {})) invitations.track();
   }
 
-  const detail = current && <HomeDetail key={current.home.id} home={current.home} section={current.section} emailEnabled={emailEnabled} sending={sending} onChanged={homes.refresh} onAdd={() => setAdding(true)}/>;
+  const detail = current && <HomeDetail key={current.home.id} home={current.home} section={current.section} emailEnabled={emailEnabled} sending={sending} onChanged={homes.refresh} onAdd={() => setAdding(true)} onDeleted={() => { setSelected(''); homes.refresh(); }}/>;
   return <div className="homes">
     <section className="homes-kpis" aria-label="Resumen">
       <div className="kpi"><span className="kpi-label">Casas</span><strong>{all.length}</strong><small>{clusters.length === 1 ? '1 privada o lote' : `${clusters.length} privadas y lotes`}</small></div>
@@ -78,13 +81,14 @@ export function AdminHomes() {
         <h2>Viviendas</h2>
         <label className="homes-search"><Search size={16}/><input aria-label="Buscar casa o residente" placeholder="Casa, nombre o correo" value={q} onChange={e => setQ(e.target.value)} maxLength={80}/></label>
         {clusters.length > 1 && <label className="movements-select">Privada o lote<select value={cluster} onChange={e => setCluster(e.target.value)}><option value="">Todas</option>{clusters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
+        {homes.data && <Button className="secondary" onClick={() => setNewHome(true)}><HousePlus size={17}/> Agregar casa</Button>}
         {!!pending && <Button busy={bulk.busy || sending} disabled={!emailEnabled || sending} onClick={() => void inviteAll()}><AnimatedSend size={17}/> Invitar a {pending} sin acceso</Button>}
       </div>
       <div className="movements-chips" role="group" aria-label="Filtrar viviendas">{FILTERS.map(f => <button key={f.id} type="button" className={filter === f.id ? 'active' : ''} aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>{f.label} <span className="homes-count">{counts[f.id] ?? 0}</span></button>)}</div>
       {homes.data && !emailEnabled && <Info>El envío de correos aún no está disponible: puedes dar de alta residentes y entregarles la invitación en persona.</Info>}
       {invitations.job && <InvitationProgress job={invitations.job}/>}
       <ErrorBox message={homes.error || bulk.error} retry={homes.error ? homes.refresh : undefined}/>
-      {homes.loading && !homes.data ? <Loading/> : !all.length ? <Empty icon={<HomeIcon/>} title="Aún no hay viviendas" text="Zentry carga las privadas y casas del fraccionamiento desde su Excel."/> :
+      {homes.loading && !homes.data ? <Loading/> : !all.length ? <Empty icon={<HomeIcon/>} title="Aún no hay viviendas" text="Agrega la primera privada y sus casas con «Agregar casa», o pide a Zentry que cargue el Excel del fraccionamiento."/> :
         <div className="homes-layout">
           <div className="homes-list">
             {!visible.length ? <Empty icon={<Search/>} title="Nada con este filtro" text="Cambia el filtro o la búsqueda."/> : visible.map(({ section, homes: list }) => <div className="homes-group" key={section.id}>
@@ -96,6 +100,7 @@ export function AdminHomes() {
         </div>}
     </section>
     {!wide && current && <Modal title={`Casa ${current.home.houseNumber}`} onClose={() => setSelected('')}>{detail}</Modal>}
+    {newHome && <AddHome clusters={clusters} initial={cluster} onClose={() => setNewHome(false)} onAdded={(id, people) => { setNewHome(false); setFilter('all'); setQ(''); setSelected(id); if (people) setAddTo(id); homes.refresh(); }}/>}
     {adding && current && <AddResident home={current.home} emailEnabled={emailEnabled} onClose={() => setAdding(false)} onAdded={() => { setAdding(false); homes.refresh(); }}/>}
   </div>;
 }
@@ -113,7 +118,8 @@ function HomeRow({ home, selected, onSelect }: { home: Home; selected: boolean; 
   </button></li>;
 }
 
-function HomeDetail({ home, section, emailEnabled, sending, onChanged, onAdd }: { home: Home; section: Section; emailEnabled: boolean; sending: boolean; onChanged: () => void; onAdd: () => void }) {
+function HomeDetail({ home, section, emailEnabled, sending, onChanged, onAdd, onDeleted }: { home: Home; section: Section; emailEnabled: boolean; sending: boolean; onChanged: () => void; onAdd: () => void; onDeleted: () => void }) {
+  const [manage, setManage] = useState<'off' | 'on' | 'delete' | null>(null);
   const list = people(home);
   const devices = list.reduce((sum, m) => sum + m.access.devices, 0);
   const [access, setAccess] = useState<{ member: Member; purpose: 'REGISTER' | 'RECOVERY' } | null>(null);
@@ -129,6 +135,7 @@ function HomeDetail({ home, section, emailEnabled, sending, onChanged, onAdd }: 
       <div><h2>Casa {home.houseNumber}</h2><p>{section.name} · {section.type === 'LOTE' ? 'Lote' : 'Privada'}{home.status !== 'ACTIVE' && ' · inactiva'}</p></div>
       {list.length > INCLUDED && <span className="badge expired"><span/>+{list.length - INCLUDED} extra</span>}
     </div>
+    {home.status !== 'ACTIVE' && <div className="homes-inactive"><Power size={18}/><div><strong>Casa desactivada</strong><small>Nadie de esta casa puede entrar a Zentry ni recibir visitas con pase. Sus residentes y su historial se conservan.</small></div><Button className="small-button" onClick={() => setManage('on')}>Reactivar</Button></div>}
     <PhoneLimit home={home} used={devices} onSaved={onChanged}/>
     <div className="homes-section-title"><h3>Residentes</h3>{home.status === 'ACTIVE' && <Button className="secondary small-button" onClick={onAdd}><UserPlus size={16}/> Agregar</Button>}</div>
     {notice && <Success>{notice}</Success>}<ErrorBox message={send.error}/>
@@ -150,8 +157,34 @@ function HomeDetail({ home, section, emailEnabled, sending, onChanged, onAdd }: 
             <Button className="secondary small-button" onClick={() => setAccess({ member, purpose: 'REGISTER' })}><KeyRound size={15}/> En persona</Button></>}</div>
       </li>;
     })}</ul>}
+    <div className="homes-manage">
+      {home.status === 'ACTIVE' && <button type="button" className="homes-link danger-text" onClick={() => setManage('off')}><Power size={15}/> Desactivar casa</button>}
+      {!list.length && <button type="button" className="homes-link danger-text" onClick={() => setManage('delete')}><Trash2 size={15}/> Eliminar casa</button>}
+    </div>
     {access && <AccessModal member={access.member} home={home} purpose={access.purpose} emailEnabled={emailEnabled} onClose={() => { setAccess(null); onChanged(); }}/>}
+    {manage && <ManageHome home={home} action={manage} onClose={() => setManage(null)} onDone={() => { const deleted = manage === 'delete'; setManage(null); if (deleted) onDeleted(); else onChanged(); }}/>}
   </div>;
+}
+
+/** Deactivate, reactivate or delete a home, each with what it means before confirming. */
+function ManageHome({ home, action, onClose, onDone }: { home: Home; action: 'off' | 'on' | 'delete'; onClose: () => void; onDone: () => void }) {
+  const [reason, setReason] = useState('');
+  const mutation = useMutation();
+  const needsReason = action !== 'delete';
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    const ok = action === 'delete' ? await mutation.run(`/admin/properties/${home.id}`, 'DELETE') : await mutation.run(`/admin/properties/${home.id}/status`, 'POST', { active: action === 'on', reason: reason.trim() });
+    if (ok) onDone();
+  }
+  const copy = {
+    off: { title: `Desactivar Casa ${home.houseNumber}`, confirm: 'Desactivar casa', text: <><p>Mientras esté desactivada:</p><ul className="homes-effects"><li>Nadie de esta casa puede entrar a Zentry; sus sesiones se cierran.</li><li>Sus pases activos se cancelan y la caseta ya no los acepta.</li><li>Deja de generar cuotas. Lo que deba se conserva.</li><li>Si alguien de la casa administra su privada, deja de hacerlo.</li></ul><p className="small muted">Sus residentes, teléfonos e historial se conservan: al reactivarla vuelven a tener acceso.</p></> },
+    on: { title: `Reactivar Casa ${home.houseNumber}`, confirm: 'Reactivar casa', text: <p>Sus residentes vuelven a entrar con sus mismos teléfonos y la casa vuelve a generar cuotas desde el mes actual. Los pases cancelados no se recuperan.</p> },
+    delete: { title: `Eliminar Casa ${home.houseNumber}`, confirm: 'Eliminar casa', text: <p>Para una casa dada de alta por error o duplicada. Solo se puede eliminar si nunca tuvo residentes, pases, visitas ni cuenta de cuotas; si ya tiene historial, desactívala.</p> },
+  }[action];
+  return <Modal title={copy.title} onClose={() => { if (!mutation.busy) onClose(); }}><form onSubmit={submit}><fieldset disabled={mutation.busy}>
+    {copy.text}
+    {needsReason && <label>Motivo<input required minLength={3} maxLength={300} value={reason} onChange={e => setReason(e.target.value)} placeholder={action === 'off' ? 'Por ejemplo: casa vendida, sin habitar' : 'Por ejemplo: llegaron los nuevos dueños'}/><small>Queda en el historial de la casa.</small></label>}
+  </fieldset><ErrorBox message={mutation.error}/><div className="modal-actions"><Button className="secondary" disabled={mutation.busy} onClick={onClose}>Cancelar</Button><Button type="submit" className={action === 'on' ? undefined : 'danger'} busy={mutation.busy} disabled={needsReason && reason.trim().length < 3}>{copy.confirm}</Button></div></form></Modal>;
 }
 
 function PhoneLimit({ home, used, onSaved }: { home: Home; used: number; onSaved: () => void }) {
@@ -192,6 +225,47 @@ function AddResident({ home, emailEnabled, onClose, onAdded }: { home: Home; ema
       {emailEnabled && <label className="checkbox-label"><input type="checkbox" checked={invite} onChange={e => setInvite(e.target.checked)}/> Enviarle la invitación por correo ahora</label>}
       {extra && <Info>Casa {home.houseNumber} ya tiene {people(home).length} residentes. A partir del tercero, cada persona cuenta como residente extra y se cobra aparte.</Info>}
     </fieldset><ErrorBox message={mutation.error}/><div className="modal-actions"><Button className="secondary" disabled={mutation.busy} onClick={onClose}>Cancelar</Button><Button type="submit" busy={mutation.busy}><UserPlus size={17}/> Agregar</Button></div></form>}
+  </Modal>;
+}
+
+/** A new home in one of the fraccionamiento's privadas or lotes; then, if wanted, its first resident. */
+function AddHome({ clusters, initial, onClose, onAdded }: { clusters: Section[]; initial: string; onClose: () => void; onAdded: (id: string, addPeople: boolean) => void }) {
+  const NEW = 'nueva';
+  const [clusterId, setClusterId] = useState(initial || (clusters.length === 1 ? clusters[0].id : clusters.length ? '' : NEW)); const [number, setNumber] = useState('');
+  const [newName, setNewName] = useState(''); const [newType, setNewType] = useState<'PRIVADA' | 'LOTE'>('PRIVADA');
+  // A privada created here stays created even if the home then fails: retrying uses it.
+  const [madeCluster, setMadeCluster] = useState<{ id: string; name: string } | null>(null);
+  const [created, setCreated] = useState<{ id: string; houseNumber: string; where: string } | null>(null);
+  const mutation = useMutation();
+  const creatingCluster = clusterId === NEW && !madeCluster;
+  const section = clusters.find(c => c.id === clusterId);
+  const taken = !!section && section.properties.some(p => p.houseNumber.trim().toLowerCase() === number.trim().toLowerCase());
+  const nameTaken = creatingCluster && clusters.some(c => c.name.trim().toLowerCase() === newName.trim().replace(/\s+/g, ' ').toLowerCase());
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    let target = clusterId === NEW ? madeCluster : section ? { id: section.id, name: section.name } : null;
+    if (!target) {
+      const made = await mutation.run<{ id: string; name: string }>('/admin/clusters', 'POST', { name: newName.trim(), type: newType });
+      if (!made) return;
+      setMadeCluster(made); target = made;
+    }
+    const home = await mutation.run<{ id: string; houseNumber: string }>('/admin/properties', 'POST', { clusterId: target.id, houseNumber: number.trim() });
+    if (home) setCreated({ ...home, where: target.name });
+  }
+  return <Modal title="Agregar casa" onClose={() => { if (mutation.busy) return; if (created) onAdded(created.id, false); else onClose(); }}>
+    {created ? <>
+      <Success>Casa {created.houseNumber} agregada a {created.where}.</Success>
+      <p className="small">Ahora agrega a quienes viven ahí: los dos primeros son propietarios y los siguientes, familiares.</p>
+      <div className="modal-actions"><Button className="secondary" onClick={() => onAdded(created.id, false)}>Listo</Button><Button onClick={() => onAdded(created.id, true)}><UserPlus size={17}/> Agregar residentes</Button></div>
+    </> : <form onSubmit={submit}><fieldset disabled={mutation.busy}>
+      <label>Privada o lote<select required value={clusterId} disabled={!!madeCluster} onChange={e => setClusterId(e.target.value)}><option value="" disabled>Elige una</option>{clusters.map(c => <option key={c.id} value={c.id}>{c.type === 'LOTE' ? 'Lote' : 'Privada'} {c.name} · {c.properties.length === 1 ? '1 casa' : `${c.properties.length} casas`}</option>)}<option value={NEW}>{madeCluster ? `${madeCluster.name} (nueva)` : '＋ Nueva privada o lote'}</option></select></label>
+      {creatingCluster && <div className="homes-new-cluster">
+        <div className="homes-kind" role="radiogroup" aria-label="Tipo">{(['PRIVADA', 'LOTE'] as const).map(t => <button key={t} type="button" role="radio" aria-checked={newType === t} className={newType === t ? 'active' : ''} onClick={() => setNewType(t)}>{t === 'LOTE' ? 'Lote' : 'Privada'}</button>)}</div>
+        <label>Nombre {newType === 'LOTE' ? 'del lote' : 'de la privada'}<input required minLength={2} maxLength={60} value={newName} onChange={e => setNewName(e.target.value)} placeholder={newType === 'LOTE' ? 'Por ejemplo: Lote 7' : 'Por ejemplo: Robles'} autoComplete="off"/>{nameTaken && <small className="danger-text">Ya existe con ese nombre.</small>}</label>
+      </div>}
+      <label>Número de casa<input autoFocus required maxLength={20} value={number} onChange={e => setNumber(e.target.value)} placeholder="Por ejemplo: 14 o 14-B" autoComplete="off"/>{taken ? <small className="danger-text">Esa casa ya existe en {section?.name}.</small> : <small>Como aparece en la casa y en el Excel del fraccionamiento.</small>}</label>
+      <p className="small muted">Empieza con 2 teléfonos permitidos y sin residentes. Si el fraccionamiento cobra cuotas, su cuenta se abre en cero.</p>
+    </fieldset><ErrorBox message={mutation.error}/><div className="modal-actions"><Button className="secondary" disabled={mutation.busy} onClick={onClose}>Cancelar</Button><Button type="submit" busy={mutation.busy} disabled={!clusterId || !number.trim() || taken || (creatingCluster && (newName.trim().length < 2 || nameTaken))}><HousePlus size={17}/> Agregar casa</Button></div></form>}
   </Modal>;
 }
 
