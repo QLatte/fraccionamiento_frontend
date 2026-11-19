@@ -6,7 +6,7 @@ export interface Property { id: string; street: string; houseNumber: string; sta
 export interface Pass { id: string; propertyId: string; createdById: string; guestName: string; guestVehicle: string | null; notes: string | null; passType: PassType; status: Status; validFrom: string; validUntil: string; createdAt: string; timezone: string; windowSeconds: number; recurrenceRule: string | null; canShare?: boolean }
 export interface Page<T> { data: T[]; nextCursor?: string | null }
 export interface SessionResult { accessToken: string; expiresAt: string }
-export interface CreatedPass { id: string; shareUrl: string; encryptedToken: string; status: Status }
+export interface CreatedPass { id: string; shareUrl: string; encryptedToken: string; status: Status; validFrom?: string; validUntil?: string }
 export interface Device { id: string; deviceLabel: string | null; createdAt: string; lastUsedAt: string | null; userId: string }
 export interface Notification { id: string; eventType: string; createdAt: string }
 export interface Gate { id: string; label: string }

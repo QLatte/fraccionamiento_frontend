@@ -17,6 +17,8 @@ export function validityLines(pass: PassSummary): string[] {
     const days = /BYDAY=([A-Z,]+)/.exec(pass.recurrenceRule ?? '')?.[1].split(',').map(d => weekdayNames[d] ?? d).join(', ') ?? 'Días programados';
     return [typeNames.RECURRING, `${days} · desde las ${time(pass.validFrom)}`, `Acceso durante ${Math.round(pass.windowSeconds / 60)} min`, `Del ${format(pass.validFrom, { day: 'numeric', month: 'short' })} al ${format(pass.validUntil, { day: 'numeric', month: 'short', year: 'numeric' })}`];
   }
+  // A single visit has no schedule: one entry at any hour until it lapses.
+  if (pass.passType === 'SINGLE_USE') return [typeNames.SINGLE_USE, 'Una sola entrada, a cualquier hora', `Vence el ${day(pass.validUntil)}`];
   const sameDay = day(pass.validFrom) === day(pass.validUntil);
   return [typeNames[pass.passType], ...(sameDay
     ? [day(pass.validFrom), `De ${time(pass.validFrom)} a ${time(pass.validUntil)}`]
